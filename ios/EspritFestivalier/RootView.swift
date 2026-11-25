@@ -62,6 +62,8 @@ struct RootView: View {
     @ViewBuilder private func content(for tab: AppTab) -> some View {
         if tab == .festivals {
             FestivalListView(source: environment.festivals, artists: environment.artists)
+        } else if tab == .articles {
+            ArticlesView(source: environment.articles, feed: environment.articleFeed)
         } else {
             EmptyState(
                 systemImage: tab.symbol, title: "Bientôt disponible",
