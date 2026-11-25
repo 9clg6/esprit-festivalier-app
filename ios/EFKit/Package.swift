@@ -14,6 +14,7 @@ let package = Package(
         .target(name: "EFData", dependencies: ["EFDomain"], resources: [.process("Resources")]),
         .target(name: "EFDesign"),
         .testTarget(name: "EFDomainTests", dependencies: ["EFDomain"]),
-        .testTarget(name: "EFDataTests", dependencies: ["EFData", "EFDomain"])
+        .testTarget(name: "EFDataTests", dependencies: ["EFData", "EFDomain"]),
+        .testTarget(name: "EFDesignTests", dependencies: ["EFDesign"])
     ]
 )
