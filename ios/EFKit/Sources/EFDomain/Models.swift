@@ -6,6 +6,8 @@ public struct Festival: Sendable, Codable, Hashable, Identifiable {
     public let id: ID
     public let name: String
     public let city: String
+    /// French region, e.g. "Bretagne"; nil when the data does not give it.
+    public let region: String?
     public let latitude: Double
     public let longitude: Double
     public let startDate: Date
@@ -20,7 +22,7 @@ public struct Festival: Sendable, Codable, Hashable, Identifiable {
     public let ticketURL: URL?
 
     public init(
-        id: ID, name: String, city: String, latitude: Double, longitude: Double,
+        id: ID, name: String, city: String, region: String? = nil, latitude: Double, longitude: Double,
         startDate: Date, endDate: Date, website: URL, description: String,
         imageURL: URL? = nil, imageCredit: String? = nil, genres: [String] = [],
         pageURL: URL? = nil, ticketURL: URL? = nil
@@ -28,6 +30,7 @@ public struct Festival: Sendable, Codable, Hashable, Identifiable {
         self.id = id
         self.name = name
         self.city = city
+        self.region = region
         self.latitude = latitude
         self.longitude = longitude
         self.startDate = startDate
@@ -42,7 +45,7 @@ public struct Festival: Sendable, Codable, Hashable, Identifiable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, name, city, latitude, longitude, startDate, endDate, website, description
+        case id, name, city, region, latitude, longitude, startDate, endDate, website, description
         case imageURL, imageCredit, genres, pageURL, ticketURL
     }
 
@@ -52,6 +55,7 @@ public struct Festival: Sendable, Codable, Hashable, Identifiable {
         self.init(
             id: try values.decode(ID.self, forKey: .id), name: try values.decode(String.self, forKey: .name),
             city: try values.decode(String.self, forKey: .city),
+            region: try values.decodeIfPresent(String.self, forKey: .region),
             latitude: try values.decode(Double.self, forKey: .latitude),
             longitude: try values.decode(Double.self, forKey: .longitude),
             startDate: try values.decode(Date.self, forKey: .startDate),

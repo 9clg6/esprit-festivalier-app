@@ -22,5 +22,7 @@
 	<string>$(EF_DATA_SOURCE)</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Ta position sert à trouver les festivals autour de toi. Elle reste sur ton téléphone.</string>
 </dict>
 </plist>
