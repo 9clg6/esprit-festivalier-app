@@ -47,6 +47,7 @@ struct HomeView: View {
             .navigationTitle("Accueil")
             .routes(environment)
         }
+        .environment(\.pushRoute) { path.append($0) }
     }
 
     @ViewBuilder private func sections(_ feed: HomeFeed) -> some View {

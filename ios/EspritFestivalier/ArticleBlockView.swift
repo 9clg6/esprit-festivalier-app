@@ -1,60 +1,15 @@
+import EFData
 import EFDesign
 import EFDomain
 import SwiftUI
 
-/// An article block with its text already built: one `AttributedString` per paragraph (UX `ArticleBlockView`).
-struct RenderedBlock: Identifiable {
-    enum Kind {
-        case paragraph(AttributedString)
-        case heading(level: Int, AttributedString)
-        case image(ArticleImage)
-        case quote(AttributedString, source: String?)
-        case list(ordered: Bool, items: [AttributedString])
-        case embed(Embed)
-        case readAlso(ArticleSummary)
-        case separator
-    }
-
-    let id: Int
-    let kind: Kind
-
-    static func make(_ blocks: [ArticleBlock]) -> [RenderedBlock] {
-        blocks.enumerated().map { RenderedBlock(id: $0.offset, kind: kind(of: $0.element)) }
-    }
-
-    private static func kind(of block: ArticleBlock) -> Kind {
-        switch block {
-        case .paragraph(let runs): .paragraph(text(runs))
-        case .heading(let level, let runs): .heading(level: level, text(runs))
-        case .image(let image): .image(image)
-        case .quote(let runs, let source): .quote(text(runs), source: source)
-        case .list(let ordered, let items): .list(ordered: ordered, items: items.map(text))
-        case .embed(let embed): .embed(embed)
-        case .readAlso(let summary): .readAlso(summary)
-        case .separator: .separator
-        }
-    }
-
-    /// Bold, italic and links; a link is underlined (colour is never the only sign) and tinted `accentDark`.
-    static func text(_ runs: [InlineRun]) -> AttributedString {
-        runs.reduce(into: AttributedString()) { text, run in
-            var piece = AttributedString(run.text)
-            var intent: InlinePresentationIntent = []
-            if run.bold { intent.insert(.stronglyEmphasized) }
-            if run.italic { intent.insert(.emphasized) }
-            if !intent.isEmpty { piece.inlinePresentationIntent = intent }
-            if let link = run.link {
-                piece.link = link
-                piece.swiftUI.underlineStyle = .single
-            }
-            text += piece
-        }
-    }
-}
-
 /// One block of E11. Text blocks keep the 16 pt margins; images run edge to edge.
 struct ArticleBlockView: View {
     let block: RenderedBlock.Kind
+    /// The address of a photo at its shown size; nil until the width is known.
+    let imageURL: (ArticleImage) -> URL?
+    /// Beyond 680 pt the photos keep the reading width and get rounded corners (UX E11).
+    let roundsImages: Bool
     let zoom: (ArticleImage) -> Void
     let play: (Embed) -> Void
     let read: (ArticleSummary) -> Void
@@ -63,16 +18,18 @@ struct ArticleBlockView: View {
         switch block {
         case .paragraph(let text):
             // 17 pt, line height about 1.5.
-            Text(text).efText(.body).lineSpacing(8).foregroundStyle(EFTextColor.ink.color)
+            Text(underliningLinks(text)).efText(.body).lineSpacing(8).foregroundStyle(EFTextColor.ink.color)
                 .textSelection(.enabled)
                 .padding(.horizontal, 16)
         case .heading(let level, let text):
-            Text(text).efText(level <= 2 ? .title2 : .title3).foregroundStyle(EFTextColor.ink.color)
+            // 32 pt above, 8 pt below in a stack spaced 16 pt (UX E11).
+            Text(underliningLinks(text)).efText(level <= 2 ? .title2 : .title3).foregroundStyle(EFTextColor.ink.color)
                 .accessibilityAddTraits(.isHeader)
                 .padding(.top, 16)
+                .padding(.bottom, -8)
                 .padding(.horizontal, 16)
         case .image(let image):
-            ArticleImageView(image: image) { zoom(image) }
+            ArticleImageView(image: image, url: imageURL(image), rounded: roundsImages) { zoom(image) }
         case .quote(let text, let source):
             quote(text, source: source)
         case .list(let ordered, let items):
@@ -80,7 +37,7 @@ struct ArticleBlockView: View {
                 ForEach(Array(items.enumerated()), id: \.offset) { index, item in
                     HStack(alignment: .firstTextBaseline, spacing: 8) {
                         Text(ordered ? "\(index + 1)." : "•")
-                        Text(item).textSelection(.enabled)
+                        Text(underliningLinks(item)).textSelection(.enabled)
                     }
                     .efText(.body)
                     .foregroundStyle(EFTextColor.ink.color)
@@ -101,11 +58,19 @@ struct ArticleBlockView: View {
         }
     }
 
+    /// Colour is never the only sign of a link. A SwiftUI attribute, so added here; the text itself is built
+    /// once by the model.
+    private func underliningLinks(_ text: AttributedString) -> AttributedString {
+        var text = text
+        for run in text.runs where run.link != nil { text[run.range].swiftUI.underlineStyle = .single }
+        return text
+    }
+
     private func quote(_ text: AttributedString, source: String?) -> some View {
         HStack(alignment: .top, spacing: 12) {
             EFColorToken.accent.color.frame(width: 3).accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 8) {
-                Text(text).efText(.body).italic().foregroundStyle(EFTextColor.ink.color)
+                Text(underliningLinks(text)).efText(.body).italic().foregroundStyle(EFTextColor.ink.color)
                 if let source {
                     Text(source).efText(.caption).foregroundStyle(EFTextColor.muted.color)
                 }
@@ -139,6 +104,8 @@ struct ArticleBlockView: View {
 /// Edge to edge, room kept at the original proportions, `thumb` while loading; the caption is its label.
 private struct ArticleImageView: View {
     let image: ArticleImage
+    let url: URL?
+    let rounded: Bool
     let zoom: () -> Void
 
     var body: some View {
@@ -147,11 +114,13 @@ private struct ArticleImageView: View {
                 EFColorToken.thumb.color
                     .aspectRatio(ratio, contentMode: .fit)
                     .overlay {
-                        AsyncImage(url: image.url) { phase in
-                            if let picture = phase.image { picture.resizable().scaledToFill() }
+                        if let url {
+                            AsyncImage(url: url) { phase in
+                                if let picture = phase.image { picture.resizable().scaledToFill() }
+                            }
                         }
                     }
-                    .clipped()
+                    .clipShape(RoundedRectangle(cornerRadius: rounded ? 12 : 0, style: .continuous))
                 if let caption = image.caption {
                     Text(caption).efText(.caption).foregroundStyle(EFTextColor.muted.color)
                         .multilineTextAlignment(.leading)
@@ -239,7 +208,7 @@ struct ZoomedImage: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             EFColorToken.night.color.ignoresSafeArea()
-            AsyncImage(url: image.url) { phase in
+            AsyncImage(url: SiteImage.fullscreenURL(image.url)) { phase in
                 if let picture = phase.image {
                     picture.resizable().scaledToFit()
                 } else {

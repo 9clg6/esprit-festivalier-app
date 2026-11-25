@@ -7,13 +7,17 @@ import SwiftUI
 /// `model.fullTextDisplayed` is the signal read counting listens to (FR-036).
 struct ArticleView: View {
     @State private var model: ArticleReaderModel
-    /// The blocks' text, built once per content, never on a body recomputation.
-    @State private var rendered: [RenderedBlock] = []
     @State private var safariURL: SafariItem?
     @State private var zoomed: ZoomItem?
-    @State private var pushed: ReaderPush?
+    /// The festival link being resolved: a new link cancels it, the same link tapped again waits for it.
+    @State private var festivalLookup: (slug: String, task: Task<Void, Never>)?
+    /// The screen's width, measured: images ask the site the size they are shown at (0 until measured).
+    @State private var screenWidth: CGFloat = 0
     /// The parent's action: Mail and Phone for `mailto:` and `tel:`.
     @Environment(\.openURL) private var openURL
+    @Environment(\.pushRoute) private var push
+    @Environment(\.displayScale) private var displayScale
+    @Environment(\.dynamicTypeSize) private var typeSize
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private let environment: AppEnvironment
 
@@ -24,7 +28,8 @@ struct ArticleView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            // Lazy: a long article builds only the blocks on screen.
+            LazyVStack(alignment: .leading, spacing: 16) {
                 if let heroURL { hero(heroURL) }
                 header.padding(.horizontal, 16)
                 text
@@ -40,6 +45,7 @@ struct ArticleView: View {
             .frame(maxWidth: 680, alignment: .leading)
             .frame(maxWidth: .infinity)
         }
+        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { screenWidth = $0 }
         // Without a photo the article starts below the bar.
         .ignoresSafeArea(edges: heroURL == nil ? [] : .top)
         .background(EFColorToken.bg.color)
@@ -50,18 +56,12 @@ struct ArticleView: View {
         })
         .sheet(item: $safariURL) { SafariView(url: $0.url).ignoresSafeArea() }
         .fullScreenCover(item: $zoomed) { ZoomedImage(image: $0.image) }
-        .navigationDestination(item: $pushed) { push in
-            switch push {
-            // AnyView: an article inside an article would define the view's type in terms of itself.
-            case .article(let article): AnyView(ArticleView(article: article, environment: environment))
-            case .festival(let id): AnyView(FestivalDetailView(id: id, environment: environment))
-            }
-        }
         .task {
             if case .loading = model.state { await model.load() }
         }
-        .onChange(of: model.state, initial: true) { _, state in
-            if case .loaded(let content) = state { rendered = RenderedBlock.make(content.blocks) }
+        .onDisappear {
+            festivalLookup?.task.cancel()
+            festivalLookup = nil
         }
     }
 
@@ -71,7 +71,12 @@ struct ArticleView: View {
         if case .loaded(let content) = model.state { content } else { nil }
     }
 
+    /// The cover once loaded, the feed's photo before: both asked at the same size, so the same photo keeps
+    /// the same address and does not reload.
     private var heroURL: URL? { content?.cover?.url ?? article.imageURL }
+
+    /// The reading column: edge to edge on iPhone, 680 pt beyond.
+    private var columnWidth: CGFloat { min(screenWidth, 680) }
 
     private func hero(_ url: URL) -> some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -82,8 +87,13 @@ struct ArticleView: View {
                 EFColorToken.thumb.color
                     .frame(height: 320)
                     .overlay {
-                        AsyncImage(url: url) { phase in
-                            if let image = phase.image { image.resizable().scaledToFill() }
+                        if screenWidth > 0 {
+                            // ponytail: fill 320 pt high assumes a 3:2 photo at most; wider ones are slightly soft.
+                            AsyncImage(url: SiteImage.url(
+                                url, pointWidth: Double(max(columnWidth, 480)), scale: Double(displayScale)
+                            )) { phase in
+                                if let image = phase.image { image.resizable().scaledToFill() }
+                            }
                         }
                     }
                     .overlay { HeroScrim() }
@@ -107,7 +117,8 @@ struct ArticleView: View {
             meta
             let title = content?.title ?? article.title
             if title.isEmpty {
-                SkeletonBlock(cornerRadius: 8).frame(height: 64)
+                // An article known only by its address: a skeleton while it loads, nothing after a failure.
+                if case .loading = model.state { SkeletonBlock(cornerRadius: 8).frame(height: 64) }
             } else {
                 Text(title).efText(.title1).foregroundStyle(EFTextColor.ink.color)
                     .accessibilityAddTraits(.isHeader)
@@ -125,7 +136,10 @@ struct ArticleView: View {
     }
 
     private var meta: some View {
-        HStack(spacing: 8) {
+        // Accessibility sizes: one item per line rather than a clipped row.
+        let layout = typeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4)) : AnyLayout(HStackLayout(spacing: 8))
+        return layout {
             let category = (content?.category ?? article.category).rawValue
             if !category.isEmpty {
                 Text(category).efText(.sectionHeader).foregroundStyle(EFTextColor.accentDark.color)
@@ -165,10 +179,11 @@ struct ArticleView: View {
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Chargement du texte")
         case .loaded:
-            ForEach(rendered) { block in
-                ArticleBlockView(block: block.kind, zoom: zoom, play: play) {
-                    pushed = .article(.stub($0.url, title: $0.title))
-                }
+            ForEach(model.rendered) { block in
+                ArticleBlockView(
+                    block: block.kind, imageURL: imageURL, roundsImages: screenWidth > 680, zoom: zoom,
+                    // Third-party content loads only on tap, in a Safari sheet (NFR-005).
+                    play: { open($0.url) }, read: { open($0.url, title: $0.title) })
             }
             .tint(EFTextColor.accentDark.color)
         case .failed(let failure):
@@ -214,17 +229,22 @@ struct ArticleView: View {
         withTransaction(transaction) { zoomed = ZoomItem(image: image) }
     }
 
-    /// Third-party content loads only now, in a Safari sheet (no inline player: no third-party tracker
-    /// in the article, NFR-005).
-    private func play(_ embed: Embed) {
-        model.activateEmbed(embed.url)
-        open(embed.url)
+    /// A body photo at the column's width; nil until the width is measured (never a wasted small load).
+    private func imageURL(_ image: ArticleImage) -> URL? {
+        guard screenWidth > 0 else { return nil }
+        return SiteImage.url(image.url, pointWidth: Double(columnWidth), scale: Double(displayScale))
     }
 
-    private func open(_ url: URL) {
-        switch model.destination(for: url) {
-        case .article(let address): pushed = .article(.stub(address))
-        case .festival(let slug): Task { await openFestival(slug, url: url) }
+    /// `title`: the link's text (« Lire aussi »), shown while the article loads.
+    private func open(_ url: URL, title: String = "") {
+        let destination = model.destination(for: url)
+        if case .festival(let slug) = destination, festivalLookup?.slug == slug { return }
+        festivalLookup?.task.cancel()
+        festivalLookup = nil
+        switch destination {
+        case .article(let address): push(.article(.stub(address, title: title)))
+        case .festival(let slug):
+            festivalLookup = (slug, Task { await openFestival(slug, url: url) })
         // swiftlint:disable:next todo
         // TODO(STORY-057/059): author, artist, category and tag screens; the site until they exist.
         case .author, .artist, .category, .tag: safariURL = SafariItem(url: url)
@@ -237,17 +257,15 @@ struct ArticleView: View {
     /// E5 when the catalogue has a festival of that slug, otherwise its page on the site.
     private func openFestival(_ slug: String, url: URL) async {
         let festivals = (try? await environment.festivals.festivals(updatedSince: nil)) ?? []
+        // Left the screen or opened another link meanwhile.
+        guard !Task.isCancelled else { return }
+        festivalLookup = nil
         if festivals.contains(where: { $0.id == slug }) {
-            pushed = .festival(slug)
+            push(.festival(slug))
         } else {
             safariURL = SafariItem(url: url)
         }
     }
-}
-
-private enum ReaderPush: Hashable {
-    case article(Article)
-    case festival(Festival.ID)
 }
 
 private struct ZoomItem: Identifiable {
