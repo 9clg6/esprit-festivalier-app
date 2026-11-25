@@ -1,0 +1,30 @@
+name: EspritFestivalier
+options:
+  deploymentTarget:
+    iOS: "17.0"
+packages:
+  EFKit:
+    path: EFKit
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+targets:
+  EspritFestivalier:
+    type: application
+    platform: iOS
+    sources: [EspritFestivalier]
+    dependencies:
+      - package: EFKit
+        product: EFDomain
+      - package: EFKit
+        product: EFData
+      - package: EFKit
+        product: EFDesign
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: fr.espritfestivalier.app
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Esprit Festivalier
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
