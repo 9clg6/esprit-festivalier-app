@@ -8,14 +8,18 @@ extension NotificationPreferences {
 public struct NotificationPreferences: Sendable, Hashable, Codable {
     public var festivalJ7: Bool
     public var festivalJ1: Bool
+    /// Reminders before the picked sets (STORY-020).
+    public var concerts: Bool
     /// The article sections notified (FR-012: only "Programmation" by default).
     public var articleCategories: Set<Article.Category>
 
     public init(
-        festivalJ7: Bool = true, festivalJ1: Bool = true, articleCategories: Set<Article.Category> = [.programmation]
+        festivalJ7: Bool = true, festivalJ1: Bool = true, concerts: Bool = true,
+        articleCategories: Set<Article.Category> = [.programmation]
     ) {
         self.festivalJ7 = festivalJ7
         self.festivalJ1 = festivalJ1
+        self.concerts = concerts
         self.articleCategories = articleCategories
     }
 
@@ -25,6 +29,7 @@ public struct NotificationPreferences: Sendable, Hashable, Codable {
         let defaults = NotificationPreferences()
         festivalJ7 = try values.decodeIfPresent(Bool.self, forKey: .festivalJ7) ?? defaults.festivalJ7
         festivalJ1 = try values.decodeIfPresent(Bool.self, forKey: .festivalJ1) ?? defaults.festivalJ1
+        concerts = try values.decodeIfPresent(Bool.self, forKey: .concerts) ?? defaults.concerts
         articleCategories = try values.decodeIfPresent(Set<Article.Category>.self, forKey: .articleCategories)
             ?? defaults.articleCategories
     }

@@ -75,6 +75,7 @@ final class AccountModel {
             await reloadFromDisk()
             throw error
         }
+        notifications.resetPermissionOffer()
         await reloadFromDisk()
     }
 

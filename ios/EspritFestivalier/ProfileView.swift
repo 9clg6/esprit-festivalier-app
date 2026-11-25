@@ -24,11 +24,13 @@ struct ProfileView: View {
                 favoriteRemindersSection
                 articlesSection
                 Section {
+                    Toggle("Concerts cochés", isOn: concertsBinding)
                     Picker("Prévenir", selection: $lead) {
                         ForEach(ReminderLead.allCases, id: \.rawValue) { lead in
                             Text("\(lead.rawValue) min avant").tag(lead.rawValue)
                         }
                     }
+                    .disabled(!notificationsModel.preferences.concerts)
                 } header: {
                     Text("Rappels de concerts")
                 } footer: {
@@ -95,6 +97,10 @@ struct ProfileView: View {
         } footer: {
             Text("À 10 h, une semaine puis la veille du début de chaque festival favori.")
         }
+    }
+
+    private var concertsBinding: Binding<Bool> {
+        Binding { notificationsModel.preferences.concerts } set: { notificationsModel.preferences.concerts = $0 }
     }
 
     private var articlesSection: some View {

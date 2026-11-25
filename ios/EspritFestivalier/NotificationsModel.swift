@@ -104,7 +104,9 @@ final class NotificationsModel {
     /// What "Exporter mes données" writes.
     var exportFlags: [String: Bool] {
         let categories = Set(Article.Category.known).union(preferences.articleCategories)
-        var flags = ["festivalJ7": preferences.festivalJ7, "festivalJ1": preferences.festivalJ1]
+        var flags = [
+            "festivalJ7": preferences.festivalJ7, "festivalJ1": preferences.festivalJ1, "concerts": preferences.concerts
+        ]
         for category in categories {
             flags["articles.\(category.rawValue)"] = preferences.articleCategories.contains(category)
         }
@@ -128,6 +130,9 @@ final class NotificationsModel {
             )
         }
     }
+
+    /// After the account deletion: the next pick or favorite offers the sheet again.
+    func resetPermissionOffer() { UserDefaults.standard.removeObject(forKey: Self.askedKey) }
 
     /// Once: refused or postponed, the sheet does not come back by itself (UX P5).
     func offerPermission() {
@@ -261,7 +266,8 @@ struct NotificationScheduler {
         picks: [Performance.ID: Festival.ID?], favorites: [Festival.ID], lead: ReminderLead,
         preferences: NotificationPreferences
     ) async {
-        let concerts = await concertPlan(picks: picks, lead: lead)
+        // Switched off: no concert reminder is planned or kept.
+        let concerts = preferences.concerts ? await concertPlan(picks: picks, lead: lead) : .none
         let favorite = await favoriteFestivals(favorites)
         let concertPrefix = ConcertReminders.identifierPrefix
         let favoritePrefix = FestivalReminders.identifierPrefix
@@ -331,6 +337,8 @@ struct NotificationScheduler {
     }
 
     private struct ConcertPlan {
+        static let none = ConcertPlan(reminders: [], titles: [:], unresolved: [])
+
         let reminders: [ConcertReminder]
         /// The festival's name, the notification's title.
         let titles: [Performance.ID: String]
