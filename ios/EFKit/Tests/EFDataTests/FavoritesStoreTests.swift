@@ -9,7 +9,8 @@ import EFData
 // Decisions specified here:
 // - `FavoritesStore` is an `actor`; mutations `throw` when the file cannot be written;
 // - one file, `favorites.json`, in the directory given at init (created if missing);
-// - missing or unreadable file -> empty store, no crash; the next write replaces it;
+// - missing or unreadable file -> empty store, no crash; an unreadable non-empty file is kept
+//   aside as `favorites.corrupt.json` (FavoritesStoreRecoveryTests);
 // - `favoriteIDs`: live favorites, most recently added first, stable even when the clock
 //   gives the same time twice, and kept across instances;
 // - add on a live favorite and remove on a non-favorite do nothing (no new date, no tombstone);
@@ -18,7 +19,7 @@ import EFData
 // - `toggle` returns the new state (true = now a favorite).
 
 /// A clock that moves one second per reading, from a whole second (JSON round trip safe).
-private final class SteppingClock: @unchecked Sendable {
+final class SteppingClock: @unchecked Sendable {
     private let lock = NSLock()
     private var current = Date(timeIntervalSince1970: 1_795_000_000)
     private let step: TimeInterval
@@ -33,15 +34,15 @@ private final class SteppingClock: @unchecked Sendable {
     }
 }
 
-private func temporaryDirectory() -> URL {
+func temporaryDirectory() -> URL {
     FileManager.default.temporaryDirectory.appending(path: "FavoritesStoreTests-\(UUID().uuidString)")
 }
 
-private func makeStore(in directory: URL, clock: SteppingClock = SteppingClock()) -> FavoritesStore {
+func makeStore(in directory: URL, clock: SteppingClock = SteppingClock()) -> FavoritesStore {
     FavoritesStore(directory: directory, now: { clock.now() })
 }
 
-private func storedEntry(_ id: Festival.ID, in store: FavoritesStore) async throws -> FavoriteEntry {
+func storedEntry(_ id: Festival.ID, in store: FavoritesStore) async throws -> FavoriteEntry {
     try #require(await store.entries.first { $0.festivalId == id }, "no entry for \(id)")
 }
 
