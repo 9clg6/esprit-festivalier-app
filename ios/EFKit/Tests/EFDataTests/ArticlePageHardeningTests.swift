@@ -6,8 +6,8 @@ import EFData
 // Opus review of PR #25 (STORY-053, ADR-007, NFR-005), each finding measured by a probe on 2026-11-25.
 // Decisions pinned here:
 // - a page nested 10 000 deep (divs or spans) never crashes the app and keeps its text; the reader is
-//   linear: 20 000 orphan closings or 20 000 <hr> under 20 000 open tags read in well under 2 s
-//   (debug). They run in-process (exit tests need Swift 6.2, CI has 6.1): a
+//   linear: 4x more orphan closings or <hr> under 4x more open tags (10 000) read about 4x slower,
+//   not 16x. They run in-process (exit tests need Swift 6.2, CI has 6.1): a
 //   regression overflows the stack and crashes the runner, which fails CI;
 // - only http/https addresses become links; javascript:, file:, data: are dropped (text kept);
 //   mailto: and tel: stay links; tabs and new lines inside an href are removed, as browsers do;
@@ -28,44 +28,56 @@ import EFData
 //   static func followsRedirect(to url: URL) -> Bool                    // the redirect decision
 //   ArticleContentError.redirectedOffSite(URL), ArticleContentError.httpStatus(Int)
 
-// 2 s: the quadratic reader took 5-28 s; the slower Intel CI runner (debug) needs room.
-private let deepBound = Duration.seconds(2)
+// A ratio, not a bound in seconds: a slow or loaded runner (CI: Intel, debug, 2.16 s once against a 2 s
+// bound) slows both sizes alike. Linear reads ~4x slower at 4x the size, quadratic ~16x (the old quadratic
+// reader took 5-28 s at 20 000): 8 sits between them.
+private let baseSize = 2_500
+private let linearBound = 8.0
+
+/// time(4n) / time(n), best of 3 reads each; `check` sees every read. The sizes alternate, so a burst of
+/// load on the runner slows both, not only one.
+private func growth(of body: (Int) -> String, checking check: ([ArticleBlock]) -> Void) async throws -> Double {
+    let pages = [body(baseSize), body(4 * baseSize)]
+    var best: [Duration] = [.seconds(3_600), .seconds(3_600)]
+    for _ in 0..<3 {
+        for (size, html) in pages.enumerated() {
+            let start = ContinuousClock.now
+            let found = try await blocks(ofBody: html)
+            best[size] = min(best[size], ContinuousClock.now - start)
+            check(found)
+        }
+    }
+    return best[1] / best[0]
+}
 
 // MARK: - Deep nesting and linear time (in-process: a regression crashes the runner)
 
-@Suite struct DeepNestingTests {
+// Serialized: these tests do not time each other.
+@Suite(.serialized) struct DeepNestingTests {
     @Test func tenThousandUnclosedDivsKeepTheirText() async throws {
-        let start = ContinuousClock.now
-        let found = try await blocks(ofBody: String(repeating: "<div>", count: 10_000) + "<p>Au fond</p>")
-        let elapsed = ContinuousClock.now - start
-        #expect(paragraphs(found) == ["Au fond"])
-        #expect(elapsed < deepBound, "read in \(elapsed)")
+        let ratio = try await growth(of: { String(repeating: "<div>", count: $0) + "<p>Au fond</p>" },
+                                     checking: { #expect(paragraphs($0) == ["Au fond"]) })
+        #expect(ratio < linearBound, "4x the page read \(ratio)x slower")
     }
 
     @Test func tenThousandUnclosedSpansKeepTheirText() async throws {
-        let start = ContinuousClock.now
-        let found = try await blocks(ofBody: "<p>" + String(repeating: "<span>", count: 10_000) + "Au fond</p>")
-        let elapsed = ContinuousClock.now - start
-        #expect(paragraphs(found) == ["Au fond"])
-        #expect(elapsed < deepBound, "read in \(elapsed)")
+        let ratio = try await growth(of: { "<p>" + String(repeating: "<span>", count: $0) + "Au fond</p>" },
+                                     checking: { #expect(paragraphs($0) == ["Au fond"]) })
+        #expect(ratio < linearBound, "4x the page read \(ratio)x slower")
     }
 
     @Test func orphanClosingsUnderOpenDivsReadInLinearTime() async throws {
-        let body = String(repeating: "<div>", count: 20_000) + String(repeating: "</span>", count: 20_000) + "<p>Fin</p>"
-        let start = ContinuousClock.now
-        let found = try await blocks(ofBody: body)
-        let elapsed = ContinuousClock.now - start
-        #expect(paragraphs(found) == ["Fin"])
-        #expect(elapsed < deepBound, "read in \(elapsed)")
+        let ratio = try await growth(of: {
+            String(repeating: "<div>", count: $0) + String(repeating: "</span>", count: $0) + "<p>Fin</p>"
+        }, checking: { #expect(paragraphs($0) == ["Fin"]) })
+        #expect(ratio < linearBound, "4x the page read \(ratio)x slower")
     }
 
     @Test func separatorsUnderOpenSpansReadInLinearTime() async throws {
-        let body = String(repeating: "<span>", count: 20_000) + String(repeating: "<hr>", count: 20_000) + "Fin"
-        let start = ContinuousClock.now
-        let found = try await blocks(ofBody: body)
-        let elapsed = ContinuousClock.now - start
-        #expect(found.map(text(of:)).joined().contains("Fin"))
-        #expect(elapsed < deepBound, "read in \(elapsed)")
+        let ratio = try await growth(of: {
+            String(repeating: "<span>", count: $0) + String(repeating: "<hr>", count: $0) + "Fin"
+        }, checking: { #expect($0.map(text(of:)).joined().contains("Fin")) })
+        #expect(ratio < linearBound, "4x the page read \(ratio)x slower")
     }
 }
 
