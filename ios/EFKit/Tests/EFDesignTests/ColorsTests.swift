@@ -7,7 +7,7 @@ import EFDesign
 
 // MARK: - Helpers (what the user sees: the colour SwiftUI renders in a given appearance)
 
-private func rgbHex(_ color: Color, _ scheme: ColorScheme) -> String {
+@MainActor private func rgbHex(_ color: Color, _ scheme: ColorScheme) -> String {
     var environment = EnvironmentValues()
     environment.colorScheme = scheme
     let resolved = color.resolve(in: environment)
@@ -74,19 +74,19 @@ let daTokens: [TokenCase] = [
     #expect(Set(EFColorToken.allCases.map { "\($0)" }) == Set(daTokens.map { "\($0.token)" }))
 }
 
-@Test(arguments: daTokens)
+@MainActor @Test(arguments: daTokens)
 func tokenRendersTheDAColourInLightAppearance(_ c: TokenCase) {
     #expect(rgbHex(c.token.color, .light) == c.light)
 }
 
-@Test(arguments: daTokens)
+@MainActor @Test(arguments: daTokens)
 func tokenRendersTheDAColourInDarkAppearance(_ c: TokenCase) {
     #expect(rgbHex(c.token.color, .dark) == c.dark)
 }
 
 // MARK: - Text colours: accent is never one of them
 
-@Test func noTextColourRendersAsAccentInEitherAppearance() {
+@MainActor @Test func noTextColourRendersAsAccentInEitherAppearance() {
     for scheme in [ColorScheme.light, .dark] {
         let accent = rgbHex(EFColorToken.accent.color, scheme)
         for text in EFTextColor.allCases {
@@ -95,18 +95,18 @@ func tokenRendersTheDAColourInDarkAppearance(_ c: TokenCase) {
     }
 }
 
-@Test func theAccentTextColourIsAccentDark() {
+@MainActor @Test func theAccentTextColourIsAccentDark() {
     #expect(rgbHex(EFTextColor.accentDark.color, .light) == "#14728f")
     #expect(rgbHex(EFTextColor.accentDark.color, .dark) == "#5cc3e4")
 }
 
 // Lead decision 2026-11-25: badge text is a fixed #0e1a26, never the dark ink (1.3:1 on sun).
-@Test func textOnSunIsTheFixedDarkInkInBothAppearances() {
+@MainActor @Test func textOnSunIsTheFixedDarkInkInBothAppearances() {
     #expect(rgbHex(EFTextColor.onSun.color, .light) == "#0e1a26")
     #expect(rgbHex(EFTextColor.onSun.color, .dark) == "#0e1a26")
 }
 
-@Test func textOnFilledButtonsIsWhiteInBothAppearances() {
+@MainActor @Test func textOnFilledButtonsIsWhiteInBothAppearances() {
     #expect(rgbHex(EFTextColor.onFill.color, .light) == "#ffffff")
     #expect(rgbHex(EFTextColor.onFill.color, .dark) == "#ffffff")
 }
@@ -132,7 +132,7 @@ let allowedTextPairs: [TextPair] = [
     TextPair(text: .onSun, background: .sun, source: "Composants: Badge, alertes de conflit"),
 ]
 
-@Test(arguments: allowedTextPairs, [ColorScheme.light, .dark])
+@MainActor @Test(arguments: allowedTextPairs, [ColorScheme.light, .dark])
 func allowedTextPairReachesWCAGAA(_ pair: TextPair, _ scheme: ColorScheme) {
     let ratio = contrastRatio(rgbHex(pair.text.color, scheme), rgbHex(pair.background.color, scheme))
     #expect(ratio >= 4.5, "\(pair.testDescription) in \(scheme): \(ratio):1")
