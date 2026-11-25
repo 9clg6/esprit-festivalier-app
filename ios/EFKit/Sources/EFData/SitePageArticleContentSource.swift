@@ -1,29 +1,65 @@
 import EFDomain
 import Foundation
 
-/// The full article, read from its page on the site (ADR-007). `load` returns the page's bytes.
+/// The full article, read from its page on the site (ADR-007). `load` returns the page and the response.
 /// Metadata from the NewsArticle JSON-LD when present, the rest from the template; no title or an
 /// empty body is `ArticleContentError.unreadable`, a loading error reaches the caller unchanged.
+/// Only the site is fetched: an address is canonicalised first (`SiteLink.site`), and a page served
+/// from another host or with a status outside 200…299 is a typed error.
 public struct SitePageArticleContentSource: ArticleContentSource {
     private let template: SiteTemplate
-    private let load: @Sendable (URL) async throws -> Data
+    private let load: @Sendable (URL) async throws -> (Data, URLResponse)
 
-    public init(template: SiteTemplate = .v1, load: @escaping @Sendable (URL) async throws -> Data) {
+    public init(
+        template: SiteTemplate = .v1,
+        load: @escaping @Sendable (URL) async throws -> (Data, URLResponse) = SitePageArticleContentSource.loadFromSite
+    ) {
         self.template = template
         self.load = load
     }
 
     public func content(at url: URL) async throws -> ArticleContent {
-        guard url.scheme == "https", url.host() == SiteLink.siteHost else {
-            throw ArticleContentError.notSiteAddress(url)
-        }
-        return try await Self.read(try await load(url), at: url, template: template)
+        guard let url = SiteLink.site(url) else { throw ArticleContentError.notSiteAddress(url) }
+        let (data, response) = try await load(url)
+        let final = response.url ?? url
+        guard SiteLink.site(final) != nil else { throw ArticleContentError.redirectedOffSite(final) }
+        guard let status = (response as? HTTPURLResponse)?.statusCode else { throw URLError(.badServerResponse) }
+        guard (200...299).contains(status) else { throw ArticleContentError.httpStatus(status) }
+        return try await Self.read(data, at: url, template: template)
     }
 
     /// Off the caller's actor: the reader runs on every article open.
     @concurrent
     private static func read(_ data: Data, at url: URL, template: SiteTemplate) async throws -> ArticleContent {
         try ArticlePageReader(data: data, url: url, template: template).content()
+    }
+
+    // MARK: - Default loader
+
+    /// Gives up after 10 s without data.
+    public static let siteSession: URLSession = {
+        let configuration = URLSessionConfiguration.default
+        configuration.timeoutIntervalForRequest = 10
+        return URLSession(configuration: configuration)
+    }()
+
+    /// A redirect is followed only to an https address of the site.
+    public static func followsRedirect(to url: URL) -> Bool {
+        url.scheme?.lowercased() == "https" && SiteLink.site(url) != nil
+    }
+
+    @Sendable public static func loadFromSite(_ url: URL) async throws -> (Data, URLResponse) {
+        try await siteSession.data(from: url, delegate: SiteRedirects())
+    }
+}
+
+/// Refuses a redirect off the site: the 3xx answer itself comes back, read as `httpStatus`.
+private final class SiteRedirects: NSObject, URLSessionTaskDelegate, Sendable {
+    func urlSession(
+        _ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
+        newRequest request: URLRequest
+    ) async -> URLRequest? {
+        request.url.map(SitePageArticleContentSource.followsRedirect(to:)) == true ? request : nil
     }
 }
 
@@ -98,8 +134,9 @@ struct ArticlePageReader {
         let avatar = byline.flatMap { line in
             document.first(in: line) { $0.name == "img" && $0.hasClass(template.avatar) }
         }
+        let avatarURL = avatar.flatMap { page.link(document[$0].attribute("src")).flatMap(PageContext.siteImage) }
         return AuthorRef(
-            slug: slug, name: name, avatarURL: avatar.flatMap { page.link(document[$0].attribute("src")) },
+            slug: slug, name: name, avatarURL: avatarURL,
             bio: bio(of: slug, in: main))
     }
 

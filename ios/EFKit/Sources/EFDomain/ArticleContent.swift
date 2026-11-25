@@ -171,4 +171,8 @@ public enum ArticleContentError: Error, Equatable {
     case unreadable
     /// Only https://esprit-festivalier.fr/ addresses are downloaded.
     case notSiteAddress(URL)
+    /// The site answered outside 200…299.
+    case httpStatus(Int)
+    /// The page was served from another host than the site (after a redirect).
+    case redirectedOffSite(URL)
 }

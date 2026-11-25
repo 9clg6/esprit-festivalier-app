@@ -203,11 +203,17 @@ struct PageContext {
     let document: HTMLDocument
     let base: URL
 
-    /// An absolute address for `href`, relative ones resolved on the page's address.
+    /// An absolute address for `href`, relative ones resolved on the page's address. As browsers do,
+    /// spaces around it and tabs or new lines inside it are removed.
     func link(_ href: String?) -> URL? {
-        guard let href = href?.trimmingCharacters(in: .whitespaces), !href.isEmpty else { return nil }
+        guard let href = href?.trimmingCharacters(in: .whitespacesAndNewlines).filter({ !$0.isNewline && $0 != "\t" }),
+              !href.isEmpty
+        else { return nil }
         return URL(string: href, relativeTo: base)?.absoluteURL
     }
+
+    /// Only images of the site are loaded (NFR-005), at their canonical https address.
+    static func siteImage(_ url: URL) -> URL? { SiteLink.site(url) }
 
     func nonEmpty(_ text: String?) -> String? {
         guard let text, !text.isEmpty else { return nil }
@@ -242,16 +248,23 @@ struct PageContext {
         switch element.name {
         case "strong", "b": style.bold = true
         case "em", "i": style.italic = true
-        case "a": style.link = link(element.attribute("href")) ?? style.link
+        case "a": style.link = openable(link(element.attribute("href"))) ?? style.link
         default: break
         }
         return style
     }
 
+    /// Web, mail and phone addresses; javascript:, file:, data:… are no link.
+    private func openable(_ url: URL?) -> URL? {
+        guard let url else { return nil }
+        if case .unsupported = SiteLink(url: url) { return nil }
+        return url
+    }
+
     /// The image without the site's `?w=` size: the reader asks the size it shows.
     func image(_ index: Int, caption: String?) -> ArticleImage? {
         let element = document[index]
-        guard let url = link(element.attribute("src")),
+        guard let url = link(element.attribute("src")).flatMap(Self.siteImage),
               var components = URLComponents(url: url, resolvingAgainstBaseURL: true)
         else { return nil }
         components.query = nil
@@ -266,11 +279,15 @@ struct PageContext {
         let element = document[index]
         guard let url = link(element.attribute("src")) else { return nil }
         let host = url.host()?.lowercased() ?? ""
-        let provider: Embed.Provider = switch host {
-        case _ where host.contains("youtube") || host == "youtu.be": .youtube
-        case _ where host.hasSuffix("spotify.com"): .spotify
-        case _ where host.hasSuffix("instagram.com"): .instagram
-        default: .other
+        func on(_ domains: String...) -> Bool { domains.contains { host == $0 || host.hasSuffix("." + $0) } }
+        let provider: Embed.Provider = if on("youtube.com", "youtube-nocookie.com", "youtu.be") {
+            .youtube
+        } else if on("spotify.com") {
+            .spotify
+        } else if on("instagram.com") {
+            .instagram
+        } else {
+            .other
         }
         return Embed(provider: provider, url: url, title: nonEmpty(element.attribute("title")))
     }
