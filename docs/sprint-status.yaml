@@ -1,0 +1,275 @@
+version: "6.0.0"
+project_name: "esprit-festivalier-app"
+project_level: 3
+current_sprint: 1
+sprint_plan_path: "docs/sprint-plan-esprit-festivalier-app-2026-11-25.md"
+
+sprints:
+  - sprint_number: 1
+    start_date: "2026-11-30"
+    end_date: "2026-12-13"
+    capacity_points: 24
+    committed_points: 20
+    completed_points: 0
+    status: "not_started"
+    goal: "L'app démarre aux couleurs du site sur données de démo, CI verte, essai APNs tranché"
+    stories:
+      - story_id: "STORY-001"
+        title: "Monorepo, projet Xcode et CI"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-002"
+        title: "Design system EFDesign"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-003"
+        title: "Domaine, interfaces des sources et mocks"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-009"
+        title: "Worker de base et essai APNs"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+  - sprint_number: 2
+    start_date: "2026-12-14"
+    end_date: "2026-12-27"
+    capacity_points: 16
+    committed_points: 14
+    completed_points: 0
+    status: "not_started"
+    goal: "Première version TestFlight avec la liste des festivals de démo"
+    stories:
+      - story_id: "STORY-010"
+        title: "Navigation, premier lancement et états communs"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-011"
+        title: "Liste des festivals"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-004"
+        title: "Contrats de l'instantané"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-033"
+        title: "Chaîne TestFlight"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+  - sprint_number: 3
+    start_date: "2026-12-28"
+    end_date: "2027-01-10"
+    capacity_points: 24
+    committed_points: 20
+    completed_points: 0
+    status: "not_started"
+    goal: "Trouver un festival : filtres, autour de moi, carte, fiche, billetterie"
+    stories:
+      - story_id: "STORY-012"
+        title: "Recherche et filtres"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-013"
+        title: "Autour de moi"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-014"
+        title: "Carte des festivals"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-015"
+        title: "Fiche festival"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-016"
+        title: "Lien billetterie suivi"
+        points: 2
+        status: "not_started"
+        assigned_to: null
+  - sprint_number: 4
+    start_date: "2027-01-11"
+    end_date: "2027-01-24"
+    capacity_points: 24
+    committed_points: 20
+    completed_points: 0
+    status: "not_started"
+    goal: "Vraies données ouvertes chaque nuit, et favoris"
+    stories:
+      - story_id: "STORY-005"
+        title: "Pipeline de l'instantané"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-006"
+        title: "Artistes MusicBrainz et publication nocturne"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-007"
+        title: "Sources instantané et cache"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-018"
+        title: "Favoris et Mes festivals"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+  - sprint_number: 5
+    start_date: "2027-01-25"
+    end_date: "2027-02-07"
+    capacity_points: 24
+    committed_points: 21
+    completed_points: 0
+    status: "not_started"
+    goal: "Jour J et lecture : timetable, rappels, hors ligne, programmations, articles"
+    stories:
+      - story_id: "STORY-019"
+        title: "Timetable et conflits"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-020"
+        title: "Rappels de concerts"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-008"
+        title: "Fiches favorites hors ligne"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-017"
+        title: "Programmations et page artiste"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-026"
+        title: "Articles"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+  - sprint_number: 6
+    start_date: "2027-02-08"
+    end_date: "2027-02-21"
+    capacity_points: 24
+    committed_points: 21
+    completed_points: 0
+    status: "not_started"
+    goal: "Compte et synchronisation"
+    stories:
+      - story_id: "STORY-021"
+        title: "Authentification dans le Worker"
+        points: 8
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-022"
+        title: "Connexion et Profil"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-023"
+        title: "Synchronisation"
+        points: 8
+        status: "not_started"
+        assigned_to: null
+  - sprint_number: 7
+    start_date: "2027-02-22"
+    end_date: "2027-03-07"
+    capacity_points: 24
+    committed_points: 18
+    completed_points: 0
+    status: "not_started"
+    goal: "Notifications, accueil, mesure d'audience"
+    stories:
+      - story_id: "STORY-024"
+        title: "Appareils et préférences de notification"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-025"
+        title: "Notifications des favoris"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-027"
+        title: "Notifications d'articles"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-028"
+        title: "Accueil"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-029"
+        title: "Encart rédaction et À propos"
+        points: 1
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-030"
+        title: "Mesure d'audience anonyme"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+  - sprint_number: 8
+    start_date: "2027-03-08"
+    end_date: "2027-03-21"
+    capacity_points: 24
+    committed_points: 6
+    completed_points: 0
+    status: "not_started"
+    goal: "Bêta prête pour les membres"
+    stories:
+      - story_id: "STORY-031"
+        title: "Accessibilité et finitions"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-032"
+        title: "Confidentialité"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+  - sprint_number: 9
+    start_date: "2027-03-22"
+    end_date: "2027-04-04"
+    capacity_points: 24
+    committed_points: 3
+    completed_points: 0
+    status: "not_started"
+    goal: "Soumission App Store"
+    stories:
+      - story_id: "STORY-034"
+        title: "Soumission App Store"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+
+velocity:
+  sprint_1: null
+  sprint_2: null
+  sprint_3: null
+  sprint_4: null
+  sprint_5: null
+  sprint_6: null
+  sprint_7: null
+  sprint_8: null
+  sprint_9: null
+  rolling_average: null
+
+team:
+  size: 1
+  sprint_length_weeks: 2
+  capacity_per_sprint: 24  # hypothèse, à recaler après le sprint 1
