@@ -34,7 +34,7 @@ public struct FestivalRow: View {
                 Text(name)
                     .efText(.title3)
                     .foregroundStyle(EFTextColor.ink.color)
-                Text("\(Self.dates(startDate, endDate)) · \(city)")
+                Text("\(FestivalDates.text(from: startDate, to: endDate)) · \(city)")
                     .efText(.bodySecondary)
                     .foregroundStyle(EFTextColor.ink2.color)
                 if !genres.isEmpty {
@@ -56,7 +56,9 @@ public struct FestivalRow: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(EFColorToken.card.color, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(([name, Self.dates(startDate, endDate), city] + genres).joined(separator: ", "))
+        .accessibilityLabel(
+            ([name, FestivalDates.text(from: startDate, to: endDate), city] + genres).joined(separator: ", ")
+        )
     }
 
     private var thumbnail: some View {
@@ -76,19 +78,6 @@ public struct FestivalRow: View {
         .frame(width: 64, height: 64)
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .accessibilityHidden(true)
-    }
-
-    private static let locale = Locale(identifier: "fr_FR")
-    private static let paris = TimeZone(identifier: "Europe/Paris") ?? .current
-
-    static func dates(_ start: Date, _ end: Date) -> String {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = paris
-        calendar.locale = locale
-        return (start..<max(start, end)).formatted(
-            Date.IntervalFormatStyle(locale: locale, calendar: calendar, timeZone: paris)
-                .day().month(.wide).year()
-        )
     }
 }
 

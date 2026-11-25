@@ -9,7 +9,14 @@
       "startDate": "2027-06-17T00:00:00+02:00",
       "endDate": "2027-06-20T23:59:00+02:00",
       "website": "https://www.hellfest.fr/",
-      "description": "Metal and rock festival in Clisson, announced for 17 to 20 June 2027. Demo data: the lineup and the timetable are for demonstration only."
+      "description": "Festival rock et metal à Clisson, annoncé du 17 au 20 juin 2027. Programmation et horaires : données de démonstration.",
+      "imageURL": "https://esprit-festivalier.fr/media/2026/10/capture-d-ecran-2026-10-29-a-22.52.28-cf9efcb3.png?w=1280",
+      "imageCredit": "Mathilde Baës",
+      "genres": [
+        "Rock / Metal"
+      ],
+      "pageURL": "https://esprit-festivalier.fr/festival/hellfest/",
+      "ticketURL": "https://tickets.hellfest.fr/"
     },
     "stages": [
       {
@@ -125,6 +132,13 @@
         "start": "2027-06-20T22:00:00+02:00",
         "end": "2027-06-20T23:15:00+02:00"
       }
+    ],
+    "summary": "Le Hellfest réunit à Clisson, en Loire-Atlantique, les fans de rock et de metal pour quatre jours de concerts.",
+    "practicalInfo": [
+      {
+        "title": "Billets",
+        "text": "Les pass 4 jours 2027 sont tous vendus et la revente officielle est ouverte. Les pass 1 jour sont mis en vente au premier trimestre 2027, limités à 2 pass par jour et par commande. Infos relevées le 2 novembre 2026 : vérifie sur le site officiel."
+      }
     ]
   },
   {
@@ -137,7 +151,16 @@
       "startDate": "2027-07-15T00:00:00+02:00",
       "endDate": "2027-07-18T23:59:00+02:00",
       "website": "https://www.vieillescharrues.asso.fr/",
-      "description": "Festival in Carhaix-Plouguer, expected 15 to 18 July 2027. Demo data: the lineup and the timetable are for demonstration only."
+      "description": "Festival éclectique à Carhaix-Plouguer, attendu du 15 au 18 juillet 2027. Programmation et horaires : données de démonstration.",
+      "imageURL": "https://esprit-festivalier.fr/media/2026/10/capture-d-ecran-2026-10-30-a-14.09.39-4350e5eb.png?w=1280",
+      "imageCredit": "Teo Floc'h",
+      "genres": [
+        "Éclectique",
+        "Rock / Metal",
+        "Pop"
+      ],
+      "pageURL": "https://esprit-festivalier.fr/festival/les-vieilles-charrues/",
+      "ticketURL": "https://www.vieillescharrues.asso.fr/billetterie/"
     },
     "stages": [
       {
@@ -237,7 +260,8 @@
         "start": "2027-07-16T22:00:00+02:00",
         "end": "2027-07-16T23:15:00+02:00"
       }
-    ]
+    ],
+    "summary": "Les Vieilles Charrues se tiennent à Carhaix-Plouguer, dans le Finistère, avec une programmation éclectique mêlant rock, metal et pop."
   },
   {
     "festival": {
@@ -249,7 +273,16 @@
       "startDate": "2027-07-02T00:00:00+02:00",
       "endDate": "2027-07-05T23:59:00+02:00",
       "website": "https://www.eurockeennes.fr/",
-      "description": "Festival on the Malsaucy peninsula near Belfort, announced for 2 to 5 July 2027. Demo data: the lineup and the timetable are for demonstration only."
+      "description": "Festival éclectique sur la presqu'île du Malsaucy, près de Belfort, annoncé du 2 au 5 juillet 2027. Programmation et horaires : données de démonstration.",
+      "imageURL": "https://esprit-festivalier.fr/media/2026/10/vueaerienneeurocks2023zelienoreda-2-47c7fff6.jpg?w=1280",
+      "imageCredit": "Esprit Festivalier",
+      "genres": [
+        "Éclectique",
+        "Rock / Metal",
+        "Électro"
+      ],
+      "pageURL": "https://esprit-festivalier.fr/festival/les-eurockeennes-de-belfort/",
+      "ticketURL": "https://www.eurockeennes.fr/achat/"
     },
     "stages": [
       {
@@ -365,6 +398,21 @@
         "start": "2027-07-05T22:00:00+02:00",
         "end": "2027-07-05T23:15:00+02:00"
       }
+    ],
+    "summary": "Les Eurockéennes de Belfort mélangent rock, metal et électro sur la presqu'île du Malsaucy.",
+    "practicalInfo": [
+      {
+        "title": "Camping",
+        "text": "Accessible sans supplément à tout détenteur d'un billet qui apporte son matériel. Ouverture le vendredi 2 juillet à midi, fermeture le mardi 6 juillet à midi. Sanitaires, douches et surveillance 24 h sur 24."
+      },
+      {
+        "title": "Paiement",
+        "text": "Paiement sans espèces, avec un bracelet à puce remis à l'arrivée en échange du billet."
+      },
+      {
+        "title": "Objets interdits",
+        "text": "Armes, bouteilles en plastique ou en verre, sacs de plus de 30 L, chaises, trépieds, perches à selfie, drones, pointeurs laser, fumigènes et animaux. Les gourdes vides de 75 cl maximum sont acceptées."
+      }
     ]
   },
   {
@@ -374,10 +422,19 @@
       "city": "La Rochelle",
       "latitude": 46.1555,
       "longitude": -1.1525,
-      "startDate": "2027-07-09T00:00:00+02:00",
-      "endDate": "2027-07-13T23:59:00+02:00",
+      "startDate": "2027-07-10T00:00:00+02:00",
+      "endDate": "2027-07-14T23:59:00+02:00",
       "website": "https://www.francofolies.fr/",
-      "description": "French-language song festival in La Rochelle; the 2027 dates are not confirmed, this is the usual mid-July period. Demo data: the lineup and the timetable are for demonstration only."
+      "description": "Festival de la chanson francophone à La Rochelle, en juillet. Programmation et horaires : données de démonstration.",
+      "imageURL": "https://esprit-festivalier.fr/media/2026/10/francofolies-photos1-8e47e19a.jpg?w=1280",
+      "imageCredit": "Esprit Festivalier",
+      "genres": [
+        "Éclectique",
+        "Rock / Metal",
+        "Pop"
+      ],
+      "pageURL": "https://esprit-festivalier.fr/festival/francofolies/",
+      "ticketURL": "https://billetterie.francofolies.fr/"
     },
     "stages": [
       {
@@ -402,112 +459,119 @@
         "festivalId": "francofolies",
         "stageId": "francofolies-scene-jean-louis-foulquier",
         "artistId": "gims",
-        "start": "2027-07-09T18:00:00+02:00",
-        "end": "2027-07-09T19:15:00+02:00"
+        "start": "2027-07-10T18:00:00+02:00",
+        "end": "2027-07-10T19:15:00+02:00"
       },
       {
         "id": "francofolies-zaz",
         "festivalId": "francofolies",
         "stageId": "francofolies-grand-theatre-de-la-passerelle",
         "artistId": "zaz",
-        "start": "2027-07-10T18:00:00+02:00",
-        "end": "2027-07-10T19:15:00+02:00"
+        "start": "2027-07-11T18:00:00+02:00",
+        "end": "2027-07-11T19:15:00+02:00"
       },
       {
         "id": "francofolies-youssou-ndour",
         "festivalId": "francofolies",
         "stageId": "francofolies-scene-verdiere",
         "artistId": "youssou-ndour",
-        "start": "2027-07-11T18:00:00+02:00",
-        "end": "2027-07-11T19:15:00+02:00"
+        "start": "2027-07-12T18:00:00+02:00",
+        "end": "2027-07-12T19:15:00+02:00"
       },
       {
         "id": "francofolies-luiza",
         "festivalId": "francofolies",
         "stageId": "francofolies-scene-jean-louis-foulquier",
         "artistId": "luiza",
-        "start": "2027-07-12T18:00:00+02:00",
-        "end": "2027-07-12T19:15:00+02:00"
+        "start": "2027-07-13T18:00:00+02:00",
+        "end": "2027-07-13T19:15:00+02:00"
       },
       {
         "id": "francofolies-aya-nakamura",
         "festivalId": "francofolies",
         "stageId": "francofolies-grand-theatre-de-la-passerelle",
         "artistId": "aya-nakamura",
-        "start": "2027-07-13T18:00:00+02:00",
-        "end": "2027-07-13T19:15:00+02:00"
+        "start": "2027-07-14T18:00:00+02:00",
+        "end": "2027-07-14T19:15:00+02:00"
       },
       {
         "id": "francofolies-orelsan",
         "festivalId": "francofolies",
         "stageId": "francofolies-scene-verdiere",
         "artistId": "orelsan",
-        "start": "2027-07-09T20:00:00+02:00",
-        "end": "2027-07-09T21:15:00+02:00"
+        "start": "2027-07-10T20:00:00+02:00",
+        "end": "2027-07-10T21:15:00+02:00"
       },
       {
         "id": "francofolies-mika",
         "festivalId": "francofolies",
         "stageId": "francofolies-scene-jean-louis-foulquier",
         "artistId": "mika",
-        "start": "2027-07-10T20:00:00+02:00",
-        "end": "2027-07-10T21:15:00+02:00"
+        "start": "2027-07-11T20:00:00+02:00",
+        "end": "2027-07-11T21:15:00+02:00"
       },
       {
         "id": "francofolies-niska",
         "festivalId": "francofolies",
         "stageId": "francofolies-grand-theatre-de-la-passerelle",
         "artistId": "niska",
-        "start": "2027-07-11T20:00:00+02:00",
-        "end": "2027-07-11T21:15:00+02:00"
+        "start": "2027-07-12T20:00:00+02:00",
+        "end": "2027-07-12T21:15:00+02:00"
       },
       {
         "id": "francofolies-louane",
         "festivalId": "francofolies",
         "stageId": "francofolies-scene-verdiere",
         "artistId": "louane",
-        "start": "2027-07-12T20:00:00+02:00",
-        "end": "2027-07-12T21:15:00+02:00"
+        "start": "2027-07-13T20:00:00+02:00",
+        "end": "2027-07-13T21:15:00+02:00"
       },
       {
         "id": "francofolies-feu-chatterton",
         "festivalId": "francofolies",
         "stageId": "francofolies-scene-jean-louis-foulquier",
         "artistId": "feu-chatterton",
-        "start": "2027-07-13T20:00:00+02:00",
-        "end": "2027-07-13T21:15:00+02:00"
+        "start": "2027-07-14T20:00:00+02:00",
+        "end": "2027-07-14T21:15:00+02:00"
       },
       {
         "id": "francofolies-gaetan-roussel",
         "festivalId": "francofolies",
         "stageId": "francofolies-grand-theatre-de-la-passerelle",
         "artistId": "gaetan-roussel",
-        "start": "2027-07-09T22:00:00+02:00",
-        "end": "2027-07-09T23:15:00+02:00"
+        "start": "2027-07-10T22:00:00+02:00",
+        "end": "2027-07-10T23:15:00+02:00"
       },
       {
         "id": "francofolies-julien-clerc",
         "festivalId": "francofolies",
         "stageId": "francofolies-scene-verdiere",
         "artistId": "julien-clerc",
-        "start": "2027-07-10T22:00:00+02:00",
-        "end": "2027-07-10T23:15:00+02:00"
+        "start": "2027-07-11T22:00:00+02:00",
+        "end": "2027-07-11T23:15:00+02:00"
       },
       {
         "id": "francofolies-raphael",
         "festivalId": "francofolies",
         "stageId": "francofolies-scene-jean-louis-foulquier",
         "artistId": "raphael",
-        "start": "2027-07-11T22:00:00+02:00",
-        "end": "2027-07-11T23:15:00+02:00"
+        "start": "2027-07-12T22:00:00+02:00",
+        "end": "2027-07-12T23:15:00+02:00"
       },
       {
         "id": "francofolies-odezenne",
         "festivalId": "francofolies",
         "stageId": "francofolies-grand-theatre-de-la-passerelle",
         "artistId": "odezenne",
-        "start": "2027-07-12T22:00:00+02:00",
-        "end": "2027-07-12T23:15:00+02:00"
+        "start": "2027-07-13T22:00:00+02:00",
+        "end": "2027-07-13T23:15:00+02:00"
+      }
+    ],
+    "summary": "Les Francofolies animent La Rochelle chaque mois de juillet autour de la chanson francophone et de scènes variées.",
+    "practicalInfo": [
+      {
+        "title": "Eau",
+        "text": "Des points d'eau et des fontaines sont répartis sur le site, en accès gratuit (information de l'édition 2026)."
       }
     ]
   },
@@ -518,10 +582,17 @@
       "city": "Rennes",
       "latitude": 48.058133,
       "longitude": -1.732183,
-      "startDate": "2027-12-01T00:00:00+01:00",
-      "endDate": "2027-12-05T23:59:00+01:00",
+      "startDate": "2026-12-02T00:00:00+01:00",
+      "endDate": "2026-12-06T23:59:00+01:00",
       "website": "https://www.lestrans.com/",
-      "description": "Festival of new music at the Parc Expo of Rennes; the 2027 dates are not announced, this is the usual early-December period. Demo data: the lineup and the timetable are for demonstration only."
+      "description": "Festival des nouvelles musiques au Parc Expo de Rennes, début décembre. Programmation et horaires : données de démonstration.",
+      "imageURL": "https://esprit-festivalier.fr/media/2026/11/04-12-25_parc-expo_ambiance_-elodie-le-gall-bd-49-9d9d521e.jpg?w=1280",
+      "imageCredit": "Élodie Le Gall",
+      "genres": [
+        "Éclectique"
+      ],
+      "pageURL": "https://esprit-festivalier.fr/festival/trans-musicales/",
+      "ticketURL": "https://www.lestrans.com/le-festival/billetterie_trans/"
     },
     "stages": [
       {
@@ -546,65 +617,66 @@
         "festivalId": "trans-musicales",
         "stageId": "trans-musicales-hall-8",
         "artistId": "rouperou",
-        "start": "2027-12-01T18:00:00+01:00",
-        "end": "2027-12-01T19:15:00+01:00"
+        "start": "2026-12-02T18:00:00+01:00",
+        "end": "2026-12-02T19:15:00+01:00"
       },
       {
         "id": "trans-musicales-odoneila",
         "festivalId": "trans-musicales",
         "stageId": "trans-musicales-hall-9",
         "artistId": "odoneila",
-        "start": "2027-12-02T18:00:00+01:00",
-        "end": "2027-12-02T19:15:00+01:00"
+        "start": "2026-12-03T18:00:00+01:00",
+        "end": "2026-12-03T19:15:00+01:00"
       },
       {
         "id": "trans-musicales-a-l-aube",
         "festivalId": "trans-musicales",
         "stageId": "trans-musicales-greenroom",
         "artistId": "a-l-aube",
-        "start": "2027-12-03T18:00:00+01:00",
-        "end": "2027-12-03T19:15:00+01:00"
+        "start": "2026-12-04T18:00:00+01:00",
+        "end": "2026-12-04T19:15:00+01:00"
       },
       {
         "id": "trans-musicales-gregailh",
         "festivalId": "trans-musicales",
         "stageId": "trans-musicales-hall-8",
         "artistId": "gregailh",
-        "start": "2027-12-04T18:00:00+01:00",
-        "end": "2027-12-04T19:15:00+01:00"
+        "start": "2026-12-05T18:00:00+01:00",
+        "end": "2026-12-05T19:15:00+01:00"
       },
       {
         "id": "trans-musicales-kimia",
         "festivalId": "trans-musicales",
         "stageId": "trans-musicales-hall-9",
         "artistId": "kimia",
-        "start": "2027-12-05T18:00:00+01:00",
-        "end": "2027-12-05T19:15:00+01:00"
+        "start": "2026-12-06T18:00:00+01:00",
+        "end": "2026-12-06T19:15:00+01:00"
       },
       {
         "id": "trans-musicales-angine-de-poitrine",
         "festivalId": "trans-musicales",
         "stageId": "trans-musicales-greenroom",
         "artistId": "angine-de-poitrine",
-        "start": "2027-12-01T20:00:00+01:00",
-        "end": "2027-12-01T21:15:00+01:00"
+        "start": "2026-12-02T20:00:00+01:00",
+        "end": "2026-12-02T21:15:00+01:00"
       },
       {
         "id": "trans-musicales-tarta-relena",
         "festivalId": "trans-musicales",
         "stageId": "trans-musicales-hall-8",
         "artistId": "tarta-relena",
-        "start": "2027-12-02T20:00:00+01:00",
-        "end": "2027-12-02T21:15:00+01:00"
+        "start": "2026-12-03T20:00:00+01:00",
+        "end": "2026-12-03T21:15:00+01:00"
       },
       {
         "id": "trans-musicales-dolphyn",
         "festivalId": "trans-musicales",
         "stageId": "trans-musicales-hall-9",
         "artistId": "dolphyn",
-        "start": "2027-12-03T20:00:00+01:00",
-        "end": "2027-12-03T21:15:00+01:00"
+        "start": "2026-12-04T20:00:00+01:00",
+        "end": "2026-12-04T21:15:00+01:00"
       }
-    ]
+    ],
+    "summary": "Les Trans Musicales font découvrir à Rennes, chaque début décembre, les nouveaux visages des musiques actuelles, avec une programmation éclectique au Parc Expo et dans plusieurs salles de la ville."
   }
 ]

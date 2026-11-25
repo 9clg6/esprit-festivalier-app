@@ -61,7 +61,7 @@ struct RootView: View {
 
     @ViewBuilder private func content(for tab: AppTab) -> some View {
         if tab == .festivals {
-            FestivalListView(source: environment.festivals)
+            FestivalListView(source: environment.festivals, artists: environment.artists)
         } else {
             EmptyState(
                 systemImage: tab.symbol, title: "Bientôt disponible",

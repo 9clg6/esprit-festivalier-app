@@ -39,12 +39,36 @@ final class FestivalListModel {
 /// E2: upcoming festivals, month by month.
 struct FestivalListView: View {
     @State private var model: FestivalListModel
+    @State private var path: [Festival.ID] = Self.initialPath
+    private let source: any FestivalSource
+    private let artists: any ArtistSource
 
-    init(source: any FestivalSource) {
+    init(source: any FestivalSource, artists: any ArtistSource) {
+        self.source = source
+        self.artists = artists
         _model = State(initialValue: FestivalListModel(source: source))
     }
 
+    /// Debug builds only: `-openFestival <id>` opens a festival's detail at launch (simulator runs).
+    private static var initialPath: [Festival.ID] {
+        #if DEBUG
+        UserDefaults.standard.string(forKey: "openFestival").map { [$0] } ?? []
+        #else
+        []
+        #endif
+    }
+
     var body: some View {
+        NavigationStack(path: $path) {
+            list
+                .toolbar(.hidden, for: .navigationBar)
+                .navigationDestination(for: Festival.ID.self) { id in
+                    FestivalDetailView(id: id, festivals: source, artists: artists)
+                }
+        }
+    }
+
+    private var list: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 12) {
                 Text("Festivals")
@@ -80,10 +104,14 @@ struct FestivalListView: View {
             ForEach(sections) { section in
                 SectionHeader(section.title).padding(.top, 20)
                 ForEach(section.festivals) { festival in
-                    FestivalRow(
-                        name: festival.name, startDate: festival.startDate,
-                        endDate: festival.endDate, city: festival.city
-                    )
+                    NavigationLink(value: festival.id) {
+                        FestivalRow(
+                            name: festival.name, startDate: festival.startDate,
+                            endDate: festival.endDate, city: festival.city,
+                            imageURL: festival.imageURL, genres: Array(festival.genres.prefix(2))
+                        )
+                    }
+                    .buttonStyle(.plain)
                 }
             }
         }
