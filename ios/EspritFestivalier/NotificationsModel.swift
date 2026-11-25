@@ -263,27 +263,28 @@ struct NotificationScheduler {
     ) async {
         let concerts = await concertPlan(picks: picks, lead: lead)
         let favorite = await favoriteFestivals(favorites)
+        let concertPrefix = ConcertReminders.identifierPrefix
+        let favoritePrefix = FestivalReminders.identifierPrefix
+        // Only the identifiers cross the callback: older SDKs do not mark the requests Sendable.
+        let pending = await withCheckedContinuation { done in
+            center.getPendingNotificationRequests { done.resume(returning: $0.map(\.identifier)) }
+        }.filter { $0.hasPrefix(concertPrefix) || $0.hasPrefix(favoritePrefix) }
+        let kept = Set(pending.filter { id in
+            if id.hasPrefix(concertPrefix) {
+                return concerts.unresolved.contains(String(id.dropFirst(concertPrefix.count)))
+            }
+            // "fav-<festival>-j7": the kind is the last 3 characters.
+            return favorite.unresolved.contains(String(id.dropFirst(favoritePrefix.count).dropLast(3)))
+        })
+        let scheduled = pending.filter { !kept.contains($0) }
+        // The kept reminders take their places under the iOS cap.
         let plan = NotificationPlan.earliest(
             concerts: concerts.reminders,
             festivals: FestivalReminders.plan(
                 favorites: favorite.found, preferences: preferences, now: Date(), calendar: AppEnvironment.calendar
-            )
+            ),
+            limit: max(0, ConcertReminders.limit - kept.count)
         )
-        let concertPrefix = ConcertReminders.identifierPrefix
-        let favoritePrefix = FestivalReminders.identifierPrefix
-        // Only the identifiers cross the callback: older SDKs do not mark the requests Sendable.
-        let scheduled = await withCheckedContinuation { done in
-            center.getPendingNotificationRequests { done.resume(returning: $0.map(\.identifier)) }
-        }.filter { id in
-            if id.hasPrefix(concertPrefix) {
-                return !concerts.unresolved.contains(String(id.dropFirst(concertPrefix.count)))
-            }
-            // "fav-<festival>-j7": the kind is the last 3 characters.
-            if id.hasPrefix(favoritePrefix) {
-                return !favorite.unresolved.contains(String(id.dropFirst(favoritePrefix.count).dropLast(3)))
-            }
-            return false
-        }
         guard !Task.isCancelled else { return }
         center.removePendingNotificationRequests(withIdentifiers: scheduled)
         for reminder in plan.concerts {
