@@ -175,7 +175,9 @@ final class NotificationsModel {
     }
 
     private func runArticleCheck() async {
-        guard let feed = try? await articles.articles(category: nil), !Task.isCancelled else { return }
+        // An empty feed changes nothing: no seen set is written, so a first run stays a first run.
+        guard let feed = try? await articles.articles(category: nil), !feed.isEmpty, !Task.isCancelled
+        else { return }
         let stored: [Article.ID]? = Self.read(seenFile)
         let result = NewArticles.check(feed: feed, seen: stored.map(Set.init), preferences: preferences)
         let feedIDs = feed.map(\.id)
