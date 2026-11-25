@@ -248,6 +248,22 @@ private func period(_ period: FestivalFilter.Period) -> FestivalFilter {
         #expect(ids(period(.thisWeekend), all, now: thursday) == ["sundayNight"])
     }
 
+    // Regression: the weekend ends at Monday 00:00, excluded. A festival starting then is next week's.
+    @Test func aFestivalStartingAtMondayMidnightIsNotThisWeekend() {
+        let all = [festival("mondayMidnight", from: "2026-11-30T00:00:00+01:00", to: "2026-11-30T23:00:00+01:00")]
+
+        #expect(ids(period(.thisWeekend), all).isEmpty)
+    }
+
+    @Test func festivalsEndingOnSundayNightOrAtMondayMidnightAreThisWeekend() {
+        let all = [
+            festival("endsSunday2359", from: "2026-11-29T20:00:00+01:00", to: "2026-11-29T23:59:00+01:00"),
+            festival("endsMondayMidnight", from: "2026-11-29T22:00:00+01:00", to: "2026-11-30T00:00:00+01:00")
+        ]
+
+        #expect(ids(period(.thisWeekend), all) == ["endsSunday2359", "endsMondayMidnight"])
+    }
+
     // MARK: This month (Paris calendar month)
 
     @Test func thisMonthKeepsTheFestivalsOverlappingTheCurrentMonth() {

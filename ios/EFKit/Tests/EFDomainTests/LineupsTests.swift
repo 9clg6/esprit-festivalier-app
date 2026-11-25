@@ -6,7 +6,7 @@ import EFDomain
 // Need (E7): a list of cards, newest announcement first; each card shows the festival, the
 // announcement date, the first 5 artists and "+ 19" for the rest. Only festivals still to come
 // (or in progress): a finished festival's lineup is no longer news. Data referring to an unknown
-// festival or artist is skipped, never a crash.
+// festival or artist is skipped, never a crash; a lineup with no known artist is dropped.
 // Need (E8): the artist's "En festival" list = the upcoming festivals whose lineup has the artist,
 // soonest first. An unknown artist has none.
 // "now" is explicit. A festival is finished when it ended before `now` (as in FestivalList).
@@ -137,6 +137,12 @@ private func feed(_ lineups: [Lineup], _ festivals: [Festival], at now: Date = n
 
         #expect(card.artistNames == ["Artist 1", "Artist 2", "Artist 3", "Artist 4", "Artist 5"])
         #expect(card.remainingCount == 1)
+    }
+
+    @Test func aLineupWhoseArtistsAreAllUnknownIsDropped() {
+        let lineups = [lineup("ghosts", on: "2026-11-24T10:00:00Z", ["ghost1", "ghost2"]), lineup("hellfest", ["a1"])]
+
+        #expect(feed(lineups, [festival("ghosts"), festival("hellfest")]).map(\.festival.id) == ["hellfest"])
     }
 }
 
