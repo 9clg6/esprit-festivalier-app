@@ -11,12 +11,16 @@ public struct FestivalRow: View {
     private let imageURL: URL?
     private let genres: [String]
     private let favorite: (isOn: Bool, toggle: () -> Void)?
+    private let isPast: Bool
 
     /// `favorite`: when given, a heart sits at the trailing edge. VoiceOver still reads one element,
     /// ending with ", en favori" when on, and the heart is its "Ajouter / Retirer des favoris" action.
+    /// `isPast`: a festival that is over; only the thumbnail is dimmed and the date line is `muted`,
+    /// so every text keeps AA contrast.
     public init(
         name: String, startDate: Date, endDate: Date, city: String,
-        imageURL: URL? = nil, genres: [String] = [], favorite: (isOn: Bool, toggle: () -> Void)? = nil
+        imageURL: URL? = nil, genres: [String] = [], favorite: (isOn: Bool, toggle: () -> Void)? = nil,
+        isPast: Bool = false
     ) {
         self.name = name
         self.startDate = startDate
@@ -25,6 +29,7 @@ public struct FestivalRow: View {
         self.imageURL = imageURL
         self.genres = genres
         self.favorite = favorite
+        self.isPast = isPast
     }
 
     public var body: some View {
@@ -65,7 +70,7 @@ public struct FestivalRow: View {
                     .foregroundStyle(EFTextColor.ink.color)
                 Text("\(FestivalDates.text(from: startDate, to: endDate)) · \(city)")
                     .efText(.bodySecondary)
-                    .foregroundStyle(EFTextColor.ink2.color)
+                    .foregroundStyle((isPast ? EFTextColor.muted : .ink2).color)
                 if !genres.isEmpty {
                     HStack(spacing: 8) {
                         ForEach(genres, id: \.self) { genre in
@@ -101,6 +106,7 @@ public struct FestivalRow: View {
         }
         .frame(width: 64, height: 64)
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .opacity(isPast ? 0.55 : 1)
         .accessibilityHidden(true)
     }
 }

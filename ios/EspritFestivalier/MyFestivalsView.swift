@@ -87,13 +87,13 @@ struct MyFestivalsView: View {
                 )
             } else {
                 if let next = sections.next { nextCard(next) }
-                list("À VENIR", sections.upcoming, dimmed: false)
-                list("PASSÉS", sections.past, dimmed: true)
+                list("À VENIR", sections.upcoming, isPast: false)
+                list("PASSÉS", sections.past, isPast: true)
             }
         }
     }
 
-    @ViewBuilder private func list(_ title: String, _ festivals: [Festival], dimmed: Bool) -> some View {
+    @ViewBuilder private func list(_ title: String, _ festivals: [Festival], isPast: Bool) -> some View {
         if !festivals.isEmpty {
             SectionHeader(title).padding(.top, 20)
             ForEach(festivals) { festival in
@@ -101,9 +101,9 @@ struct MyFestivalsView: View {
                     FestivalRow(
                         name: festival.name, startDate: festival.startDate, endDate: festival.endDate,
                         city: festival.city, imageURL: festival.imageURL, genres: Array(festival.genres.prefix(2)),
-                        favorite: (favorites.contains(festival.id), { favorites.toggle(festival.id) })
+                        favorite: (favorites.contains(festival.id), { favorites.toggle(festival.id) }),
+                        isPast: isPast
                     )
-                    .opacity(dimmed ? 0.55 : 1)
                 }
                 .buttonStyle(.plain)
             }
