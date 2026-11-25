@@ -3,6 +3,8 @@ import Foundation
 /// A small tolerant HTML reader (ADR-007): one pass over the bytes builds a tree of elements and text.
 /// Void elements, `p` and `li` closed implicitly, comments ignored, `svg` dropped, `script` and `style`
 /// kept as raw text, orphan closing tags ignored, entities decoded, a truncated page read up to the cut.
+/// At most `maxDepth` open elements: deeper ones are attached to the deepest open one, so the tree (and
+/// every recursive walk over it) stays shallow and each tag costs at most `maxDepth` steps.
 /// Never throws: whatever the bytes, the result is a tree (possibly empty).
 struct HTMLDocument: Sendable {
     enum Node: Sendable {
@@ -82,6 +84,8 @@ struct HTMLDocument: Sendable {
             || character == "\r\n"
     }
 
+    static let maxDepth = 128
+
     static let void: Set<String> = [
         "area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "track", "wbr"
     ]
@@ -102,6 +106,8 @@ struct HTMLDocument: Sendable {
 private struct TreeBuilder {
     var elements = [HTMLDocument.Element(name: "#document", attributes: [])]
     private var open = [0]
+    /// How many elements of each name are open: an orphan closing tag costs one lookup.
+    private var openNames: [String: Int] = [:]
 
     mutating func text(_ text: String) {
         elements[open[open.count - 1]].children.append(.text(text))
@@ -113,22 +119,33 @@ private struct TreeBuilder {
         let index = elements.count
         elements.append(HTMLDocument.Element(name: name, attributes: attributes))
         elements[open[open.count - 1]].children.append(.element(index))
-        if !selfClosing && !HTMLDocument.void.contains(name) { open.append(index) }
+        if !selfClosing && !HTMLDocument.void.contains(name) && open.count <= HTMLDocument.maxDepth {
+            open.append(index)
+            openNames[name, default: 0] += 1
+        }
     }
 
     /// A closing tag closes the nearest open element of that name; an orphan is ignored.
     mutating func end(_ name: String) {
-        guard let position = open.lastIndex(where: { elements[$0].name == name }), position > 0 else { return }
+        guard openNames[name, default: 0] > 0,
+              let position = open.lastIndex(where: { elements[$0].name == name }), position > 0
+        else { return }
+        pop(from: position)
+    }
+
+    private mutating func pop(from position: Int) {
+        for index in open[position...] { openNames[elements[index].name, default: 1] -= 1 }
         open.removeSubrange(position...)
     }
 
     /// Implicit end: closes an open `name` when only `through` elements are open above it.
     private mutating func close(_ name: String, through allowed: Set<String>) {
+        guard openNames[name, default: 0] > 0 else { return }
         var position = open.count - 1
         while position > 0 {
             let open = elements[self.open[position]].name
             if open == name {
-                self.open.removeSubrange(position...)
+                pop(from: position)
                 return
             }
             guard allowed.contains(open) else { return }
@@ -193,8 +210,8 @@ private struct Tokenizer {
         let (attributes, selfClosing, afterTag) = (tag.attributes, tag.selfClosing, tag.end)
         switch name {
         case "svg":  // drawings carry no text of the article
-            guard !selfClosing else { return resume(at: afterTag) }
-            guard let end = findClosing("svg", from: afterTag) else { return false }
+            // ponytail: an unclosed one skips only its own tag, what follows is read.
+            guard !selfClosing, let end = findClosing("svg", from: afterTag) else { return resume(at: afterTag) }
             return resume(at: end)
         case _ where HTMLDocument.rawText.contains(name):
             builder.start(name, attributes: attributes, selfClosing: false)
@@ -266,6 +283,15 @@ private struct Tokenizer {
     private mutating func skipMarkup(at open: Int) {
         let isComment = byte(at: open + 2) == Self.dash && byte(at: open + 3) == Self.dash
         if isComment {
+            // "<!-->" and "<!--->" are empty comments.
+            if byte(at: open + 4) == Self.greaterThan {
+                resume(at: open + 5)
+                return
+            }
+            if byte(at: open + 4) == Self.dash, byte(at: open + 5) == Self.greaterThan {
+                resume(at: open + 6)
+                return
+            }
             var index = open + 4
             while index + 2 < bytes.count {
                 if bytes[index] == Self.dash, bytes[index + 1] == Self.dash, bytes[index + 2] == Self.greaterThan {
