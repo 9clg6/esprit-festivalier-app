@@ -1,7 +1,7 @@
 [
   {
     "festivalId": "hellfest",
-    "announcedOn": "2026-11-25T00:00:00Z",
+    "announcedOn": "2026-11-24T09:00:00Z",
     "artistIds": [
       "bring-me-the-horizon",
       "iron-maiden",
@@ -19,7 +19,7 @@
   },
   {
     "festivalId": "vieilles-charrues",
-    "announcedOn": "2026-11-25T00:00:00Z",
+    "announcedOn": "2026-10-29T09:00:00Z",
     "artistIds": [
       "katy-perry",
       "gims",
@@ -35,7 +35,7 @@
   },
   {
     "festivalId": "eurockeennes",
-    "announcedOn": "2026-11-25T00:00:00Z",
+    "announcedOn": "2026-11-18T09:00:00Z",
     "artistIds": [
       "pulp",
       "the-offspring",
@@ -53,7 +53,7 @@
   },
   {
     "festivalId": "francofolies",
-    "announcedOn": "2026-11-25T00:00:00Z",
+    "announcedOn": "2026-11-06T09:00:00Z",
     "artistIds": [
       "gims",
       "zaz",
@@ -73,7 +73,7 @@
   },
   {
     "festivalId": "trans-musicales",
-    "announcedOn": "2026-11-25T00:00:00Z",
+    "announcedOn": "2026-10-14T09:00:00Z",
     "artistIds": [
       "rouperou",
       "odoneila",
