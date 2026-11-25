@@ -21,10 +21,24 @@ public enum AuthError: Error, Equatable {
     case invalidAppleToken, invalidEmail, wrongCode
 }
 
+/// What Sign in with Apple hands over, as Better Auth's Apple sign-in needs it (STORY-021): the
+/// identity token, the raw nonce whose SHA-256 went in the request, and the one-time code.
+public struct AppleCredential: Sendable, Hashable {
+    public let idToken: String
+    public let nonce: String
+    public let authorizationCode: String?
+
+    public init(idToken: String, nonce: String, authorizationCode: String?) {
+        self.idToken = idToken
+        self.nonce = nonce
+        self.authorizationCode = authorizationCode
+    }
+}
+
 /// Sign in with Apple or an e-mail code (UX P6). The screens only know this protocol (NFR-008).
 public protocol AuthService: Sendable {
     var session: AuthSession? { get async }
-    func signInWithApple(identityToken: String) async throws -> AuthSession
+    func signInWithApple(_ credential: AppleCredential) async throws -> AuthSession
     func sendEmailCode(to email: String) async throws
     func verifyEmailCode(_ code: String, email: String) async throws -> AuthSession
     func signOut() async throws

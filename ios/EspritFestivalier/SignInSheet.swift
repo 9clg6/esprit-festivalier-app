@@ -1,4 +1,5 @@
 import AuthenticationServices
+import CryptoKit
 import EFData
 import EFDesign
 import EFDomain
@@ -15,6 +16,8 @@ struct SignInSheet: View {
     @State private var error: String?
     @State private var canResend = false
     @State private var resendDelay: Task<Void, Never>?
+    /// The raw nonce of the Apple request in flight; Apple gets its SHA-256.
+    @State private var nonce = ""
 
     private enum Step { case choose, email, code }
 
@@ -60,7 +63,10 @@ struct SignInSheet: View {
                 .foregroundStyle(EFTextColor.ink.color)
                 .multilineTextAlignment(.center)
             SignInWithAppleButton(.continue) { request in
-                request.requestedScopes = []
+                nonce = Self.randomNonce()
+                request.nonce = SHA256.hash(data: Data(nonce.utf8)).map { String(format: "%02x", $0) }.joined()
+                // The user may hide or relay the address: the account never depends on it.
+                request.requestedScopes = [.email]
             } onCompletion: { result in
                 appleCompleted(result)
             }
@@ -169,9 +175,11 @@ struct SignInSheet: View {
                 error = message(for: AuthError.invalidAppleToken)
                 return
             }
+            let code = credential.authorizationCode.flatMap { String(data: $0, encoding: .utf8) }
+            let apple = AppleCredential(idToken: token, nonce: nonce, authorizationCode: code)
             Task {
                 do {
-                    try await account.signInWithApple(identityToken: token)
+                    try await account.signInWithApple(apple)
                     dismiss()
                 } catch {
                     self.error = message(for: error)
@@ -181,6 +189,12 @@ struct SignInSheet: View {
             // Closing the Apple sheet is not an error.
             if (failure as? ASAuthorizationError)?.code != .canceled { error = message(for: failure) }
         }
+    }
+
+    /// 32 random bytes in hex (the system generator is cryptographically secure).
+    private static func randomNonce() -> String {
+        var generator = SystemRandomNumberGenerator()
+        return (0..<32).map { _ in String(format: "%02x", UInt8.random(in: .min ... .max, using: &generator)) }.joined()
     }
 
     private func message(for error: any Error) -> String {

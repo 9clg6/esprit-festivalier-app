@@ -28,7 +28,9 @@ final class AccountModel {
         // Debug builds only: `-seedSession apple` or `-seedSession fan@example.org` (screenshots).
         if await auth.session == nil, let seed = UserDefaults.standard.string(forKey: "seedSession") {
             if seed == "apple" {
-                _ = try? await auth.signInWithApple(identityToken: "debug-seed")
+                _ = try? await auth.signInWithApple(
+                    AppleCredential(idToken: "debug-seed", nonce: "debug", authorizationCode: nil)
+                )
             } else {
                 _ = try? await auth.verifyEmailCode(MockAuthService.demoCode, email: seed)
             }
@@ -38,8 +40,8 @@ final class AccountModel {
         syncStatus = try? await sync.sync()
     }
 
-    func signInWithApple(identityToken: String) async throws {
-        session = try await auth.signInWithApple(identityToken: identityToken)
+    func signInWithApple(_ credential: AppleCredential) async throws {
+        session = try await auth.signInWithApple(credential)
     }
 
     func sendEmailCode(to email: String) async throws {

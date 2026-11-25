@@ -20,9 +20,10 @@ public actor MockAuthService: AuthService {
     }
 
     /// The same Apple identity gives the same user: the token's `sub` when readable, else a hash.
-    public func signInWithApple(identityToken: String) throws -> AuthSession {
-        guard !identityToken.isEmpty else { throw AuthError.invalidAppleToken }
-        let subject = Self.subject(ofJWT: identityToken) ?? Self.hash(identityToken)
+    /// Without a nonce the server could not check the token: same refusal as an empty token.
+    public func signInWithApple(_ credential: AppleCredential) throws -> AuthSession {
+        guard !credential.idToken.isEmpty, !credential.nonce.isEmpty else { throw AuthError.invalidAppleToken }
+        let subject = Self.subject(ofJWT: credential.idToken) ?? Self.hash(credential.idToken)
         return try signIn(AuthSession(userId: "apple-\(subject)", provider: .apple, email: nil, createdAt: now()))
     }
 
