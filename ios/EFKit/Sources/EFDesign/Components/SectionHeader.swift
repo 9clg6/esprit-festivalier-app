@@ -36,7 +36,7 @@ public struct SectionHeader: View {
                 .foregroundStyle(EFTextColor.ink2.color)
                 .accessibilityAddTraits(.isHeader)
             if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: 8) }
-            seeAll
+            seeAll?.accessibilityLabel("Tout voir : \(title)")
         }
     }
 }
