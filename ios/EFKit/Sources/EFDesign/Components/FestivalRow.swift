@@ -10,10 +10,12 @@ public struct FestivalRow: View {
     private let city: String
     private let imageURL: URL?
     private let genres: [String]
+    private let favorite: (isOn: Bool, toggle: () -> Void)?
 
+    /// `favorite`: when given, a heart sits at the trailing edge, a separate VoiceOver element.
     public init(
         name: String, startDate: Date, endDate: Date, city: String,
-        imageURL: URL? = nil, genres: [String] = []
+        imageURL: URL? = nil, genres: [String] = [], favorite: (isOn: Bool, toggle: () -> Void)? = nil
     ) {
         self.name = name
         self.startDate = startDate
@@ -21,9 +23,21 @@ public struct FestivalRow: View {
         self.city = city
         self.imageURL = imageURL
         self.genres = genres
+        self.favorite = favorite
     }
 
     public var body: some View {
+        HStack(alignment: .top, spacing: 0) {
+            content
+            if let favorite {
+                FavoriteButton(isFavorite: favorite.isOn, action: favorite.toggle).padding(.trailing, 4)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(EFColorToken.card.color, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    @ViewBuilder private var content: some View {
         // Accessibility sizes: thumbnail above the text, so long names keep the full width.
         let layout = dynamicTypeSize.isAccessibilitySize
             ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
@@ -54,7 +68,6 @@ public struct FestivalRow: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(EFColorToken.card.color, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
             ([name, FestivalDates.text(from: startDate, to: endDate), city] + genres).joined(separator: ", ")

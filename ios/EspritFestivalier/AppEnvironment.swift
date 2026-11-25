@@ -9,8 +9,10 @@ struct AppEnvironment: Sendable {
     let articles: any ArticleSource
     let articleFeed: SiteFeed
     let artists: any ArtistSource
+    /// Favorites, kept in Application Support (not Caches: the system may empty Caches).
+    let favorites: FavoritesModel
 
-    init(kind: DataSourceKind) {
+    @MainActor init(kind: DataSourceKind) {
         // Articles always come from the live site feed, whatever the data source.
         let feed = SiteFeed()
         articleFeed = feed
@@ -22,10 +24,13 @@ struct AppEnvironment: Sendable {
             lineups = MockLineupSource()
             artists = MockArtistSource()
         }
+        favorites = FavoritesModel(
+            store: FavoritesStore(directory: .applicationSupportDirectory.appending(path: "EspritFestivalier"))
+        )
     }
 
     /// Reads `EF_DATA_SOURCE`; a missing or unknown value means `mock`.
-    init(bundle: Bundle = .main) {
+    @MainActor init(bundle: Bundle = .main) {
         let value = bundle.object(forInfoDictionaryKey: "EF_DATA_SOURCE") as? String ?? ""
         self.init(kind: DataSourceKind(rawValue: value) ?? .mock)
     }
