@@ -31,9 +31,12 @@ struct MyFestivalsView: View {
 
     var body: some View {
         NavigationStack(path: $path) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 12) { content }
-                    .padding(.horizontal, 16)
+            // Re-evaluated every minute, so "Demain" becomes "Aujourd'hui" without leaving the tab.
+            TimelineView(.everyMinute) { context in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 12) { content(now: Self.now(context.date)) }
+                        .padding(.horizontal, 16)
+                }
             }
             .background(EFColorToken.bg.color)
             .navigationTitle("Mes festivals")
@@ -45,13 +48,13 @@ struct MyFestivalsView: View {
     }
 
     /// Debug builds only: `-fakeNow 2026-12-01T12:00:00Z` shows the "Prochain" card with the demo data.
-    private static var now: Date {
+    private static func now(_ date: Date) -> Date {
         #if DEBUG
-        if let text = UserDefaults.standard.string(forKey: "fakeNow"), let date = try? Date(text, strategy: .iso8601) {
-            return date
+        if let text = UserDefaults.standard.string(forKey: "fakeNow"), let fake = try? Date(text, strategy: .iso8601) {
+            return fake
         }
         #endif
-        return Date()
+        return date
     }
 
     private func refresh() async {
@@ -65,7 +68,7 @@ struct MyFestivalsView: View {
         }
     }
 
-    @ViewBuilder private var content: some View {
+    @ViewBuilder private func content(now: Date) -> some View {
         switch load {
         case .loading:
             ForEach(0..<3, id: \.self) { _ in SkeletonBlock(cornerRadius: 16).frame(height: 88) }
@@ -77,7 +80,7 @@ struct MyFestivalsView: View {
         case .loaded(let festivals):
             let byID = Dictionary(festivals.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
             let sections = MyFestivals.sections(
-                favorites: favorites.ids.compactMap { byID[$0] }, now: Self.now, calendar: calendar
+                favorites: favorites.ids.compactMap { byID[$0] }, now: now, calendar: calendar
             )
             if sections.isEmpty {
                 EmptyState(
