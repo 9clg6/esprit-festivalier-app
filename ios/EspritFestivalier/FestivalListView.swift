@@ -260,7 +260,7 @@ struct FestivalListView: View {
     private var mapArea: some View {
         ZStack(alignment: .bottom) {
             FestivalMapView(
-                festivals: model.upcoming, selection: $selectedOnMap,
+                festivals: model.upcoming, favoriteIDs: Set(favorites.ids), selection: $selectedOnMap,
                 userCoordinate: aroundMe.isAuthorized ? aroundMe.coordinate : nil, recenter: recenter
             )
             VStack(alignment: .trailing, spacing: 12) {

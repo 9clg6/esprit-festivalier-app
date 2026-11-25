@@ -3,9 +3,11 @@ import EFDomain
 import MapKit
 import SwiftUI
 
-/// E4: festivals as clustered pins. Touching a cluster zooms in, touching a pin selects its festival.
+/// E4: festivals as clustered pins, a heart on favorites. Touching a cluster zooms in, touching a pin
+/// selects its festival.
 struct FestivalMapView: UIViewRepresentable {
     let festivals: [Festival]
+    let favoriteIDs: Set<Festival.ID>
     @Binding var selection: Festival.ID?
     let userCoordinate: Coordinate?
     /// Incremented by the "recentrer sur moi" button.
@@ -34,6 +36,7 @@ struct FestivalMapView: UIViewRepresentable {
         context.coordinator.parent = self
         map.showsUserLocation = userCoordinate != nil
         context.coordinator.sync(map, festivals: festivals)
+        context.coordinator.sync(map, favorites: favoriteIDs)
         if recenter != context.coordinator.lastRecenter {
             context.coordinator.lastRecenter = recenter
             if let userCoordinate {
@@ -62,6 +65,7 @@ struct FestivalMapView: UIViewRepresentable {
         var parent: FestivalMapView
         var lastRecenter: Int
         private var shown: [Festival.ID] = []
+        private var favorites: Set<Festival.ID> = []
 
         init(_ parent: FestivalMapView) {
             self.parent = parent
@@ -89,6 +93,22 @@ struct FestivalMapView: UIViewRepresentable {
             map.setVisibleMapRect(padded, edgePadding: .init(top: 24, left: 24, bottom: 24, right: 24), animated: true)
         }
 
+        /// Redraws the pins whose favorite state changed (pins not on screen get it in viewFor).
+        func sync(_ map: MKMapView, favorites updated: Set<Festival.ID>) {
+            let changed = favorites.symmetricDifference(updated)
+            favorites = updated
+            for pin in map.annotations.compactMap({ $0 as? Pin }) where changed.contains(pin.festival.id) {
+                if let view = map.view(for: pin) as? MKMarkerAnnotationView { style(view, for: pin) }
+            }
+        }
+
+        private func style(_ view: MKMarkerAnnotationView, for pin: Pin) {
+            let isFavorite = favorites.contains(pin.festival.id)
+            view.glyphImage = UIImage(systemName: isFavorite ? "heart.fill" : "music.note")
+            let dates = FestivalDates.text(from: pin.festival.startDate, to: pin.festival.endDate)
+            view.accessibilityLabel = "\(pin.festival.name), \(dates)" + (isFavorite ? ", en favori" : "")
+        }
+
         func mapView(_ mapView: MKMapView, viewFor annotation: any MKAnnotation) -> MKAnnotationView? {
             if let cluster = annotation as? MKClusterAnnotation {
                 let view = marker(mapView, id: "cluster", annotation: cluster)
@@ -99,10 +119,8 @@ struct FestivalMapView: UIViewRepresentable {
             guard let pin = annotation as? Pin else { return nil }
             let view = marker(mapView, id: "pin", annotation: pin)
             view.clusteringIdentifier = "festival"
-            view.glyphImage = UIImage(systemName: "music.note")
             view.canShowCallout = false
-            let dates = FestivalDates.text(from: pin.festival.startDate, to: pin.festival.endDate)
-            view.accessibilityLabel = "\(pin.festival.name), \(dates)"
+            style(view, for: pin)
             return view
         }
 
