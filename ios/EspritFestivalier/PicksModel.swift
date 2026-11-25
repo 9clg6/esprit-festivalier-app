@@ -109,13 +109,12 @@ struct ConcertReminderScheduler {
     /// favorite), the reminders already scheduled are kept as they are.
     @MainActor func reschedule(picks: Set<Performance.ID>, lead: ReminderLead) async {
         let center = UNUserNotificationCenter.current()
-        // ponytail: reads every festival not over to find the picked sets; store the festival id
-        // with each pick when the catalogue grows past a few dozen festivals.
+        // ponytail: reads every festival to find the picked sets (the plan drops the past ones); store
+        // the festival id with each pick when the catalogue grows past a few dozen festivals.
         var picked: [Performance] = [], stageNames: [Stage.ID: String] = [:], festivalNames: [Festival.ID: String] = [:]
         do {
-            let now = Date()
             let catalog = picks.isEmpty ? [] : try await festivals.festivals(updatedSince: nil)
-            for festival in catalog where festival.endDate > now {
+            for festival in catalog {
                 let detail = try await festivals.festival(id: festival.id)
                 let mine = detail.performances.filter { picks.contains($0.id) }
                 guard !mine.isEmpty else { continue }
