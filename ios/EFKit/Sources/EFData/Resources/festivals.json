@@ -1,0 +1,610 @@
+[
+  {
+    "festival": {
+      "id": "hellfest",
+      "name": "Hellfest",
+      "city": "Clisson",
+      "latitude": 47.09583,
+      "longitude": -1.26806,
+      "startDate": "2027-06-17T00:00:00+02:00",
+      "endDate": "2027-06-20T23:59:00+02:00",
+      "website": "https://www.hellfest.fr/",
+      "description": "Metal and rock festival in Clisson, announced for 17 to 20 June 2027. Demo data: the lineup and the timetable are for demonstration only."
+    },
+    "stages": [
+      {
+        "id": "hellfest-mainstage-1",
+        "festivalId": "hellfest",
+        "name": "Mainstage 1"
+      },
+      {
+        "id": "hellfest-mainstage-2",
+        "festivalId": "hellfest",
+        "name": "Mainstage 2"
+      },
+      {
+        "id": "hellfest-temple",
+        "festivalId": "hellfest",
+        "name": "Temple"
+      }
+    ],
+    "performances": [
+      {
+        "id": "hellfest-bring-me-the-horizon",
+        "festivalId": "hellfest",
+        "stageId": "hellfest-mainstage-1",
+        "artistId": "bring-me-the-horizon",
+        "start": "2027-06-17T18:00:00+02:00",
+        "end": "2027-06-17T19:15:00+02:00"
+      },
+      {
+        "id": "hellfest-iron-maiden",
+        "festivalId": "hellfest",
+        "stageId": "hellfest-mainstage-2",
+        "artistId": "iron-maiden",
+        "start": "2027-06-18T18:00:00+02:00",
+        "end": "2027-06-18T19:15:00+02:00"
+      },
+      {
+        "id": "hellfest-limp-bizkit",
+        "festivalId": "hellfest",
+        "stageId": "hellfest-temple",
+        "artistId": "limp-bizkit",
+        "start": "2027-06-19T18:00:00+02:00",
+        "end": "2027-06-19T19:15:00+02:00"
+      },
+      {
+        "id": "hellfest-the-offspring",
+        "festivalId": "hellfest",
+        "stageId": "hellfest-mainstage-1",
+        "artistId": "the-offspring",
+        "start": "2027-06-20T18:00:00+02:00",
+        "end": "2027-06-20T19:15:00+02:00"
+      },
+      {
+        "id": "hellfest-alice-cooper",
+        "festivalId": "hellfest",
+        "stageId": "hellfest-mainstage-2",
+        "artistId": "alice-cooper",
+        "start": "2027-06-17T20:00:00+02:00",
+        "end": "2027-06-17T21:15:00+02:00"
+      },
+      {
+        "id": "hellfest-anthrax",
+        "festivalId": "hellfest",
+        "stageId": "hellfest-temple",
+        "artistId": "anthrax",
+        "start": "2027-06-18T20:00:00+02:00",
+        "end": "2027-06-18T21:15:00+02:00"
+      },
+      {
+        "id": "hellfest-deep-purple",
+        "festivalId": "hellfest",
+        "stageId": "hellfest-mainstage-1",
+        "artistId": "deep-purple",
+        "start": "2027-06-19T20:00:00+02:00",
+        "end": "2027-06-19T21:15:00+02:00"
+      },
+      {
+        "id": "hellfest-megadeth",
+        "festivalId": "hellfest",
+        "stageId": "hellfest-mainstage-2",
+        "artistId": "megadeth",
+        "start": "2027-06-20T20:00:00+02:00",
+        "end": "2027-06-20T21:15:00+02:00"
+      },
+      {
+        "id": "hellfest-papa-roach",
+        "festivalId": "hellfest",
+        "stageId": "hellfest-temple",
+        "artistId": "papa-roach",
+        "start": "2027-06-17T22:00:00+02:00",
+        "end": "2027-06-17T23:15:00+02:00"
+      },
+      {
+        "id": "hellfest-mastodon",
+        "festivalId": "hellfest",
+        "stageId": "hellfest-mainstage-1",
+        "artistId": "mastodon",
+        "start": "2027-06-18T22:00:00+02:00",
+        "end": "2027-06-18T23:15:00+02:00"
+      },
+      {
+        "id": "hellfest-napalm-death",
+        "festivalId": "hellfest",
+        "stageId": "hellfest-mainstage-2",
+        "artistId": "napalm-death",
+        "start": "2027-06-19T22:00:00+02:00",
+        "end": "2027-06-19T23:15:00+02:00"
+      },
+      {
+        "id": "hellfest-behemoth",
+        "festivalId": "hellfest",
+        "stageId": "hellfest-temple",
+        "artistId": "behemoth",
+        "start": "2027-06-20T22:00:00+02:00",
+        "end": "2027-06-20T23:15:00+02:00"
+      }
+    ]
+  },
+  {
+    "festival": {
+      "id": "vieilles-charrues",
+      "name": "Les Vieilles Charrues",
+      "city": "Carhaix-Plouguer",
+      "latitude": 48.27091,
+      "longitude": -3.55828,
+      "startDate": "2027-07-15T00:00:00+02:00",
+      "endDate": "2027-07-18T23:59:00+02:00",
+      "website": "https://www.vieillescharrues.asso.fr/",
+      "description": "Festival in Carhaix-Plouguer, expected 15 to 18 July 2027. Demo data: the lineup and the timetable are for demonstration only."
+    },
+    "stages": [
+      {
+        "id": "vieilles-charrues-grande-scene",
+        "festivalId": "vieilles-charrues",
+        "name": "Grande Scene"
+      },
+      {
+        "id": "vieilles-charrues-scene-glenmor",
+        "festivalId": "vieilles-charrues",
+        "name": "Scene Glenmor"
+      },
+      {
+        "id": "vieilles-charrues-club-bruant",
+        "festivalId": "vieilles-charrues",
+        "name": "Club Bruant"
+      }
+    ],
+    "performances": [
+      {
+        "id": "vieilles-charrues-katy-perry",
+        "festivalId": "vieilles-charrues",
+        "stageId": "vieilles-charrues-grande-scene",
+        "artistId": "katy-perry",
+        "start": "2027-07-15T18:00:00+02:00",
+        "end": "2027-07-15T19:15:00+02:00"
+      },
+      {
+        "id": "vieilles-charrues-gims",
+        "festivalId": "vieilles-charrues",
+        "stageId": "vieilles-charrues-scene-glenmor",
+        "artistId": "gims",
+        "start": "2027-07-16T18:00:00+02:00",
+        "end": "2027-07-16T19:15:00+02:00"
+      },
+      {
+        "id": "vieilles-charrues-nick-cave-the-bad-seeds",
+        "festivalId": "vieilles-charrues",
+        "stageId": "vieilles-charrues-club-bruant",
+        "artistId": "nick-cave-the-bad-seeds",
+        "start": "2027-07-17T18:00:00+02:00",
+        "end": "2027-07-17T19:15:00+02:00"
+      },
+      {
+        "id": "vieilles-charrues-jean-louis-aubert",
+        "festivalId": "vieilles-charrues",
+        "stageId": "vieilles-charrues-grande-scene",
+        "artistId": "jean-louis-aubert",
+        "start": "2027-07-18T18:00:00+02:00",
+        "end": "2027-07-18T19:15:00+02:00"
+      },
+      {
+        "id": "vieilles-charrues-mosimann",
+        "festivalId": "vieilles-charrues",
+        "stageId": "vieilles-charrues-scene-glenmor",
+        "artistId": "mosimann",
+        "start": "2027-07-15T20:00:00+02:00",
+        "end": "2027-07-15T21:15:00+02:00"
+      },
+      {
+        "id": "vieilles-charrues-matmatah",
+        "festivalId": "vieilles-charrues",
+        "stageId": "vieilles-charrues-club-bruant",
+        "artistId": "matmatah",
+        "start": "2027-07-16T20:00:00+02:00",
+        "end": "2027-07-16T21:15:00+02:00"
+      },
+      {
+        "id": "vieilles-charrues-aya-nakamura",
+        "festivalId": "vieilles-charrues",
+        "stageId": "vieilles-charrues-grande-scene",
+        "artistId": "aya-nakamura",
+        "start": "2027-07-17T20:00:00+02:00",
+        "end": "2027-07-17T21:15:00+02:00"
+      },
+      {
+        "id": "vieilles-charrues-mika",
+        "festivalId": "vieilles-charrues",
+        "stageId": "vieilles-charrues-scene-glenmor",
+        "artistId": "mika",
+        "start": "2027-07-18T20:00:00+02:00",
+        "end": "2027-07-18T21:15:00+02:00"
+      },
+      {
+        "id": "vieilles-charrues-orelsan",
+        "festivalId": "vieilles-charrues",
+        "stageId": "vieilles-charrues-club-bruant",
+        "artistId": "orelsan",
+        "start": "2027-07-15T22:00:00+02:00",
+        "end": "2027-07-15T23:15:00+02:00"
+      },
+      {
+        "id": "vieilles-charrues-jain",
+        "festivalId": "vieilles-charrues",
+        "stageId": "vieilles-charrues-grande-scene",
+        "artistId": "jain",
+        "start": "2027-07-16T22:00:00+02:00",
+        "end": "2027-07-16T23:15:00+02:00"
+      }
+    ]
+  },
+  {
+    "festival": {
+      "id": "eurockeennes",
+      "name": "Les Eurockeennes",
+      "city": "Belfort",
+      "latitude": 47.686167,
+      "longitude": 6.8081694,
+      "startDate": "2027-07-02T00:00:00+02:00",
+      "endDate": "2027-07-05T23:59:00+02:00",
+      "website": "https://www.eurockeennes.fr/",
+      "description": "Festival on the Malsaucy peninsula near Belfort, announced for 2 to 5 July 2027. Demo data: the lineup and the timetable are for demonstration only."
+    },
+    "stages": [
+      {
+        "id": "eurockeennes-grande-scene",
+        "festivalId": "eurockeennes",
+        "name": "Grande Scene"
+      },
+      {
+        "id": "eurockeennes-green-room",
+        "festivalId": "eurockeennes",
+        "name": "Green Room"
+      },
+      {
+        "id": "eurockeennes-plage",
+        "festivalId": "eurockeennes",
+        "name": "Plage"
+      }
+    ],
+    "performances": [
+      {
+        "id": "eurockeennes-pulp",
+        "festivalId": "eurockeennes",
+        "stageId": "eurockeennes-grande-scene",
+        "artistId": "pulp",
+        "start": "2027-07-02T18:00:00+02:00",
+        "end": "2027-07-02T19:15:00+02:00"
+      },
+      {
+        "id": "eurockeennes-the-offspring",
+        "festivalId": "eurockeennes",
+        "stageId": "eurockeennes-green-room",
+        "artistId": "the-offspring",
+        "start": "2027-07-03T18:00:00+02:00",
+        "end": "2027-07-03T19:15:00+02:00"
+      },
+      {
+        "id": "eurockeennes-aya-nakamura",
+        "festivalId": "eurockeennes",
+        "stageId": "eurockeennes-plage",
+        "artistId": "aya-nakamura",
+        "start": "2027-07-04T18:00:00+02:00",
+        "end": "2027-07-04T19:15:00+02:00"
+      },
+      {
+        "id": "eurockeennes-orelsan",
+        "festivalId": "eurockeennes",
+        "stageId": "eurockeennes-grande-scene",
+        "artistId": "orelsan",
+        "start": "2027-07-05T18:00:00+02:00",
+        "end": "2027-07-05T19:15:00+02:00"
+      },
+      {
+        "id": "eurockeennes-mosimann",
+        "festivalId": "eurockeennes",
+        "stageId": "eurockeennes-green-room",
+        "artistId": "mosimann",
+        "start": "2027-07-02T20:00:00+02:00",
+        "end": "2027-07-02T21:15:00+02:00"
+      },
+      {
+        "id": "eurockeennes-ben-harper-the-innocent-criminals",
+        "festivalId": "eurockeennes",
+        "stageId": "eurockeennes-plage",
+        "artistId": "ben-harper-the-innocent-criminals",
+        "start": "2027-07-03T20:00:00+02:00",
+        "end": "2027-07-03T21:15:00+02:00"
+      },
+      {
+        "id": "eurockeennes-the-lumineers",
+        "festivalId": "eurockeennes",
+        "stageId": "eurockeennes-grande-scene",
+        "artistId": "the-lumineers",
+        "start": "2027-07-04T20:00:00+02:00",
+        "end": "2027-07-04T21:15:00+02:00"
+      },
+      {
+        "id": "eurockeennes-vald",
+        "festivalId": "eurockeennes",
+        "stageId": "eurockeennes-green-room",
+        "artistId": "vald",
+        "start": "2027-07-05T20:00:00+02:00",
+        "end": "2027-07-05T21:15:00+02:00"
+      },
+      {
+        "id": "eurockeennes-feu-chatterton",
+        "festivalId": "eurockeennes",
+        "stageId": "eurockeennes-plage",
+        "artistId": "feu-chatterton",
+        "start": "2027-07-02T22:00:00+02:00",
+        "end": "2027-07-02T23:15:00+02:00"
+      },
+      {
+        "id": "eurockeennes-sleaford-mods",
+        "festivalId": "eurockeennes",
+        "stageId": "eurockeennes-grande-scene",
+        "artistId": "sleaford-mods",
+        "start": "2027-07-03T22:00:00+02:00",
+        "end": "2027-07-03T23:15:00+02:00"
+      },
+      {
+        "id": "eurockeennes-airbourne",
+        "festivalId": "eurockeennes",
+        "stageId": "eurockeennes-green-room",
+        "artistId": "airbourne",
+        "start": "2027-07-04T22:00:00+02:00",
+        "end": "2027-07-04T23:15:00+02:00"
+      },
+      {
+        "id": "eurockeennes-social-distortion",
+        "festivalId": "eurockeennes",
+        "stageId": "eurockeennes-plage",
+        "artistId": "social-distortion",
+        "start": "2027-07-05T22:00:00+02:00",
+        "end": "2027-07-05T23:15:00+02:00"
+      }
+    ]
+  },
+  {
+    "festival": {
+      "id": "francofolies",
+      "name": "Les Francofolies de La Rochelle",
+      "city": "La Rochelle",
+      "latitude": 46.1555,
+      "longitude": -1.1525,
+      "startDate": "2027-07-09T00:00:00+02:00",
+      "endDate": "2027-07-13T23:59:00+02:00",
+      "website": "https://www.francofolies.fr/",
+      "description": "French-language song festival in La Rochelle; the 2027 dates are not confirmed, this is the usual mid-July period. Demo data: the lineup and the timetable are for demonstration only."
+    },
+    "stages": [
+      {
+        "id": "francofolies-scene-jean-louis-foulquier",
+        "festivalId": "francofolies",
+        "name": "Scene Jean-Louis Foulquier"
+      },
+      {
+        "id": "francofolies-grand-theatre-de-la-passerelle",
+        "festivalId": "francofolies",
+        "name": "Grand Theatre de la Passerelle"
+      },
+      {
+        "id": "francofolies-scene-verdiere",
+        "festivalId": "francofolies",
+        "name": "Scene Verdiere"
+      }
+    ],
+    "performances": [
+      {
+        "id": "francofolies-gims",
+        "festivalId": "francofolies",
+        "stageId": "francofolies-scene-jean-louis-foulquier",
+        "artistId": "gims",
+        "start": "2027-07-09T18:00:00+02:00",
+        "end": "2027-07-09T19:15:00+02:00"
+      },
+      {
+        "id": "francofolies-zaz",
+        "festivalId": "francofolies",
+        "stageId": "francofolies-grand-theatre-de-la-passerelle",
+        "artistId": "zaz",
+        "start": "2027-07-10T18:00:00+02:00",
+        "end": "2027-07-10T19:15:00+02:00"
+      },
+      {
+        "id": "francofolies-youssou-ndour",
+        "festivalId": "francofolies",
+        "stageId": "francofolies-scene-verdiere",
+        "artistId": "youssou-ndour",
+        "start": "2027-07-11T18:00:00+02:00",
+        "end": "2027-07-11T19:15:00+02:00"
+      },
+      {
+        "id": "francofolies-luiza",
+        "festivalId": "francofolies",
+        "stageId": "francofolies-scene-jean-louis-foulquier",
+        "artistId": "luiza",
+        "start": "2027-07-12T18:00:00+02:00",
+        "end": "2027-07-12T19:15:00+02:00"
+      },
+      {
+        "id": "francofolies-aya-nakamura",
+        "festivalId": "francofolies",
+        "stageId": "francofolies-grand-theatre-de-la-passerelle",
+        "artistId": "aya-nakamura",
+        "start": "2027-07-13T18:00:00+02:00",
+        "end": "2027-07-13T19:15:00+02:00"
+      },
+      {
+        "id": "francofolies-orelsan",
+        "festivalId": "francofolies",
+        "stageId": "francofolies-scene-verdiere",
+        "artistId": "orelsan",
+        "start": "2027-07-09T20:00:00+02:00",
+        "end": "2027-07-09T21:15:00+02:00"
+      },
+      {
+        "id": "francofolies-mika",
+        "festivalId": "francofolies",
+        "stageId": "francofolies-scene-jean-louis-foulquier",
+        "artistId": "mika",
+        "start": "2027-07-10T20:00:00+02:00",
+        "end": "2027-07-10T21:15:00+02:00"
+      },
+      {
+        "id": "francofolies-niska",
+        "festivalId": "francofolies",
+        "stageId": "francofolies-grand-theatre-de-la-passerelle",
+        "artistId": "niska",
+        "start": "2027-07-11T20:00:00+02:00",
+        "end": "2027-07-11T21:15:00+02:00"
+      },
+      {
+        "id": "francofolies-louane",
+        "festivalId": "francofolies",
+        "stageId": "francofolies-scene-verdiere",
+        "artistId": "louane",
+        "start": "2027-07-12T20:00:00+02:00",
+        "end": "2027-07-12T21:15:00+02:00"
+      },
+      {
+        "id": "francofolies-feu-chatterton",
+        "festivalId": "francofolies",
+        "stageId": "francofolies-scene-jean-louis-foulquier",
+        "artistId": "feu-chatterton",
+        "start": "2027-07-13T20:00:00+02:00",
+        "end": "2027-07-13T21:15:00+02:00"
+      },
+      {
+        "id": "francofolies-gaetan-roussel",
+        "festivalId": "francofolies",
+        "stageId": "francofolies-grand-theatre-de-la-passerelle",
+        "artistId": "gaetan-roussel",
+        "start": "2027-07-09T22:00:00+02:00",
+        "end": "2027-07-09T23:15:00+02:00"
+      },
+      {
+        "id": "francofolies-julien-clerc",
+        "festivalId": "francofolies",
+        "stageId": "francofolies-scene-verdiere",
+        "artistId": "julien-clerc",
+        "start": "2027-07-10T22:00:00+02:00",
+        "end": "2027-07-10T23:15:00+02:00"
+      },
+      {
+        "id": "francofolies-raphael",
+        "festivalId": "francofolies",
+        "stageId": "francofolies-scene-jean-louis-foulquier",
+        "artistId": "raphael",
+        "start": "2027-07-11T22:00:00+02:00",
+        "end": "2027-07-11T23:15:00+02:00"
+      },
+      {
+        "id": "francofolies-odezenne",
+        "festivalId": "francofolies",
+        "stageId": "francofolies-grand-theatre-de-la-passerelle",
+        "artistId": "odezenne",
+        "start": "2027-07-12T22:00:00+02:00",
+        "end": "2027-07-12T23:15:00+02:00"
+      }
+    ]
+  },
+  {
+    "festival": {
+      "id": "trans-musicales",
+      "name": "Les Rencontres Trans Musicales",
+      "city": "Rennes",
+      "latitude": 48.058133,
+      "longitude": -1.732183,
+      "startDate": "2027-12-01T00:00:00+01:00",
+      "endDate": "2027-12-05T23:59:00+01:00",
+      "website": "https://www.lestrans.com/",
+      "description": "Festival of new music at the Parc Expo of Rennes; the 2027 dates are not announced, this is the usual early-December period. Demo data: the lineup and the timetable are for demonstration only."
+    },
+    "stages": [
+      {
+        "id": "trans-musicales-hall-8",
+        "festivalId": "trans-musicales",
+        "name": "Hall 8"
+      },
+      {
+        "id": "trans-musicales-hall-9",
+        "festivalId": "trans-musicales",
+        "name": "Hall 9"
+      },
+      {
+        "id": "trans-musicales-greenroom",
+        "festivalId": "trans-musicales",
+        "name": "Greenroom"
+      }
+    ],
+    "performances": [
+      {
+        "id": "trans-musicales-rouperou",
+        "festivalId": "trans-musicales",
+        "stageId": "trans-musicales-hall-8",
+        "artistId": "rouperou",
+        "start": "2027-12-01T18:00:00+01:00",
+        "end": "2027-12-01T19:15:00+01:00"
+      },
+      {
+        "id": "trans-musicales-odoneila",
+        "festivalId": "trans-musicales",
+        "stageId": "trans-musicales-hall-9",
+        "artistId": "odoneila",
+        "start": "2027-12-02T18:00:00+01:00",
+        "end": "2027-12-02T19:15:00+01:00"
+      },
+      {
+        "id": "trans-musicales-a-l-aube",
+        "festivalId": "trans-musicales",
+        "stageId": "trans-musicales-greenroom",
+        "artistId": "a-l-aube",
+        "start": "2027-12-03T18:00:00+01:00",
+        "end": "2027-12-03T19:15:00+01:00"
+      },
+      {
+        "id": "trans-musicales-gregailh",
+        "festivalId": "trans-musicales",
+        "stageId": "trans-musicales-hall-8",
+        "artistId": "gregailh",
+        "start": "2027-12-04T18:00:00+01:00",
+        "end": "2027-12-04T19:15:00+01:00"
+      },
+      {
+        "id": "trans-musicales-kimia",
+        "festivalId": "trans-musicales",
+        "stageId": "trans-musicales-hall-9",
+        "artistId": "kimia",
+        "start": "2027-12-05T18:00:00+01:00",
+        "end": "2027-12-05T19:15:00+01:00"
+      },
+      {
+        "id": "trans-musicales-angine-de-poitrine",
+        "festivalId": "trans-musicales",
+        "stageId": "trans-musicales-greenroom",
+        "artistId": "angine-de-poitrine",
+        "start": "2027-12-01T20:00:00+01:00",
+        "end": "2027-12-01T21:15:00+01:00"
+      },
+      {
+        "id": "trans-musicales-tarta-relena",
+        "festivalId": "trans-musicales",
+        "stageId": "trans-musicales-hall-8",
+        "artistId": "tarta-relena",
+        "start": "2027-12-02T20:00:00+01:00",
+        "end": "2027-12-02T21:15:00+01:00"
+      },
+      {
+        "id": "trans-musicales-dolphyn",
+        "festivalId": "trans-musicales",
+        "stageId": "trans-musicales-hall-9",
+        "artistId": "dolphyn",
+        "start": "2027-12-03T20:00:00+01:00",
+        "end": "2027-12-03T21:15:00+01:00"
+      }
+    ]
+  }
+]
