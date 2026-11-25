@@ -122,9 +122,7 @@ private struct FestivalDetailContent: View {
                     if !lineup.isEmpty {
                         VStack(alignment: .leading, spacing: 8) {
                             SectionHeader("Programmation", seeAllValue: Route.festivalLineup(festival.id))
-                            Text("Données de démonstration (dernière édition)")
-                                .efText(.caption)
-                                .foregroundStyle(EFTextColor.muted.color)
+                            DemoCaption()
                             ForEach(lineup) { artist in
                                 NavigationLink(value: Route.artist(artist.id)) { artistRow(artist) }
                                     .buttonStyle(.plain)

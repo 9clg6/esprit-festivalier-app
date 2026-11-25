@@ -17,7 +17,8 @@ struct LineupsView: View {
             return Lineups.feed(lineups: data.lineups, festivals: data.festivals, artists: data.artists, now: Date())
         } content: { feed, reload in
             ScrollView {
-                LazyVStack(spacing: 12) {
+                LazyVStack(alignment: .leading, spacing: 12) {
+                    if environment.isDemo { DemoCaption() }
                     if feed.isEmpty {
                         EmptyState(
                             systemImage: "music.mic", title: "Aucune programmation annoncée",
@@ -84,6 +85,7 @@ struct FestivalLineupView: View {
         } content: { lineup, _ in
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
+                    if environment.isDemo { DemoCaption() }
                     if let announcedOn = lineup.announcedOn {
                         Text(announced(announcedOn)).efText(.bodySecondary).foregroundStyle(EFTextColor.ink2.color)
                     }

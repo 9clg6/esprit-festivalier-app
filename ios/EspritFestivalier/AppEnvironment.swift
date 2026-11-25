@@ -11,6 +11,8 @@ struct AppEnvironment: Sendable {
     let artists: any ArtistSource
     /// Favorites, kept in Application Support (not Caches: the system may empty Caches).
     let favorites: FavoritesModel
+    /// Lineups and artists are demo data: the screens say so.
+    let isDemo: Bool
 
     @MainActor init(kind: DataSourceKind) {
         // Articles always come from the live site feed, whatever the data source.
@@ -23,6 +25,7 @@ struct AppEnvironment: Sendable {
             festivals = MockFestivalSource()
             lineups = MockLineupSource()
             artists = MockArtistSource()
+            isDemo = true
         }
         favorites = FavoritesModel(
             store: FavoritesStore(directory: .applicationSupportDirectory.appending(path: "EspritFestivalier"))

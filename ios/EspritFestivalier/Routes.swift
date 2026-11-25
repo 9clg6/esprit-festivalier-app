@@ -73,6 +73,15 @@ struct Loaded<Value, Content: View>: View {
     }
 }
 
+/// Said wherever lineups are shown while they come from the demo data.
+struct DemoCaption: View {
+    var body: some View {
+        Text("Données de démonstration (dernière édition)")
+            .efText(.caption)
+            .foregroundStyle(EFTextColor.muted.color)
+    }
+}
+
 /// An artist without photo: initials on `sky`. Decorative for VoiceOver (the name is next to it).
 struct ArtistAvatar: View {
     let name: String

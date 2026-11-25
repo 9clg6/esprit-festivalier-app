@@ -84,6 +84,7 @@ struct HomeView: View {
         if !cards.isEmpty {
             section {
                 SectionHeader("Programmations", seeAllValue: Route.lineups)
+                if environment.isDemo { DemoCaption() }
             } content: {
                 carousel(cards) { card in
                     NavigationLink(value: Route.festivalLineup(card.festival.id)) {
