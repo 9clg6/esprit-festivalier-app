@@ -35,8 +35,9 @@ public final class ArticleReaderModel {
 
     public let article: Article
     public private(set) var state = State.loading
+    /// The blocks of `.loaded`, built once and set in the same step: never `.loaded` without them.
+    public private(set) var rendered: [RenderedBlock] = []
     private let source: any ArticleContentSource
-    private var activeEmbeds: Set<URL> = []
 
     public init(article: Article, source: any ArticleContentSource) {
         self.article = article
@@ -53,22 +54,22 @@ public final class ArticleReaderModel {
 
     public func load() async {
         do {
-            state = .loaded(try await source.content(at: article.link))
+            let content = try await source.content(at: article.link)
+            rendered = RenderedBlock.make(content.blocks)
+            state = .loaded(content)
         } catch {
-            // Leaving the screen cancels the load: not a failure.
-            if Task.isCancelled || error is CancellationError || (error as? URLError)?.code == .cancelled { return }
+            // Leaving the screen cancels the load: not a failure. A `URLError(.cancelled)` while the screen
+            // is open (session invalidated) is one.
+            if Task.isCancelled || error is CancellationError { return }
             state = .failed(Self.offlineCodes.contains((error as? URLError)?.code) ? .offline : .unreadable)
         }
     }
 
     public func retry() async {
         state = .loading
+        rendered = []
         await load()
     }
-
-    public func isEmbedActive(_ id: URL) -> Bool { activeEmbeds.contains(id) }
-
-    public func activateEmbed(_ id: URL) { activeEmbeds.insert(id) }
 
     public func destination(for url: URL) -> ReaderDestination {
         switch SiteLink(url: url) {
