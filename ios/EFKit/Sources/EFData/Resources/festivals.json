@@ -143,12 +143,12 @@
       {
         "id": "vieilles-charrues-grande-scene",
         "festivalId": "vieilles-charrues",
-        "name": "Grande Scene"
+        "name": "Grande Scène"
       },
       {
         "id": "vieilles-charrues-scene-glenmor",
         "festivalId": "vieilles-charrues",
-        "name": "Scene Glenmor"
+        "name": "Scène Glenmor"
       },
       {
         "id": "vieilles-charrues-club-bruant",
@@ -242,7 +242,7 @@
   {
     "festival": {
       "id": "eurockeennes",
-      "name": "Les Eurockeennes",
+      "name": "Les Eurockéennes",
       "city": "Belfort",
       "latitude": 47.686167,
       "longitude": 6.8081694,
@@ -255,7 +255,7 @@
       {
         "id": "eurockeennes-grande-scene",
         "festivalId": "eurockeennes",
-        "name": "Grande Scene"
+        "name": "Grande Scène"
       },
       {
         "id": "eurockeennes-green-room",
@@ -383,17 +383,17 @@
       {
         "id": "francofolies-scene-jean-louis-foulquier",
         "festivalId": "francofolies",
-        "name": "Scene Jean-Louis Foulquier"
+        "name": "Scène Jean-Louis Foulquier"
       },
       {
         "id": "francofolies-grand-theatre-de-la-passerelle",
         "festivalId": "francofolies",
-        "name": "Grand Theatre de la Passerelle"
+        "name": "Grand Théâtre de la Passerelle"
       },
       {
         "id": "francofolies-scene-verdiere",
         "festivalId": "francofolies",
-        "name": "Scene Verdiere"
+        "name": "Scène Verdière"
       }
     ],
     "performances": [
