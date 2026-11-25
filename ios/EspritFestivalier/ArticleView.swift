@@ -13,6 +13,8 @@ struct ArticleView: View {
     @State private var festivalLookup: (slug: String, task: Task<Void, Never>)?
     /// The screen's width, measured: images ask the site the size they are shown at (0 until measured).
     @State private var screenWidth: CGFloat = 0
+    /// Set once the full text was counted: a read counts once per screen.
+    @State private var counted = false
     /// The parent's action: Mail and Phone for `mailto:` and `tel:`.
     @Environment(\.openURL) private var openURL
     @Environment(\.pushRoute) private var push
@@ -20,9 +22,12 @@ struct ArticleView: View {
     @Environment(\.dynamicTypeSize) private var typeSize
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private let environment: AppEnvironment
+    /// Reactions and reads are kept under it (ADR-007); nil (no number in the address): neither.
+    private let key: ArticleKey?
 
     init(article: Article, environment: AppEnvironment) {
         self.environment = environment
+        key = ArticleKey(numbered: article.link)
         _model = State(initialValue: ArticleReaderModel(article: article, source: environment.articleContent))
     }
 
@@ -33,6 +38,12 @@ struct ArticleView: View {
                 if let heroURL { hero(heroURL) }
                 header.padding(.horizontal, 16)
                 text
+                // E11: under the text (its inline « Lire aussi » cards included), before tags and author.
+                if let key {
+                    ReactionBar(article: key, service: environment.reactions)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 8)
+                }
                 ShareLink(item: article.link) {
                     Label("Partager", systemImage: "square.and.arrow.up")
                         .efText(.strongLabel)
@@ -58,6 +69,15 @@ struct ArticleView: View {
         .fullScreenCover(item: $zoomed) { ZoomedImage(image: $0.image) }
         .task {
             if case .loading = model.state { await model.load() }
+        }
+        .task(id: model.fullTextDisplayed) {
+            // Anonymous: the article and the Paris day only (FR-036), once per day on this device.
+            // Only the full text counts: never the excerpt, never a failure.
+            // swiftlint:disable:next todo
+            // TODO(STORY-030): skip when the audience-measurement setting is off; counted by default until it exists.
+            guard model.fullTextDisplayed, !counted, let key else { return }
+            counted = true
+            try? await environment.reads.articleShown(key, fullText: true, at: .now)
         }
         .onDisappear {
             festivalLookup?.task.cancel()
