@@ -53,6 +53,12 @@ public actor LocalReactionService: ReactionService {
         return summary(for: article)
     }
 
+    /// One actor call: nothing can change the entry between the read and the write.
+    @discardableResult
+    public func toggle(_ reaction: Reaction, on article: Article.ID) throws -> ReactionSummary {
+        try set(reaction, active: !summary(for: article).mine.contains(reaction), on: article)
+    }
+
     /// The same article always gets the same made-up count (not `Hasher`: it changes every launch).
     private static func demoCount(_ article: Article.ID, _ index: Int) -> Int {
         let seed = article.unicodeScalars.reduce(UInt64(5381)) { $0 &* 33 &+ UInt64($1.value) }

@@ -1,14 +1,18 @@
 import SwiftUI
 
 /// One reaction of the article's bar. Neutral: `ink2` on `sky`; selected: white on `accentFill` with
-/// a checkmark (never the colour alone). The count shows only when known and above zero ("1,2 k"
-/// past 999). VoiceOver reads the label, "Sélectionné" and the count, never the emoji. 44 pt tall.
+/// a checkmark (never the colour alone); the emoji bounces 0.3 s when selected, unless Reduce Motion.
+/// The count shows only when known and above zero ("1,2 k" past 999). VoiceOver reads the label,
+/// "Sélectionné" and the count, never the emoji. 44 pt tall.
 public struct ReactionPill: View {
     private let emoji: String
     private let label: String
     private let count: Int?
     private let isSelected: Bool
     private let action: () -> Void
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// Bumped when the pill becomes selected: the emoji's 0.3 s bounce.
+    @State private var bounces = 0
 
     public init(emoji: String, label: String, count: Int?, isSelected: Bool, action: @escaping () -> Void) {
         self.emoji = emoji
@@ -25,6 +29,12 @@ public struct ReactionPill: View {
                     Image(systemName: "checkmark").font(.caption.weight(.bold))
                 }
                 Text(emoji).font(EFTextStyle.body.font)
+                    .keyframeAnimator(initialValue: 1.0, trigger: bounces) { emoji, scale in
+                        emoji.scaleEffect(scale)
+                    } keyframes: { _ in
+                        CubicKeyframe(1.3, duration: 0.15)
+                        CubicKeyframe(1.0, duration: 0.15)
+                    }
                 Text(label).efText(isSelected ? .strongLabel : .bodySecondary)
                 if let shown { Text(shown).efText(.strongLabel) }
             }
@@ -36,6 +46,9 @@ public struct ReactionPill: View {
             .contentShape(Capsule())
         }
         .buttonStyle(.plain)
+        .onChange(of: isSelected) { _, selected in
+            if selected, !reduceMotion { bounces += 1 }
+        }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(label)
         .accessibilityValue(count.map { $0 > 0 ? "\($0) réaction\($0 > 1 ? "s" : "")" : "" } ?? "")

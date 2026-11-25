@@ -46,10 +46,14 @@ public struct ReactionSummary: Sendable, Equatable {
 public protocol ReactionService: Sendable {
     func summary(for article: Article.ID) async throws -> ReactionSummary
     func set(_ reaction: Reaction, active: Bool, on article: Article.ID) async throws -> ReactionSummary
+    /// Adds the reaction, or removes it when it is already mine. The app decides the target at tap
+    /// time (`ReactionsModel`); a service implements this as one call when it can.
+    @discardableResult
+    func toggle(_ reaction: Reaction, on article: Article.ID) async throws -> ReactionSummary
 }
 
 extension ReactionService {
-    /// Tapping a pill: adds the reaction, or removes it when it is already mine.
+    /// Read then write: two calls, so a concurrent write in between can be overwritten.
     @discardableResult
     public func toggle(_ reaction: Reaction, on article: Article.ID) async throws -> ReactionSummary {
         let active = try await summary(for: article).mine.contains(reaction)
