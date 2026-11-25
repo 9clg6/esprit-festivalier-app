@@ -13,6 +13,10 @@ final class PicksModel {
     private let store: PicksStore
     private let reminders: ConcertReminderScheduler
     @ObservationIgnored private var scheduling: Task<Void, Never>?
+    /// The last write: each write waits for it, so writes reach the store in tap order.
+    @ObservationIgnored private var pendingWrite: Task<Void, Never>?
+    /// Bumped by each tap on an id: a failed write reverts the star only if it is still the last tap.
+    @ObservationIgnored private var generation: [Performance.ID: Int] = [:]
 
     /// UserDefaults keys; the lead is also read by the Profil tab through `@AppStorage`.
     static let leadKey = "reminderLead"
@@ -41,10 +45,20 @@ final class PicksModel {
         let target = !contains(id)
         if target { ids.insert(id) } else { ids.remove(id) }
         if target { offerReminders() }
-        Task {
-            // A failed write puts the star back: what is shown is what is saved.
-            try? await store.setPicked(id, target)
-            ids = await store.pickedIDs
+        let token = (generation[id] ?? 0) + 1
+        generation[id] = token
+        let previous = pendingWrite
+        pendingWrite = Task {
+            await previous?.value
+            do {
+                try await store.setPicked(id, target)
+            } catch {
+                // A failed write puts the star back to what is saved.
+                let saved = await store.isPicked(id)
+                if generation[id] == token {
+                    if saved { ids.insert(id) } else { ids.remove(id) }
+                }
+            }
             rescheduleReminders()
         }
     }
