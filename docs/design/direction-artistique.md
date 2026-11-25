@@ -44,11 +44,12 @@ Les trois polices sont libres (SIL Open Font License) : on peut les embarquer da
 ## Logo et ton
 
 - Logo : « Esprit Festivalier » en lettres blanches épaisses, style pixel/bloc, contour noir (`/icons/logo-260.webp`, icône `/icons/icon-512.png`).
+- **SVG : `assets/brand/esprit-festivalier-logo.svg`.** Aucun SVG officiel n'est publié : celui-ci est vectorisé (potrace, 2 couches : noir `#000000` et blanc cassé `#F0F0F0`) depuis l'écran de démarrage du back-office en 2048 px. Fidèle à l'œil ; à remplacer par le fichier source du designer s'il existe.
 - Accroche : « Le média des festivals, par ceux qui les vivent ».
 - Ton : sincère, indépendant, tutoiement dans les appels à l'action (« Tu vis les festivals de l'intérieur ? »).
 - Photos : éditoriales, concerts et festivals, toujours créditées (« Photo : … »).
 
 ## À confirmer avec le designer du site
 
-- Fichiers sources du logo (SVG) et règles d'usage.
+- Fichier source du logo (pour remplacer la version vectorisée) et règles d'usage.
 - Usage exact de `sun` (jaune) : réservé aux badges premium ? Proposition : oui, il marque tout ce qui est premium ou mis en avant.

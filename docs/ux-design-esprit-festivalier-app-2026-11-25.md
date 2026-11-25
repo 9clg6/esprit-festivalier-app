@@ -452,7 +452,7 @@ Couleurs : celles de `docs/design/direction-artistique.md`, dans un catalogue d'
 
 ### Ressources à fournir
 
-- Logo en SVG (à demander au designer du site) ; d'ici là, le WebP du site.
+- Logo en SVG : `assets/brand/esprit-festivalier-logo.svg` (vectorisé).
 - Icône d'app : dérivée de `/icons/icon-512.png`, à décliner en 1024 px.
 - Polices : Chivo, Raleway, Open Sans (Google Fonts, SIL OFL).
 - Icônes : SF Symbols.
@@ -486,7 +486,7 @@ Couleurs : celles de `docs/design/direction-artistique.md`, dans un catalogue d'
 ### À faire avant le développement
 
 - [ ] Relecture par la rédaction (ton des textes)
-- [ ] Logo SVG reçu
+- [x] Logo SVG (vectorisé, `assets/brand/`)
 - [ ] Maquettes visuelles (facultatif : les aperçus SwiftUI pourront servir de maquettes)
 
 ---
