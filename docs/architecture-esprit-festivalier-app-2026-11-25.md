@@ -176,7 +176,7 @@ flowchart LR
 - Un modèle de vue `@Observable` par écran ; aucune logique métier dans les vues.
 - Injection des dépendances par un `AppEnvironment` placé dans l'environnement SwiftUI.
 
-**Interfaces :** SwiftUI, liens universels (`/festival/{slug}`, `/article/{id}`), notifications.
+**Interfaces :** SwiftUI, adresses du site `/festival/<slug>/` et `/<slug>-<numéro>/` (article), routées dans l'app ; liens universels plus tard (FR-034) ; notifications.
 
 **Dépendances :** `EFKit`.
 
@@ -316,7 +316,7 @@ public protocol ArtistSource: Sendable {
 - `reaction` (article, réaction, votant) : voir ADR-007, après le serveur
 - Phase 2 : `entitlement` (userId, produit, expire le, transactionId d'origine), `contest`, `contest_entry` (contestId, userId, nombre d'entrées), `promotion`, `day_message`, `premium_lineup`
 
-**Mesure d'audience (Analytics Engine) :** événements `festival_view`, `favorite_add`, `ticket_click`, `discount_use` avec festivalId et jour, **sans identifiant d'utilisateur ni d'appareil**.
+**Mesure d'audience (Analytics Engine) :** événements `festival_view`, `favorite_add`, `ticket_click`, `discount_use` avec festivalId et jour, `article_view` avec la clé de l'article et le jour (FR-036), **sans identifiant d'utilisateur ni d'appareil**.
 
 ### Base
 
@@ -560,7 +560,10 @@ docs/
 | FR-028 Liens internes | SiteLink, `OpenURLAction`, Route |
 | FR-029 Auteurs | AuthorSource, KnownAuthors |
 | FR-030 Réactions | ReactionService ; plus tard API `reactions`, D1 `reaction` |
-| FR-031 à FR-035 (proposées) | Voir ADR-007, « Autres manques » |
+| FR-031 Archives | Lecteur de cartes (pages `/category/<slug>/`) |
+| FR-032 Pages liste | Lecteur de cartes, écran « liste d'articles » |
+| FR-033 à FR-035 (plus tard) | Voir ADR-007, « Autres manques » |
+| FR-036 Lectures | File d'événements locale, puis `POST /v1/events` (Analytics Engine) |
 
 ### NFR
 
@@ -620,7 +623,7 @@ Python reste utilisé pour le pipeline de données (option A comprise).
 - ✓ RGPD simple, confiance des utilisateurs.
 - ✗ Pas de statistiques de position côté serveur ; FR-026 se limite à des données agrégées (région déclarée, pas de position).
 
-### ADR-007 : application complète, contenu natif — **proposée (2026-11-25)**
+### ADR-007 : application complète, contenu natif — **proposée (2026-11-25), décisions produit du même jour intégrées**
 
 - ✓ Articles lus en entier, auteurs et réactions dans l'app ; le site n'est plus une sortie obligée. Détail dans la section suivante.
 - ✗ Sans API, l'app lit le HTML du site : un changement de gabarit peut casser la lecture. Mesures : repères à un seul endroit, fixtures dorées, garde-fou nocturne, repli sur l'extrait. À remplacer par un flux du site dès qu'il existe.
@@ -707,7 +710,7 @@ public struct InlineRun: Sendable, Codable, Hashable {
 | `SitePageArticleContentSource` | Bêta : télécharge la page et la lit |
 | `MockArticleContentSource` | Tests, aperçus, démo sans réseau (JSON embarqué) |
 | `CachedArticleContentSource` | Enveloppe n'importe quelle source : copie disque, puis mise à jour |
-| `FeedArticleContentSource` (plus tard) | Flux du site (voir « Demande à l'équipe du site ») |
+| `FeedArticleContentSource` (plus tard) | Flux du site (voir « Flux du site, plus tard ») |
 
 **Lecture du HTML : choix.**
 
@@ -727,6 +730,7 @@ public struct InlineRun: Sendable, Codable, Hashable {
 - **Métadonnées depuis le JSON-LD** (plus stable qu'un gabarit visuel) ; HTML seulement pour le reste : chapô, corps, légendes, festival, présentation de l'auteur, connexes, sponsorisé.
 - **Corps :** de `div.article-body` à `div.read-end`. Élément inconnu → son texte dans un paragraphe : rien ne disparaît en silence.
 - **Intertitres :** `h2` à `h4` ; un paragraphe court (moins de 120 caractères) entièrement en gras devient un intertitre de niveau 3.
+- **Photos :** les photographes sont membres de l'association ; leurs photos paraissent dans l'app, toujours avec leur crédit (décision du 2026-11-25).
 - **Images :** adresse absolue sur le site, `?w=960` à l'affichage, `?w=1600` en plein écran ; largeur et hauteur gardées pour réserver la place (pas de saut à l'affichage).
 - **Contenus tiers** (`iframe` YouTube, Spotify, Instagram…) : jamais chargés dans l'article (traceurs tiers, NFR-005). Carte « Vidéo YouTube » avec titre et fournisseur ; toucher ouvre l'app concernée ou une feuille Safari.
 - **Sécurité :** l'app ne télécharge que des adresses `https://esprit-festivalier.fr/…` ; tout autre hôte reste un lien externe. Délai de 10 s (NFR-002).
@@ -742,7 +746,7 @@ public struct InlineRun: Sendable, Codable, Hashable {
 - `CachedArticleContentSource` rend la copie disque tout de suite, puis recharge si elle a plus d'une heure (même principe que `CachedFestivalSource`, NFR-002).
 - JSON lu rangé dans `Caches/articles/<key>.json` (le système peut le vider : on retélécharge) ; 100 articles au plus, les plus anciens partent.
 - Copie d'une autre `parserVersion` : rechargée si le réseau est là, affichée telle quelle sinon.
-- Images : `URLCache` de 100 Mo sur disque. Articles « à lire plus tard » (FR-033, si acceptée) : JSON et images dans Application Support, comme les fiches favorites (`OfflineImage`).
+- Images : `URLCache` de 100 Mo sur disque. Articles « à lire plus tard » (FR-033, plus tard) : JSON et images dans Application Support, comme les fiches favorites (`OfflineImage`).
 - Préchargement des 5 premiers articles du flux seulement sur un réseau ni coûteux ni restreint (Wi-Fi sans mode données réduites) (`allowsExpensiveNetworkAccess = false`, `allowsConstrainedNetworkAccess = false`).
 
 **Échec : jamais d'ouverture silencieuse de Safari.**
@@ -753,14 +757,9 @@ public struct InlineRun: Sendable, Codable, Hashable {
 - `SiteLink` (`EFDomain`) classe une adresse du site : article (`/<slug>-<numéro>/`), festival (`/festival/<slug>/`), auteur (`/author/<slug>/`), artiste (`/artiste/<slug>/`), rubrique (`/category/<slug>/`), mot-clé (`/tag/<slug>/`), autre page, externe. Une seule fonction, testée sur les adresses des fixtures.
 - Le lecteur pose une `OpenURLAction` dans l'environnement SwiftUI : un lien du site devient une `Route` ; un lien externe (contenu d'un tiers) s'ouvre dans une feuille Safari.
 - Destinations : article → E11 par adresse (nouvelle route `articleURL`) ; festival → E5 si le slug est dans le catalogue ; auteur → E16 ; artiste → E8 si l'artiste est connu (nom normalisé) ; rubrique → onglet Articles filtré. Festival hors catalogue, artiste inconnu, mot-clé → liste des articles de cette page du site (même lecteur de cartes `article.card` que les auteurs, FR-032).
-- Les liens universels du site (`apple-app-site-association`) restent à demander à l'équipe du site (FR-034). Écart : l'architecture prévoyait `/article/{id}`, le site utilise `/<slug>-<numéro>/`.
+- Adresses du site : `/<slug>-<numéro>/` pour un article (pas `/article/{id}`, corrigé dans ce document, l'UX et le sprint plan), `/festival/<slug>/` pour un festival. Liens universels : plus tard (FR-034).
 
-**Demande à l'équipe du site (plus tard, sans bloquer) :**
-1. `content:encoded` (HTML complet) et crédit photo dans le flux RSS : le même lecteur lit alors un fragment, sans dépendre du gabarit.
-2. Mieux : un flux JSON par article (`/<slug>-<numéro>.json` ou `/feed.json`) avec les champs du modèle ci-dessus.
-3. Une classe stable pour les contenus sponsorisés ; le fichier `apple-app-site-association`.
-
-Chaque réponse se branche par une nouvelle implémentation de `ArticleContentSource`, sans toucher aux écrans.
+**Flux du site, plus tard :** rien n'est demandé à l'équipe du site pour l'instant (décision du 2026-11-25). On précisera le besoin quand la lecture du HTML aura tourné un moment (pistes : texte complet dans le flux, flux JSON, marque stable « sponsorisé », `apple-app-site-association`). Une réponse se brancherait par une nouvelle implémentation de `ArticleContentSource`, sans toucher aux écrans.
 
 ### 2. Auteurs
 
@@ -790,7 +789,7 @@ public struct AuthorProfile: Sendable, Codable, Hashable {
 ### 3. Réactions
 
 **Proposition produit :**
-- 5 réactions fixes, positives seulement (contenu bénévole : pas de 👎 ni de 😡) : **J'adore**, **Ça chauffe**, **Bravo**, **Waouh**, **Instructif**. Clés neutres (`love`, `fire`, `clap`, `wow`, `insight`) ; rendu en SF Symbols aux couleurs de la DA (`heart`, `flame`, `hands.clap`, `sparkles`, `lightbulb`), plus sobre que des emojis (voir questions ouvertes).
+- 5 réactions fixes en emoji, positives seulement (contenu bénévole : pas de 👎 ni de 😡) : ❤️ J'adore, 🔥 Ça chauffe, 👏 Bravo, 🤩 Waouh, 💡 Instructif (décision du 2026-11-25). Clés neutres (`love`, `fire`, `clap`, `wow`, `insight`) : l'emoji n'est que le rendu. VoiceOver lit le libellé, jamais le nom de l'emoji.
 - Une réaction active par utilisateur et par type ; plusieurs types possibles sur un même article ; toucher à nouveau retire.
 - **Sans compte :** on réagit tout de suite ; l'état est gardé sur l'appareil (ADR-004).
 - **Compteurs :** pas de faux chiffres. Avant le serveur, la bêta montre seulement ta réaction ; la source `mock` montre des compteurs de démo avec la mention « Données de démonstration » (`DemoCaption`).
@@ -843,7 +842,15 @@ Les compteurs viennent d'un `COUNT(*) … GROUP BY` sur la clé primaire, derri�
 - Réactions comprises dans l'export et la suppression du compte ; votes anonymes effacés avec l'identifiant (« Réinitialiser » dans le Profil).
 - Étiquettes App Store et `PrivacyInfo.xcprivacy` mis à jour quand le serveur arrive (interactions avec le produit).
 
-### 4. Inventaire des sorties de l'app
+### 4. Lectures d'articles (FR-036)
+
+- Décision du 2026-11-25 : l'app compte les lectures, sans identifiant d'utilisateur ni d'appareil, agrégées par article et par jour.
+- Événement `article_view` (clé de l'article, jour) au premier affichage du texte complet ; au plus un par article et par jour sur l'appareil (le dédoublonnage reste local, rien d'identifiant ne part).
+- Respecte le choix de mesure d'audience (NFR-005), comme les autres événements de FR-026.
+- **Maintenant :** file d'événements locale (mock), la même que celle du clic billetterie (STORY-016).
+- **Plus tard :** envoi par lots par `POST /v1/events` (STORY-030) vers Analytics Engine ; export par article et par période pour la rédaction.
+
+### 5. Inventaire des sorties de l'app
 
 | Où | Aujourd'hui | Décision |
 |---|---|---|
@@ -853,7 +860,7 @@ Les compteurs viennent d'un `COUNT(*) … GROUP BY` sur la clé primaire, derri�
 | E5 Fiche, « Lire sur Esprit Festivalier ↗ » | `Link` : ouvre l'app Safari, hors de l'app | **Remplacer** : section « Articles » de la fiche (articles du festival, FR-032) |
 | E5 Fiche, « Billets ↗ » | Feuille Safari avec UTM | **Garder** : l'app ne vend jamais de billets (FR-005) |
 | E5 Fiche, « Itinéraire » | Plans (`maps.apple.com`) | **Garder** |
-| E12 Profil, « Esprit Festivalier » (`/a-propos/`) | Feuille Safari | **Remplacer** : écran « À propos » natif, texte embarqué relu par la rédaction (FR-035, Could) |
+| E12 Profil, « Esprit Festivalier » (`/a-propos/`) | Feuille Safari | **Garder** pour l'instant ; écran natif plus tard (FR-035, Could) |
 | E12 Profil, « Rejoins la rédaction » (`/recrutements/`) | Feuille Safari | **Garder** pour l'instant : c'est un formulaire de candidature, hors du rôle de l'app (FR-013) ; voir questions |
 | E12 Profil, « Ouvrir Réglages » | Réglages iOS | **Garder** |
 | E12 Profil, « Exporter mes données » | Feuille de partage | **Garder** |
@@ -861,23 +868,24 @@ Les compteurs viennent d'un `COUNT(*) … GROUP BY` sur la clé primaire, derri�
 
 Écarts relevés : le code a « Lire sur Esprit Festivalier » sur la fiche, absent de l'UX ; l'UX prévoit une section « Articles » sur la fiche (FR-004), absente du code ; l'UX dit « Lire sur le site » en E11, le code « Lire l'article complet ».
 
-### 5. Autres manques pour une app complète (propositions, à valider)
+### 6. Autres manques pour une app complète (décisions de Clément, 2026-11-25)
 
-| Proposition | Pourquoi | Priorité proposée |
+| Sujet | Pourquoi | Décision |
 |---|---|---|
-| FR-031 Archives par rubrique (au-delà des ~20 articles du flux) | Le flux ne montre que les derniers articles ; le site en a plus de 10 000 | Should |
-| FR-032 Pages liste du site dans l'app (festival, artiste, mot-clé) | Destination des liens internes ; articles d'un festival sur sa fiche (critère de FR-004 non tenu) | Must |
-| FR-033 À lire plus tard, hors ligne | Lire dans le train ou dans la file d'entrée (NFR-003) | Should |
-| FR-034 Liens universels du site | Un lien partagé ou reçu ouvre l'app, pas le site ; demande à l'équipe du site | Should |
-| FR-035 À propos natif | Dernière page « vitrine » renvoyée vers le site | Could |
-| Recherche dans les articles | Utile, mais dépend d'une page de recherche du site (non vérifiée) ou du futur flux | Could, après vérification |
-| Suivre un auteur (notification à chaque article) | Fidélise ; demande le serveur (`notify`) | Could |
-| Commentaires | **Non recommandé** : modération lourde pour une association, et le PRD exclut le fil social | Won't |
+| FR-031 Archives par rubrique (au-delà des ~20 articles du flux) | Le flux ne montre que les derniers articles ; le site en a plus de 10 000 | **Must, MVP** |
+| FR-032 Pages liste du site dans l'app (festival, artiste, mot-clé, rubrique) | Destination des liens internes ; articles d'un festival sur sa fiche (critère de FR-004) | **Must, MVP** |
+| FR-036 Lectures d'articles comptées, anonymes | Chiffres de lecture pour la rédaction | **Must, MVP** (locale d'abord) |
+| FR-033 À lire plus tard, hors ligne | Lire dans le train ou dans la file d'entrée (NFR-003) | Plus tard (Should) |
+| FR-034 Liens universels du site | Un lien partagé ou reçu ouvre l'app, pas le site | Plus tard (Should) |
+| FR-035 À propos natif | Dernière page « vitrine » renvoyée vers le site | Plus tard (Could) |
+| Recherche dans les articles | Dépend d'une page de recherche du site (non vérifiée) ou d'un futur flux | Non décidé (Could, après vérification) |
+| Suivre un auteur (notification à chaque article) | Fidélise ; demande le serveur (`notify`) | Non décidé (Could) |
+| Commentaires | Pas de modération possible pour l'association ; le PRD exclut le fil social | **Exclu (Won't)** |
 
-### 6. Composants touchés
+### 7. Composants touchés
 
 - `EFDomain` : `ArticleContentSource`, `ArticleContent`, `ArticleBlock`, `SiteLink`, `AuthorSource`, `AuthorProfile`, `ReactionService`, `Reaction`.
-- `EFData` : `HTMLReader` (lecteur tolérant), `SiteTemplate.v1`, `SitePageArticleContentSource`, `SitePageAuthorSource`, lecteur de cartes, `CachedArticleContentSource`, `KnownAuthors`, `LocalReactionService`, mocks.
+- `EFData` : `HTMLReader` (lecteur tolérant), `SiteTemplate.v1`, `SitePageArticleContentSource`, `SitePageAuthorSource`, lecteur de cartes (pages liste et archives), `CachedArticleContentSource`, `KnownAuthors`, `LocalReactionService`, événement `article_view` dans la file locale, mocks.
 - `EFDesign` : `ReactionBar`, `AuthorBlock`, `ArticleBlockView`.
 - App : E11 réécrit, E16, routes `articleURL`, `author`, `siteListing` ; `OpenURLAction` du lecteur.
 - CI : garde-fou nocturne du gabarit.

@@ -42,7 +42,7 @@ Barre d'onglets, 5 onglets :
 | Articles | `newspaper` | Rubriques du site |
 | Profil | `person.crop.circle` | Compte, notifications, confidentialité, à propos |
 
-Liens universels : `/festival/{slug}` → fiche ; `/article/{id}` → article. Une notification ouvre l'écran concerné, avec le bon onglet sélectionné.
+Adresses du site routées dans l'app : `/festival/<slug>/` → fiche ; `/<slug>-<numéro>/` → article ; `/author/<slug>/` → auteur. Liens universels : plus tard (FR-034). Une notification ouvre l'écran concerné, avec le bon onglet sélectionné.
 
 ---
 
@@ -309,7 +309,7 @@ Photo, nom, genres, « Suivre » (phase 2), liste « En festival » (FestivalRow
 
 ### E10 : Articles
 
-Grand titre, pastilles des rubriques défilantes (Tout, Live reports, Programmations, Interviews, Actus, Guides, Décryptages, Chroniques). Liste d'ArticleCard : image 16:9, rubrique, titre, auteur et date, badge « Sponsorisé » si besoin.
+Grand titre, pastilles des rubriques défilantes (Tout, Live reports, Programmations, Interviews, Actus, Guides, Décryptages, Chroniques). Liste d'ArticleCard : image 16:9, rubrique, titre, auteur et date, badge « Sponsorisé » si besoin. Au bout des articles du flux, la liste d'une rubrique continue avec les archives du site, chargées en bas de liste (FR-031). Les pages liste du site (festival, artiste, mot-clé) reprennent ce même écran (FR-032).
 
 ### E11 : Article (lecteur complet, v1.1)
 
@@ -341,8 +341,8 @@ Le texte complet est dans l'app (FR-027, ADR-007). Plus de « Lire sur le site �
 │ │ Mentir au psy  youtube ↗  │ │  avant le toucher
 │ └───────────────────────────┘ │
 │ TA RÉACTION                   │  en-tête de section
-│ (♥ J'adore 12)(🔥 Ça chauffe 3)│  ReactionBar, pilules sur
-│ (👏 Bravo)(✨ Waouh)(💡 Instructif)│  plusieurs lignes
+│ (❤️ J'adore 12)(🔥 Ça chauffe 3)│  ReactionBar, pilules sur
+│ (👏 Bravo)(🤩 Waouh)(💡 Instructif)│  plusieurs lignes
 │ [Concert] [Orelsan] [Zénith]  │  mots-clés et artistes → écrans de l'app
 │ ┌───────────────────────────┐ │  AuthorBlock (carte)
 │ │ (ML) Mano Le Bris         │ │
@@ -354,7 +354,7 @@ Le texte complet est dans l'app (FR-027, ADR-007). Plus de « Lire sur le site �
 └───────────────────────────────┘
 ```
 
-Les icônes de la maquette sont des repères : le rendu proposé est en SF Symbols (`heart`, `flame`, `hands.clap`, `sparkles`, `lightbulb`), voir la question ouverte sur les emojis.
+Réactions en emoji (décision du 2026-11-25) : ❤️ J'adore, 🔥 Ça chauffe, 👏 Bravo, 🤩 Waouh, 💡 Instructif. L'emoji suit Dynamic Type (taille du Corps) ; VoiceOver lit le libellé, jamais le nom de l'emoji. Les photos des photographes de l'association paraissent avec leur crédit.
 
 **Blocs et typographie (tokens existants, pas de nouveau style) :**
 
@@ -416,8 +416,8 @@ E15 existe déjà (premier lancement) : la page auteur prend le numéro E16.
 
 | État | Rendu |
 |---|---|
-| Neutre | Pilule fond `sky`, icône `accent-dark`, libellé `ink2` |
-| Active | Fond `accent-fill`, icône et libellé `onFill` ; vibration légère ; rebond de l'icône de 0,3 s (coupé si « Réduire les animations ») |
+| Neutre | Pilule fond `sky`, emoji, libellé `ink2` |
+| Active | Fond `accent-fill`, libellé `onFill` ; vibration légère ; rebond de l'emoji de 0,3 s (coupé si « Réduire les animations ») |
 | Sans compteurs (bêta, avant le serveur) | Libellé seul ; jamais de « 0 » |
 | Démo (source `mock`) | Compteurs + `DemoCaption` « Données de démonstration » sous la barre |
 | Avec compteurs | Nombre après le libellé ; 0 masqué ; « 1,2 k » au-delà de 999 ; apparition en fondu, sans décaler les pilules |
@@ -432,9 +432,9 @@ Placement : à la fin du texte, avant les mots-clés et le bloc auteur ; on réa
 - **Liens :** dans le `Text`, accessibles au rotor « Liens » ; lien tiers annoncé « site externe ».
 - **Images :** description = texte alternatif, sinon légende ; le crédit est lu après ; image sans l'un ni l'autre ignorée.
 - **Contenu tiers :** « Vidéo YouTube, Mentir au psy, ouvre une app externe ».
-- **Réactions :** chaque pilule est un bouton : libellé « J'adore », valeur « 12 réactions », trait « Sélectionné » si active ; groupe « Réactions » ; cibles de 44 × 44 pt.
+- **Réactions :** chaque pilule est un bouton ; l'emoji est masqué pour VoiceOver ; libellé « J'adore », valeur « 12 réactions », trait « Sélectionné » si active ; groupe « Réactions » ; cibles de 44 × 44 pt.
 - **Dynamic Type :** texte et légendes suivent la taille ; images toujours en pleine largeur ; aux tailles d'accessibilité, les réactions passent en liste verticale.
-- **Contraste :** réaction active, blanc sur `accent-fill` 5,5:1 ; neutre, `ink2` sur `sky` 9,9:1 (clair) et 10,3:1 (sombre), icône `accent-dark` sur `sky` 4,9:1 et 7,5:1.
+- **Contraste :** réaction active, blanc sur `accent-fill` 5,5:1 ; neutre, `ink2` sur `sky` 9,9:1 (clair) et 10,3:1 (sombre).
 
 ### E12 : Profil
 
@@ -525,7 +525,7 @@ Un seul écran, pas de tunnel : logo, « Le média des festivals, par ceux qui l
 | `ArticleBlockView` | Un bloc d'article (voir E11) | selon le bloc | Paragraphe = un seul `Text` avec `AttributedString` |
 | `ArticleImageView` | Image, légende, crédit | chargement, chargée, échec (fond `thumb`) | Bord à bord ; plein écran au toucher |
 | `EmbedCard` | Type, titre, fournisseur, ↗ | normal, pressé | Rien de tiers ne charge avant le toucher |
-| `ReactionBar` | 5 pilules de réaction | voir « Réactions : états » | Retour à la ligne (`FlowLayout`) ; liste aux tailles d'accessibilité |
+| `ReactionBar` | 5 pilules de réaction (emoji + libellé) | voir « Réactions : états » | Retour à la ligne (`FlowLayout`) ; liste aux tailles d'accessibilité |
 | `AuthorBlock` | Avatar, nom, présentation, « Voir ses articles » | normal, pressé | Carte ; ouvre E16 |
 
 ---
@@ -613,7 +613,9 @@ Couleurs : celles de `docs/design/direction-artistique.md`, dans un catalogue d'
 | FR-028 Liens internes | E11, P4 |
 | FR-029 Auteurs | E11 (signature, bloc auteur, crédits), E16 |
 | FR-030 Réactions | E11 (`ReactionBar`) |
-| FR-032 Pages liste (proposée) | E5 (section Articles) |
+| FR-031 Archives | E10 (bas de liste) |
+| FR-032 Pages liste | E5 (section Articles), E10 |
+| FR-036 Lectures comptées | E11 (rien de visible ; choix dans E12, confidentialité) |
 | FR-014 à FR-022 | Esquisses de phase 2 |
 | NFR-003 Hors ligne | E5 (« Disponible hors ligne »), bandeau hors ligne |
 | NFR-006 Accessibilité | Section Accessibilité |

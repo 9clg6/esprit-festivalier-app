@@ -266,10 +266,10 @@ sprints:
     start_date: "2027-03-22"
     end_date: "2027-04-04"
     capacity_points: 24
-    committed_points: 13
+    committed_points: 18
     completed_points: 0
     status: "not_started"
-    goal: "Auteurs, réactions, articles des festivals, garde-fou du gabarit"
+    goal: "Auteurs, réactions, pages liste et archives, lectures comptées, garde-fou du gabarit"
     stories:
       - story_id: "STORY-057"
         title: "Auteurs (E16)"
@@ -282,12 +282,22 @@ sprints:
         status: "not_started"
         assigned_to: null
       - story_id: "STORY-059"
-        title: "Pages liste et articles d'un festival (proposée)"
+        title: "Pages liste et articles d'un festival"
         points: 3
         status: "not_started"
         assigned_to: null
       - story_id: "STORY-060"
         title: "Garde-fou du gabarit"
+        points: 2
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-062"
+        title: "Archives par rubrique"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-066"
+        title: "Lectures d'articles comptées (mock first)"
         points: 2
         status: "not_started"
         assigned_to: null
