@@ -26,8 +26,8 @@ extension View {
 }
 
 /// Loads a value once, then shows it: skeletons while loading, "Réessayer" on failure.
-/// Coming back to the screen does not reload; `reloadsOnActive` reloads when the app comes back to the
-/// foreground. A failed or cancelled reload keeps what is shown.
+/// Coming back to the screen does not reload; `reloadsOnActive` reloads when the app comes back from the
+/// background. A failed or cancelled reload keeps what is shown.
 struct Loaded<Value, Content: View>: View {
     enum State {
         case loading, failed
@@ -38,6 +38,7 @@ struct Loaded<Value, Content: View>: View {
     let load: @MainActor () async throws -> Value
     @ViewBuilder let content: (Value, _ reload: @escaping @MainActor () async -> Void) -> Content
     @SwiftUI.State private var state = State.loading
+    @SwiftUI.State private var wasInBackground = false
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -67,7 +68,13 @@ struct Loaded<Value, Content: View>: View {
             if case .loading = state { await reload() }
         }
         .onChange(of: scenePhase) { _, phase in
-            if reloadsOnActive, phase == .active { Task { await reload() } }
+            // Coming back passes through .inactive, so remember .background; a banner, Control
+            // Center or a system alert only goes .active -> .inactive -> .active and does not reload.
+            if phase == .background { wasInBackground = true }
+            if reloadsOnActive, phase == .active, wasInBackground {
+                wasInBackground = false
+                Task { await reload() }
+            }
         }
     }
 
