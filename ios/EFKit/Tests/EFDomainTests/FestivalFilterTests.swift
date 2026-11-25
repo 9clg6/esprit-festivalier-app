@@ -279,6 +279,22 @@ private func period(_ period: FestivalFilter.Period) -> FestivalFilter {
         #expect(ids(period(.thisMonth), all) == ["startedInOctober", "endsOnTheLastDay"])
     }
 
+    // Regression: the month ends at the 1st of next month 00:00, excluded. A festival starting then is next month's.
+    @Test func aFestivalStartingOnTheFirstOfNextMonthAtMidnightIsNotThisMonth() {
+        let all = [festival("decemberMidnight", from: "2026-12-01T00:00:00+01:00", to: "2026-12-03T23:59:00+01:00")]
+
+        #expect(ids(period(.thisMonth), all).isEmpty)
+    }
+
+    @Test func festivalsEndingAtTheMonthsLastSecondOrStartedOnItsLastDayAreThisMonth() {
+        let all = [
+            festival("endsLastSecond", from: "2026-11-28T00:00:00+01:00", to: "2026-11-30T23:59:59+01:00"),
+            festival("startsLastDay", from: "2026-11-30T23:00:00+01:00", to: "2026-12-01T02:00:00+01:00")
+        ]
+
+        #expect(ids(period(.thisMonth), all) == ["endsLastSecond", "startsLastDay"])
+    }
+
     // MARK: Chosen dates
 
     @Test func chosenDatesKeepTheFestivalsOverlappingTheInterval() {
@@ -292,6 +308,21 @@ private func period(_ period: FestivalFilter.Period) -> FestivalFilter {
         ]
 
         #expect(ids(period(.dates(interval)), all) == ["straddlesStart", "inside", "straddlesEnd"])
+    }
+
+    // The sheet passes an interval ending at 23:59:59 of the last chosen day: that second is included.
+    @Test func chosenDatesIncludeAFestivalStartingAtTheLastSecondOfTheLastDay() {
+        let interval = DateInterval(start: date("2027-07-01T00:00:00+02:00"), end: date("2027-07-10T23:59:59+02:00"))
+        let all = [festival("lastSecond", from: "2027-07-10T23:59:59+02:00", to: "2027-07-11T03:00:00+02:00")]
+
+        #expect(ids(period(.dates(interval)), all) == ["lastSecond"])
+    }
+
+    @Test func chosenDatesExcludeAFestivalStartingAtMidnightAfterTheLastDay() {
+        let interval = DateInterval(start: date("2027-07-01T00:00:00+02:00"), end: date("2027-07-10T23:59:59+02:00"))
+        let all = [festival("nextDay", from: "2027-07-11T00:00:00+02:00", to: "2027-07-11T23:00:00+02:00")]
+
+        #expect(ids(period(.dates(interval)), all).isEmpty)
     }
 
     // MARK: Combination and order
