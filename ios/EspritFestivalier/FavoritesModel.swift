@@ -12,6 +12,9 @@ final class FavoritesModel {
     /// Short non-blocking message after a failed write; cleared after a few seconds.
     private(set) var saveError: String?
     private let store: FavoritesStore
+    /// The last write: each write waits for it, so writes reach the store in tap order.
+    private var pending: Task<Void, Never>?
+    private var hideError: Task<Void, Never>?
 
     init(store: FavoritesStore) { self.store = store }
 
@@ -31,15 +34,25 @@ final class FavoritesModel {
     func toggle(_ id: Festival.ID) {
         let target = !contains(id)
         apply(id, target)
-        Task {
+        let previous = pending
+        pending = Task {
+            await previous?.value
             do {
                 try await store.setFavorite(id, target)
             } catch {
                 apply(id, await store.contains(id))
-                saveError = "Impossible d'enregistrer le favori"
-                try? await Task.sleep(for: .seconds(3))
-                saveError = nil
+                show(error: "Impossible d'enregistrer le favori")
             }
+        }
+    }
+
+    /// A newer message restarts the delay: an older timer never hides it.
+    private func show(error message: String) {
+        saveError = message
+        hideError?.cancel()
+        hideError = Task {
+            try? await Task.sleep(for: .seconds(3))
+            if !Task.isCancelled { saveError = nil }
         }
     }
 
