@@ -2,9 +2,10 @@ import EFDesign
 import EFDomain
 import SwiftUI
 
-/// The screens a tab's `NavigationStack` can push (E5, E7, festival lineup, E8, E11).
+/// The screens a tab's `NavigationStack` can push (E5, E6, E7, festival lineup, E8, E11).
 enum Route: Hashable {
     case festival(Festival.ID)
+    case timetable(Festival.ID)
     case lineups
     case festivalLineup(Festival.ID)
     case artist(Artist.ID)
@@ -16,6 +17,7 @@ extension View {
         navigationDestination(for: Route.self) { route in
             switch route {
             case .festival(let id): FestivalDetailView(id: id, environment: environment)
+            case .timetable(let id): TimetableView(id: id, environment: environment)
             case .lineups: LineupsView(environment: environment)
             case .festivalLineup(let id): FestivalLineupView(festivalId: id, environment: environment)
             case .artist(let id): ArtistView(artistId: id, environment: environment)

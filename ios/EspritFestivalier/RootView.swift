@@ -29,6 +29,7 @@ enum AppTab: CaseIterable {
 /// E15 on the first launch, then the five tabs (UX doc, "Navigation").
 struct RootView: View {
     let environment: AppEnvironment
+    @Environment(\.scenePhase) private var scenePhase
     @AppStorage("hasSeenWelcome") private var hasSeenWelcome = false
     // ponytail: `-initialTab festivals` launch argument lets simulator runs start on any tab.
     @State private var tab = AppTab.allCases.first {
@@ -53,7 +54,11 @@ struct RootView: View {
         .environment(environment.favorites)
         // One light haptic per favorite added, from the heart, a swipe or the VoiceOver action.
         .sensoryFeedback(.impact(weight: .light), trigger: environment.favorites.additions)
+        .environment(environment.picks)
         .task { await environment.favorites.load() }
+        .task { await environment.picks.load() }
+        // Back to the app: the next reminders take the places of those already shown (64 at most).
+        .onChange(of: scenePhase) { if scenePhase == .active { environment.picks.rescheduleReminders() } }
     }
 
     @ViewBuilder private var saveError: some View {
@@ -96,13 +101,8 @@ struct RootView: View {
             ArticlesView(source: environment.articles, feed: environment.articleFeed)
         case .mine:
             MyFestivalsView(environment: environment) { self.tab = .festivals }
-        default:
-            EmptyState(
-                systemImage: tab.symbol, title: "Bientôt disponible",
-                message: "Cet onglet arrive dans une prochaine version."
-            )
-            .frame(maxHeight: .infinity)
-            .background(EFColorToken.bg.color)
+        case .profile:
+            ProfileView()
         }
     }
 }

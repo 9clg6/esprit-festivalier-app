@@ -4,16 +4,21 @@ import Foundation
 import Observation
 
 /// The favorites every screen reads, so the hearts of the list, the detail, the map and
-/// "Mes festivals" stay in sync. The `FavoritesStore` keeps them on disk.
+/// "Mes festivals" stay in sync. The `FavoritesStore` keeps them on disk; each favorite's sheet
+/// and image are copied to the `OfflineCache` (STORY-008).
 @MainActor @Observable
 final class FavoritesModel {
     /// Most recently added first.
     private(set) var ids: [Festival.ID] = []
+    /// Favorites whose sheet is stored on the device ("Disponible hors ligne").
+    private(set) var offlineIDs: Set<Festival.ID> = []
     /// Short non-blocking message after a failed write; cleared after a few seconds.
     private(set) var saveError: String?
     /// Counts the user's additions (heart, swipe, VoiceOver action): the light haptic's trigger.
     private(set) var additions = 0
     private let store: FavoritesStore
+    private let offline: OfflineCache
+    private let festivals: any FestivalSource
     /// The last write: each write waits for it, so writes reach the store in tap order.
     private var pending: Task<Void, Never>?
     /// Writes not finished yet, and whether one failed since the queue was last empty.
@@ -23,7 +28,11 @@ final class FavoritesModel {
     private var generation: [Festival.ID: Int] = [:]
     private var hideError: Task<Void, Never>?
 
-    init(store: FavoritesStore) { self.store = store }
+    init(store: FavoritesStore, offline: OfflineCache, festivals: any FestivalSource) {
+        self.store = store
+        self.offline = offline
+        self.festivals = festivals
+    }
 
     func contains(_ id: Festival.ID) -> Bool { ids.contains(id) }
 
@@ -35,7 +44,12 @@ final class FavoritesModel {
         }
         #endif
         ids = await store.favoriteIDs
+        // Favorites saved before the offline copy existed, or whose copy failed: copy them now.
+        for id in ids { await keepOffline(id, true) }
     }
+
+    /// The stored image of a favorite, shown instead of the network one.
+    func offlineImage(_ id: Festival.ID) async -> Data? { await offline.imageData(id) }
 
     /// Sets the state the user sees the heart move to, decided at tap time (never flipped on disk).
     func toggle(_ id: Festival.ID) {
@@ -50,6 +64,7 @@ final class FavoritesModel {
             await previous?.value
             do {
                 try await store.setFavorite(id, target)
+                await keepOffline(id, target)
             } catch {
                 failedSinceDrain = true
                 let onDisk = await store.contains(id)
@@ -79,6 +94,22 @@ final class FavoritesModel {
         hideError = Task {
             try? await Task.sleep(for: .seconds(3))
             if !Task.isCancelled { saveError = nil }
+        }
+    }
+
+    /// Saves or removes the offline copy; a failure only leaves the mention off.
+    private func keepOffline(_ id: Festival.ID, _ isFavorite: Bool) async {
+        if isFavorite, await !offline.isAvailableOffline(id),
+           let detail = try? await festivals.festival(id: id) {
+            try? await offline.save(detail)
+        } else if !isFavorite {
+            try? await offline.remove(id)
+        }
+        // The heart may have moved again meanwhile: the mention follows the current state.
+        if contains(id), await offline.isAvailableOffline(id) {
+            offlineIDs.insert(id)
+        } else {
+            offlineIDs.remove(id)
         }
     }
 
