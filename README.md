@@ -19,3 +19,11 @@ Cadrage (méthode BMAD, phase 1) :
 
 - iOS en Swift (TestFlight d'abord), Android en Kotlin ensuite.
 - API si besoin : Cloudflare, authentification Better Auth (choix exact à l'étape architecture).
+
+## Développement
+
+Prérequis : Xcode et `brew install xcodegen swiftlint`.
+
+```
+cd ios && xcodegen generate && open EspritFestivalier.xcodeproj
+```
