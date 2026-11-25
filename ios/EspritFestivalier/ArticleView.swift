@@ -10,15 +10,19 @@ struct ArticleView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                EFColorToken.thumb.color
-                    .aspectRatio(16 / 9, contentMode: .fit)
-                    .overlay {
-                        AsyncImage(url: article.imageURL) { phase in
-                            if let image = phase.image { image.resizable().scaledToFill() }
+                if let imageURL = article.imageURL {
+                    // Full bleed under the status bar and the navigation bar, like E5.
+                    EFColorToken.thumb.color
+                        .frame(height: 320)
+                        .overlay {
+                            AsyncImage(url: imageURL) { phase in
+                                if let image = phase.image { image.resizable().scaledToFill() }
+                            }
                         }
-                    }
-                    .clipped()
-                    .accessibilityHidden(true)
+                        .overlay { HeroScrim() }
+                        .clipped()
+                        .accessibilityHidden(true)
+                }
                 VStack(alignment: .leading, spacing: 16) {
                     HStack(spacing: 8) {
                         Text(article.category.rawValue).efText(.sectionHeader)
@@ -47,6 +51,8 @@ struct ArticleView: View {
             }
             .frame(maxWidth: .infinity)
         }
+        // Without a photo the article starts below the bar.
+        .ignoresSafeArea(edges: article.imageURL == nil ? [] : .top)
         .background(EFColorToken.bg.color)
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $safariURL) { SafariView(url: $0.url, readerMode: true).ignoresSafeArea() }

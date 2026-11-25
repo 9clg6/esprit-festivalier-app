@@ -214,14 +214,8 @@ private struct FestivalDetailContent: View {
         ZStack(alignment: .bottomLeading) {
             // The overlay takes the hero's size: the fill overflow is clipped, not laid out.
             Color.clear.overlay { image.resizable().scaledToFill() }.clipped()
-            // Top scrim (page colour): status bar and back button; bottom scrim: the credit.
-            LinearGradient(
-                stops: [.init(color: EFColorToken.bg.color.opacity(0.8), location: 0),
-                        .init(color: .clear, location: 0.22),
-                        .init(color: .clear, location: 0.6),
-                        .init(color: EFColorToken.night.color.opacity(0.85), location: 1)],
-                startPoint: .top, endPoint: .bottom
-            )
+            // Top scrim: status bar and back button; bottom scrim: the credit.
+            HeroScrim(shadesBottom: true)
             if let credit = festival.imageCredit {
                 Text("Photo : \(credit)")
                     .efText(.caption)
