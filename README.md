@@ -13,12 +13,17 @@ Cadrage (méthode BMAD, phase 1) :
 - [Product brief](docs/product-brief-esprit-festivalier-app-2026-11-25.md)
 - [Brainstorm des fonctionnalités](docs/brainstorm-esprit-festivalier-app-2026-11-25.md)
 - [Direction artistique](docs/design/direction-artistique.md)
+- [PRD](docs/prd-esprit-festivalier-app-2026-11-25.md)
+- [Architecture](docs/architecture-esprit-festivalier-app-2026-11-25.md)
+- [UX](docs/ux-design-esprit-festivalier-app-2026-11-25.md)
+- [Plan de sprints](docs/sprint-plan-esprit-festivalier-app-2026-11-25.md)
 - [Suivi BMAD](docs/bmm-workflow-status.yaml)
 
-## Stack prévue
+## Stack
 
-- iOS en Swift (TestFlight d'abord), Android en Kotlin ensuite.
-- API si besoin : Cloudflare, authentification Better Auth (choix exact à l'étape architecture).
+- iOS : SwiftUI (iOS 17+), package `EFKit` (`ios/EFKit`). Android en Kotlin plus tard.
+- API : Cloudflare Workers en TypeScript (Hono, Better Auth, D1).
+- Données publiques : instantané JSON sur R2, construit chaque nuit depuis les données ouvertes.
 
 ## Développement
 
