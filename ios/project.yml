@@ -1,5 +1,6 @@
 name: EspritFestivalier
 options:
+  developmentLanguage: fr
   deploymentTarget:
     iOS: "17.0"
 packages:
@@ -18,7 +19,12 @@ targets:
       properties:
         EF_DATA_SOURCE: $(EF_DATA_SOURCE)
         ITSAppUsesNonExemptEncryption: false
+        CFBundleLocalizations: [fr]
         NSLocationWhenInUseUsageDescription: Ta position sert à trouver les festivals autour de toi. Elle reste sur ton téléphone.
+    entitlements:
+      path: EspritFestivalier/EspritFestivalier.entitlements
+      properties:
+        com.apple.developer.applesignin: [Default]
     dependencies:
       - package: EFKit
         product: EFDomain
