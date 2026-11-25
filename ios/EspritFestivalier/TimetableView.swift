@@ -46,8 +46,10 @@ struct TimetableView: View {
     @State private var model: TimetableModel
     @State private var day: Date?
     @State private var onlyMine = false
+    private let isDemo: Bool
 
     init(id: Festival.ID, environment: AppEnvironment) {
+        isDemo = environment.isDemo
         _model = State(initialValue: TimetableModel(
             id: id, festivals: environment.festivals, artists: environment.artists
         ))
@@ -99,6 +101,8 @@ struct TimetableView: View {
             let playing = Set(timetable.nowPlaying(at: now).map(\.id))
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 8) {
+                    // The demo times are invented, even for real festivals.
+                    if isDemo { DemoCaption().padding(.top, 8) }
                     dayPicker(timetable.days, selected: selected)
                     let stages = selected.stages.compactMap { stage in
                         let shown = stage.performances.filter { !onlyMine || picks.contains($0.id) }
