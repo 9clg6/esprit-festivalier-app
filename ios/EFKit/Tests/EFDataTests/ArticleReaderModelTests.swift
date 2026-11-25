@@ -22,12 +22,14 @@ import EFData
 //     public private(set) var state: State     // .loading until the first answer
 //     public var showsOpenOnSite: Bool { get }  // "Ouvrir sur le site ↗": only on .failed(.unreadable)
 //     public var fullTextDisplayed: Bool { get } // loaded with at least one paragraph (read counting)
-//     public func load() async                 // asks `source` for `article.link`; cancellation is not a failure
+//     public func load() async                 // asks `source` for `article.link`; leaving the screen (the
+//                                              // task cancelled) is not a failure; a `URLError(.cancelled)`
+//                                              // without task cancellation (session invalidated) is .unreadable
 //     public func retry() async                // loading again, then loaded or failed
-//     public func isEmbedActive(_ id: URL) -> Bool   // an embed is identified by its `Embed.url`
-//     public func activateEmbed(_ id: URL)
 //     public func destination(for url: URL) -> ReaderDestination
 //   }
+//   No embed activation state (review of PR #26): the embed card opens `Embed.url` in a Safari sheet.
+//   Rendered blocks: ArticleReaderRenderingTests.swift.
 //   public enum ReaderDestination: Equatable, Sendable {
 //     case article(URL)                       // E11 by address (new route `articleURL`)
 //     case festival(slug: String), author(slug: String), artist(slug: String)
@@ -44,8 +46,6 @@ private let feedArticle = Article(
     imageURL: URL(string: "https://esprit-festivalier.fr/_img/orelsan.jpg?w=960"),
     excerpt: "Deux heures de show devant 15 000 personnes.")
 
-private let youtube = Embed(provider: .youtube, url: URL(string: "https://www.youtube.com/embed/abc")!, title: "Mentir au psy")
-private let spotify = Embed(provider: .spotify, url: URL(string: "https://open.spotify.com/embed/xyz")!, title: nil)
 private let photo = ArticleImage(
     url: URL(string: "https://esprit-festivalier.fr/_img/vald.jpg")!, width: 1600, height: 1067, alt: nil,
     caption: "Vald @odieuxboby")
@@ -279,31 +279,6 @@ private actor GatedSource: ArticleContentSource {
         #expect(!model.showsOpenOnSite)
     }
 
-    // MARK: Third-party content: a card, loaded only on tap
-
-    @Test func thirdPartyContentIsACardUntilTapped() async {
-        let blocks: [ArticleBlock] = [.paragraph([InlineRun(text: "Le clip :")]), .embed(youtube), .embed(spotify)]
-        let source = ScriptedSource(.success(fullText(blocks)))
-        let model = ArticleReaderModel(article: feedArticle, source: source)
-
-        await model.load()
-
-        #expect(!model.isEmbedActive(youtube.url))
-        #expect(!model.isEmbedActive(spotify.url))
-        #expect(await source.requested == [feedArticle.link])
-    }
-
-    @Test func tappingACardActivatesOnlyThatContent() async {
-        let blocks: [ArticleBlock] = [.paragraph([InlineRun(text: "Le clip :")]), .embed(youtube), .embed(spotify)]
-        let model = ArticleReaderModel(article: feedArticle, source: ScriptedSource(.success(fullText(blocks))))
-        await model.load()
-
-        model.activateEmbed(youtube.url)
-
-        #expect(model.isEmbedActive(youtube.url))
-        #expect(!model.isEmbedActive(spotify.url))
-    }
-
     // MARK: Links in the text (SiteLink)
 
     @Test(arguments: [
@@ -333,6 +308,29 @@ private actor GatedSource: ArticleContentSource {
         let url = try #require(URL(string: address))
 
         #expect(model.destination(for: url) == expected)
+    }
+
+    // Review of PR #26: « Lire aussi » goes through `destination(for:)` like any link; the editor can
+    // point it to a festival or another site, not only to an article.
+    @Test(arguments: [
+        ("/superbus-pres-de-deux-heures-de-tubes-a-l-accor-arena-10673/",
+         ReaderDestination.article(site("/superbus-pres-de-deux-heures-de-tubes-a-l-accor-arena-10673/"))),
+        ("/festival/hellfest/", .festival(slug: "hellfest")),
+        ("/artiste/orelsan/", .artist(slug: "orelsan")),
+        ("https://www.youtube.com/watch?v=abc", .external(URL(string: "https://www.youtube.com/watch?v=abc")!))
+    ])
+    func readAlsoOpensWhereItsLinkBelongs(href: String, expected: ReaderDestination) async throws {
+        let page = ArticlePage.page(body: """
+            <p>Texte.</p><aside class="read-also"><span>Lire aussi</span><a href="\(href)">À lire</a></aside>
+            """)
+        let content = try await readArticle(page)
+        let model = ArticleReaderModel(article: feedArticle, source: ScriptedSource(.success(content)))
+        await model.load()
+        let summary = try #require(content.blocks.compactMap { block -> ArticleSummary? in
+            if case let .readAlso(summary) = block { summary } else { nil }
+        }.first)
+
+        #expect(model.destination(for: summary.url) == expected)
     }
 
     // MARK: Leaving the screen
@@ -365,5 +363,30 @@ private actor GatedSource: ArticleContentSource {
         await back.value
 
         #expect(model.state == .loaded(fullText()))
+    }
+
+    // Review of PR #26: URLSession also throws `URLError(.cancelled)` when the session is invalidated
+    // while the screen is still open. That is a failure the reader can retry, never an endless loading.
+    @Test func aCancelledRequestWhileTheScreenIsOpenIsAFailureNotAnEndlessLoading() async {
+        let model = ArticleReaderModel(article: feedArticle, source: ScriptedSource(.failure(URLError(.cancelled))))
+
+        await model.load()
+
+        #expect(model.state == .failed(.unreadable))
+        #expect(model.article.excerpt == feedArticle.excerpt)
+        #expect(model.showsOpenOnSite)
+        #expect(!model.fullTextDisplayed)
+    }
+
+    @Test func aCancelledRequestWhileTheScreenIsOpenCanBeRetried() async {
+        let source = ScriptedSource(.failure(URLError(.cancelled)), .success(fullText()))
+        let model = ArticleReaderModel(article: feedArticle, source: source)
+        await model.load()
+
+        await model.retry()
+
+        #expect(model.state == .loaded(fullText()))
+        #expect(model.fullTextDisplayed)
+        #expect(await source.requested == [feedArticle.link, feedArticle.link])
     }
 }
