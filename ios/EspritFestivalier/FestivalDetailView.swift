@@ -110,6 +110,9 @@ private struct FestivalDetailContent: View {
                     }
                     if !lineup.isEmpty {
                         section("Programmation") {
+                            Text("Données de démonstration (dernière édition)")
+                                .efText(.caption)
+                                .foregroundStyle(EFTextColor.muted.color)
                             // Tapping an artist does nothing yet (E8 comes later).
                             ForEach(lineup, id: \.self) { name in
                                 Text(name).efText(.body).foregroundStyle(EFTextColor.ink.color)
@@ -135,9 +138,6 @@ private struct FestivalDetailContent: View {
                                 .frame(minHeight: 44, alignment: .leading)
                         }
                     }
-                    Text("Programmation et horaires : données de démonstration")
-                        .efText(.caption)
-                        .foregroundStyle(EFTextColor.muted.color)
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 24)
