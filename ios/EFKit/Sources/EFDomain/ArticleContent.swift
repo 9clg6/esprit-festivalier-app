@@ -14,9 +14,12 @@ public struct ArticleKey: RawRepresentable, Codable, Hashable, Sendable {
 
     /// The key reactions and reads are kept and sent under (ADR-007): the number of an article of the
     /// site, `/<slug>-<1…9 digits>/` (http, www, query or fragment ignored); nil for any other address.
+    /// Leading zeros go ("-0012/" and "-12/" are one article); a number of only zeros is none.
     public init?(numbered url: URL) {
-        guard case let .article(key) = SiteLink(url: url), key.isNumbered else { return nil }
-        self = key
+        guard case let .article(key) = SiteLink(url: url) else { return nil }
+        let number = ArticleKey(rawValue: String(key.rawValue.drop { $0 == "0" }))
+        guard number.isNumbered else { return nil }
+        self = number
     }
 
     /// 1 to 9 ASCII digits: the only keys the server takes ("Clés d'articles validées").
