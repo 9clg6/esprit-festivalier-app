@@ -8,6 +8,8 @@ struct AppEnvironment: Sendable {
     let lineups: any LineupSource
     let articles: any ArticleSource
     let articleFeed: SiteFeed
+    /// The full text of an article (E11), with a copy on the device (ADR-007).
+    let articleContent: any ArticleContentSource
     let artists: any ArtistSource
     /// Favorites, kept in Application Support (not Caches: the system may empty Caches).
     let favorites: FavoritesModel
@@ -34,6 +36,11 @@ struct AppEnvironment: Sendable {
         let directory = URL.applicationSupportDirectory.appending(path: "EspritFestivalier")
         let offline = OfflineCache(directory: directory.appending(path: "Offline"), fetchImage: OfflineImage.fetch)
         self.offline = offline
+        // Like the feed, the text always comes from the site: the `mock` catalogue's articles are never
+        // listed, so `MockArticleContentSource` would fail every article of the live feed.
+        articleContent = CachedArticleContentSource(
+            wrapping: SitePageArticleContentSource(), directory: Self.excludedFromBackup(
+                directory.appending(path: "Offline/Articles")))
         let catalog: any FestivalSource
         let auth: any AuthService
         let sync: any SyncService
@@ -68,6 +75,16 @@ struct AppEnvironment: Sendable {
             auth: auth, sync: sync, favorites: favorites, picks: picks, notifications: notifications,
             reactions: reactions, reads: reads
         )
+    }
+
+    /// A copy of public data: it can be downloaded again, so it stays out of iCloud backups.
+    private static func excludedFromBackup(_ folder: URL) -> URL {
+        var folder = folder
+        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        var excluded = URLResourceValues()
+        excluded.isExcludedFromBackup = true
+        try? folder.setResourceValues(excluded)
+        return folder
     }
 
     /// Festival dates are read on the Paris calendar, in French.
