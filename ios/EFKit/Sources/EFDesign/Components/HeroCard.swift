@@ -21,16 +21,17 @@ public struct HeroCard: View {
         .foregroundStyle(EFTextColor.onFill.color)
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .padding(.top, 72)
-        // Behind the text the gradient is at least 85 % `night`: white stays above 4.5:1 on any photo.
-        .background(
+        // Solid 85 % `night` behind the text, whatever its height (AX sizes): white stays above 4.5:1
+        // on any photo. A fixed 72 pt ramp above it fades into the photo.
+        .background(EFColorToken.night.color.opacity(0.85))
+        .background(alignment: .top) {
             LinearGradient(
-                stops: [.init(color: EFColorToken.night.color.opacity(0), location: 0),
-                        .init(color: EFColorToken.night.color.opacity(0.85), location: 0.45),
-                        .init(color: EFColorToken.night.color.opacity(0.95), location: 1)],
+                colors: [EFColorToken.night.color.opacity(0), EFColorToken.night.color.opacity(0.85)],
                 startPoint: .top, endPoint: .bottom
             )
-        )
+            .frame(height: 72)
+            .offset(y: -72)
+        }
         .frame(maxWidth: .infinity, minHeight: 260, alignment: .bottom)
         .background { photo }
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
