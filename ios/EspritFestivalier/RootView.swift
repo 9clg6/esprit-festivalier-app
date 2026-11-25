@@ -48,7 +48,7 @@ struct RootView: View {
             }
         }
         .background(EFColorToken.bg.color.ignoresSafeArea())
-        .overlay(alignment: .top) { saveError }
+        .overlay(alignment: .top) { saveError.allowsHitTesting(false) }
         .animation(.default, value: environment.favorites.saveError)
         .environment(environment.favorites)
         .task { await environment.favorites.load() }
