@@ -50,9 +50,11 @@ struct FestivalDetailView: View {
     @State private var model: FestivalDetailModel
 
     private let id: Festival.ID
+    private let isDemo: Bool
 
     init(id: Festival.ID, environment: AppEnvironment) {
         self.id = id
+        isDemo = environment.isDemo
         _model = State(initialValue: FestivalDetailModel(
             id: id, festivals: environment.festivals, artists: environment.artists
         ))
@@ -70,7 +72,7 @@ struct FestivalDetailView: View {
                 ) { Task { await model.load() } }
                 .frame(maxHeight: .infinity)
             case .loaded(let detail, let lineup):
-                FestivalDetailContent(detail: detail, lineup: lineup)
+                FestivalDetailContent(detail: detail, lineup: lineup, isDemo: isDemo)
             }
         }
         .background(EFColorToken.bg.color)
@@ -106,6 +108,7 @@ private struct FestivalDetailContent: View {
     @State private var safariURL: SafariItem?
     let detail: FestivalDetail
     let lineup: [Artist]
+    let isDemo: Bool
 
     private var festival: Festival { detail.festival }
 
@@ -122,7 +125,7 @@ private struct FestivalDetailContent: View {
                     if !lineup.isEmpty {
                         VStack(alignment: .leading, spacing: 8) {
                             SectionHeader("Programmation", seeAllValue: Route.festivalLineup(festival.id))
-                            DemoCaption()
+                            if isDemo { DemoCaption() }
                             ForEach(lineup) { artist in
                                 NavigationLink(value: Route.artist(artist.id)) { artistRow(artist) }
                                     .buttonStyle(.plain)
