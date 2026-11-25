@@ -1,5 +1,9 @@
 import Foundation
 
+extension NotificationPreferences {
+    public func allows(_ kind: FestivalReminderKind) -> Bool { kind == .j7 ? festivalJ7 : festivalJ1 }
+}
+
 /// What the Profil switches on (STORY-024). Kept on the device until the server exists.
 public struct NotificationPreferences: Sendable, Hashable, Codable {
     public var festivalJ7: Bool
@@ -57,9 +61,7 @@ public enum FestivalReminders {
     public static func plan(
         favorites: [Festival], preferences: NotificationPreferences, now: Date, calendar: Calendar
     ) -> [FestivalReminder] {
-        let kinds = FestivalReminderKind.allCases.filter {
-            $0 == .j7 ? preferences.festivalJ7 : preferences.festivalJ1
-        }
+        let kinds = FestivalReminderKind.allCases.filter(preferences.allows)
         return favorites.flatMap { festival in
             kinds.compactMap { kind -> FestivalReminder? in
                 let firstDay = calendar.startOfDay(for: festival.startDate)

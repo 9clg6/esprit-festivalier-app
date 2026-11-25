@@ -273,8 +273,12 @@ struct NotificationScheduler {
             if id.hasPrefix(concertPrefix) {
                 return concerts.unresolved.contains(String(id.dropFirst(concertPrefix.count)))
             }
-            // "fav-<festival>-j7": the kind is the last 3 characters.
-            return favorite.unresolved.contains(String(id.dropFirst(favoritePrefix.count).dropLast(3)))
+            // "fav-<festival>-<kind>": a switched-off or unknown kind goes.
+            let rest = id.dropFirst(favoritePrefix.count)
+            guard let dash = rest.lastIndex(of: "-"),
+                  let kind = FestivalReminderKind(rawValue: String(rest[rest.index(after: dash)...]))
+            else { return false }
+            return preferences.allows(kind) && favorite.unresolved.contains(String(rest[..<dash]))
         })
         let scheduled = pending.filter { !kept.contains($0) }
         // The kept reminders take their places under the iOS cap.
