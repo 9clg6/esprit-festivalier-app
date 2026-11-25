@@ -7,8 +7,8 @@ import EFData
 // Decisions pinned here:
 // - a page nested 10 000 deep (divs or spans) never crashes the app and keeps its text; the reader is
 //   linear: 20 000 orphan closings or 20 000 <hr> under 20 000 open tags read in well under 0.5 s
-//   (debug). Today these crash on stack overflow, so they run as exit tests (child process): a crash
-//   fails the spec without taking down the run;
+//   (debug). They run in-process (exit tests need Swift 6.2, CI has 6.1): a
+//   regression overflows the stack and crashes the runner, which fails CI;
 // - only http/https addresses become links; javascript:, file:, data: are dropped (text kept);
 //   mailto: and tel: stay links; tabs and new lines inside an href are removed, as browsers do;
 // - only https images of the site are kept (body, cover, author avatar): no third-party load;
@@ -30,49 +30,41 @@ import EFData
 
 private let deepBound = Duration.milliseconds(500)
 
-// MARK: - Deep nesting and linear time (exit tests: today's stack overflow must not kill the run)
+// MARK: - Deep nesting and linear time (in-process: a regression crashes the runner)
 
 @Suite struct DeepNestingTests {
-    @Test func tenThousandUnclosedDivsKeepTheirText() async {
-        await #expect(processExitsWith: .success) {
-            let start = ContinuousClock.now
-            let found = try await blocks(ofBody: String(repeating: "<div>", count: 10_000) + "<p>Au fond</p>")
-            let elapsed = ContinuousClock.now - start
-            #expect(paragraphs(found) == ["Au fond"])
-            #expect(elapsed < deepBound, "read in \(elapsed)")
-        }
+    @Test func tenThousandUnclosedDivsKeepTheirText() async throws {
+        let start = ContinuousClock.now
+        let found = try await blocks(ofBody: String(repeating: "<div>", count: 10_000) + "<p>Au fond</p>")
+        let elapsed = ContinuousClock.now - start
+        #expect(paragraphs(found) == ["Au fond"])
+        #expect(elapsed < deepBound, "read in \(elapsed)")
     }
 
-    @Test func tenThousandUnclosedSpansKeepTheirText() async {
-        await #expect(processExitsWith: .success) {
-            let start = ContinuousClock.now
-            let found = try await blocks(ofBody: "<p>" + String(repeating: "<span>", count: 10_000) + "Au fond</p>")
-            let elapsed = ContinuousClock.now - start
-            #expect(paragraphs(found) == ["Au fond"])
-            #expect(elapsed < deepBound, "read in \(elapsed)")
-        }
+    @Test func tenThousandUnclosedSpansKeepTheirText() async throws {
+        let start = ContinuousClock.now
+        let found = try await blocks(ofBody: "<p>" + String(repeating: "<span>", count: 10_000) + "Au fond</p>")
+        let elapsed = ContinuousClock.now - start
+        #expect(paragraphs(found) == ["Au fond"])
+        #expect(elapsed < deepBound, "read in \(elapsed)")
     }
 
-    @Test func orphanClosingsUnderOpenDivsReadInLinearTime() async {
-        await #expect(processExitsWith: .success) {
-            let body = String(repeating: "<div>", count: 20_000) + String(repeating: "</span>", count: 20_000) + "<p>Fin</p>"
-            let start = ContinuousClock.now
-            let found = try await blocks(ofBody: body)
-            let elapsed = ContinuousClock.now - start
-            #expect(paragraphs(found) == ["Fin"])
-            #expect(elapsed < deepBound, "read in \(elapsed)")
-        }
+    @Test func orphanClosingsUnderOpenDivsReadInLinearTime() async throws {
+        let body = String(repeating: "<div>", count: 20_000) + String(repeating: "</span>", count: 20_000) + "<p>Fin</p>"
+        let start = ContinuousClock.now
+        let found = try await blocks(ofBody: body)
+        let elapsed = ContinuousClock.now - start
+        #expect(paragraphs(found) == ["Fin"])
+        #expect(elapsed < deepBound, "read in \(elapsed)")
     }
 
-    @Test func separatorsUnderOpenSpansReadInLinearTime() async {
-        await #expect(processExitsWith: .success) {
-            let body = String(repeating: "<span>", count: 20_000) + String(repeating: "<hr>", count: 20_000) + "Fin"
-            let start = ContinuousClock.now
-            let found = try await blocks(ofBody: body)
-            let elapsed = ContinuousClock.now - start
-            #expect(found.map(text(of:)).joined().contains("Fin"))
-            #expect(elapsed < deepBound, "read in \(elapsed)")
-        }
+    @Test func separatorsUnderOpenSpansReadInLinearTime() async throws {
+        let body = String(repeating: "<span>", count: 20_000) + String(repeating: "<hr>", count: 20_000) + "Fin"
+        let start = ContinuousClock.now
+        let found = try await blocks(ofBody: body)
+        let elapsed = ContinuousClock.now - start
+        #expect(found.map(text(of:)).joined().contains("Fin"))
+        #expect(elapsed < deepBound, "read in \(elapsed)")
     }
 }
 
