@@ -5,13 +5,15 @@ import SwiftUI
 
 /// E10: the site's articles, filtered by section.
 struct ArticlesView: View {
+    private let environment: AppEnvironment
     @State private var model: ArticlesModel
     @State private var path: [Article] = []
     /// Set by a tapped article notification.
     @Binding private var opened: Article?
 
-    init(source: any ArticleSource, feed: SiteFeed?, opened: Binding<Article?>) {
-        _model = State(initialValue: ArticlesModel(source: source, feed: feed))
+    init(environment: AppEnvironment, opened: Binding<Article?>) {
+        self.environment = environment
+        _model = State(initialValue: ArticlesModel(source: environment.articles, feed: environment.articleFeed))
         _opened = opened
     }
 
@@ -31,7 +33,7 @@ struct ArticlesView: View {
             .background(EFColorToken.bg.color)
             .navigationTitle("Articles")
             .navigationBarTitleDisplayMode(.large)
-            .navigationDestination(for: Article.self) { ArticleView(article: $0) }
+            .navigationDestination(for: Article.self) { ArticleView(article: $0, environment: environment) }
         }
         .onChange(of: opened, initial: true) {
             guard let opened else { return }

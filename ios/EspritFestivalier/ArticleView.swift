@@ -5,7 +5,16 @@ import SwiftUI
 /// E11: reads the excerpt or text the feed carries, then sends the reader to the site.
 struct ArticleView: View {
     let article: Article
+    let environment: AppEnvironment
+    /// Reactions and reads are kept under it (ADR-007); nil (no number in the address): neither.
+    private let key: ArticleKey?
     @State private var safariURL: SafariItem?
+
+    init(article: Article, environment: AppEnvironment) {
+        self.article = article
+        self.environment = environment
+        key = ArticleKey(numbered: article.link)
+    }
 
     var body: some View {
         ScrollView {
@@ -36,6 +45,9 @@ struct ArticleView: View {
                         // 17 pt, line height about 1.5.
                         Text(paragraph).efText(.body).lineSpacing(8).foregroundStyle(EFTextColor.ink.color)
                     }
+                    if let key {
+                        ReactionBar(article: key, service: environment.reactions).padding(.top, 8)
+                    }
                     PrimaryButton("Lire l'article complet") { safariURL = SafariItem(url: article.link) }
                         .padding(.top, 8)
                     ShareLink(item: article.link) {
@@ -56,6 +68,14 @@ struct ArticleView: View {
         .background(EFColorToken.bg.color)
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $safariURL) { SafariView(url: $0.url, readerMode: true).ignoresSafeArea() }
+        .task {
+            // Anonymous: the article and the Paris day only (FR-036), once per day on this device.
+            // Only the full text counts: the feed carries excerpts until the native reader (STORY-055).
+            // swiftlint:disable:next todo
+            // TODO(STORY-030): skip when the audience-measurement setting is off; counted by default until it exists.
+            guard let key else { return }
+            try? await environment.reads.articleShown(key, fullText: false, at: .now)
+        }
     }
 
     private var paragraphs: [String] {

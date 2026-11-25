@@ -152,7 +152,7 @@ struct RootView: View {
         case .festivals:
             FestivalListView(environment: environment, requestedPeriod: $festivalsPeriod)
         case .articles:
-            ArticlesView(source: environment.articles, feed: environment.articleFeed, opened: $openedArticle)
+            ArticlesView(environment: environment, opened: $openedArticle)
         case .mine:
             MyFestivalsView(environment: environment, opened: $openedFestival) { self.tab = .festivals }
         case .profile:

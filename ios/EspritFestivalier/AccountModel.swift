@@ -16,16 +16,20 @@ final class AccountModel {
     private let favorites: FavoritesModel
     private let picks: PicksModel
     private let notifications: NotificationsModel
+    private let reactions: LocalReactionService
+    private let reads: ReadCounter
 
     init(
         auth: any AuthService, sync: any SyncService, favorites: FavoritesModel, picks: PicksModel,
-        notifications: NotificationsModel
+        notifications: NotificationsModel, reactions: LocalReactionService, reads: ReadCounter
     ) {
         self.auth = auth
         self.sync = sync
         self.favorites = favorites
         self.picks = picks
         self.notifications = notifications
+        self.reactions = reactions
+        self.reads = reads
     }
 
     func load() async {
@@ -64,11 +68,14 @@ final class AccountModel {
         session = nil
     }
 
-    /// Erases favorites, picks, offline copies and notification switches on this device; the
-    /// reminders go with them.
+    /// Erases favorites, picks, reactions, queued reads, offline copies and notification switches on
+    /// this device; the reminders go with them.
     /// On failure too, the screens show what is left on disk.
     func deleteAccount() async throws {
         removeExportFile()
+        // Before the erase: a reaction or read written in between must not rewrite the old ones.
+        await reactions.reset()
+        await reads.reset()
         do {
             try await auth.deleteAccount()
         } catch {
@@ -84,13 +91,16 @@ final class AccountModel {
         await favorites.reloadAfterErase()
         await picks.reloadAfterErase()
         notifications.reloadAfterErase()
+        await reactions.reload()
+        await reads.reload()
     }
 
     /// The export, written to a temporary file for the share sheet.
     func exportFile() async throws -> URL {
         let export = LocalDataExport(
             account: session, favorites: await favorites.entries(), picks: await picks.entries(),
-            reminderLead: PicksModel.lead, notifications: notifications.exportFlags, exportedAt: Date()
+            reactions: await reactions.entries, reminderLead: PicksModel.lead,
+            notifications: notifications.exportFlags, exportedAt: Date()
         )
         try export.json().write(to: Self.exportFile, options: .atomic)
         return Self.exportFile

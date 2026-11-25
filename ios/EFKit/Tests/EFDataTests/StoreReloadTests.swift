@@ -106,3 +106,91 @@ private func erase(_ name: String, in directory: URL) throws {
         #expect(await store.entries.isEmpty)
     }
 }
+
+@Suite struct LocalReactionServiceReloadTests {
+    private let article = ArticleKey(rawValue: "10675")
+
+    private func makeService(in directory: URL) -> LocalReactionService {
+        let clock = SteppingClock()
+        return LocalReactionService(directory: directory, now: { clock.now() })
+    }
+
+    @Test func reactionsAreGoneAfterTheFileIsErased() async throws {
+        let directory = temporaryDirectory()
+        let service = makeService(in: directory)
+        _ = try await service.set(.love, active: true, on: article)
+        try erase("reactions.json", in: directory)
+
+        await service.reload()
+
+        #expect(try await service.summary(for: article).mine.isEmpty)
+        #expect(await service.entries.isEmpty, "no tombstone either")
+    }
+
+    @Test func anErasedReactionDoesNotComeBackWithTheNextOne() async throws {
+        let directory = temporaryDirectory()
+        let service = makeService(in: directory)
+        _ = try await service.set(.love, active: true, on: article)
+        try erase("reactions.json", in: directory)
+        await service.reload()
+
+        _ = try await service.set(.fire, active: true, on: article)
+
+        #expect(try await makeService(in: directory).summary(for: article).mine == [.fire])
+    }
+
+    @Test func reloadingAMissingFileGivesAnEmptyService() async throws {
+        let service = makeService(in: temporaryDirectory().appending(path: "never-created"))
+
+        await service.reload()
+
+        #expect(await service.entries.isEmpty)
+    }
+}
+
+private func key(_ rawValue: String) -> ArticleKey { ArticleKey(rawValue: rawValue) }
+
+private let noon = try! Date("2026-11-25T11:00:00Z", strategy: .iso8601)
+
+/// The clock stays on the day of the reads, so they never age past the 30-day limit.
+private func makeCounter(in directory: URL) -> ReadCounter { ReadCounter(directory: directory, now: { noon }) }
+
+@Suite struct ReadCounterReloadTests {
+
+    @Test func readsAreGoneAfterTheFileIsErased() async throws {
+        let directory = temporaryDirectory()
+        let counter = makeCounter(in: directory)
+        try await counter.record(key("10675"), at: noon)
+        try erase("reads.json", in: directory)
+
+        await counter.reload()
+
+        #expect(await counter.pending.isEmpty)
+    }
+
+    @Test func anErasedReadDoesNotComeBackWithTheNextOne() async throws {
+        let directory = temporaryDirectory()
+        let counter = makeCounter(in: directory)
+        try await counter.record(key("10675"), at: noon)
+        try erase("reads.json", in: directory)
+        await counter.reload()
+
+        try await counter.record(key("10672"), at: noon)
+
+        #expect(await makeCounter(in: directory).pending.map(\.articleId.rawValue) == ["10672"])
+    }
+
+    @Test func anUnreadableFileIsKeptAsideAndCountingContinues() async throws {
+        let directory = temporaryDirectory()
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let unreadable = Data("{ not json".utf8)
+        try unreadable.write(to: directory.appending(path: "reads.json"))
+
+        let counter = makeCounter(in: directory)
+        #expect(await counter.pending.isEmpty)
+        try await counter.record(key("10675"), at: noon)
+
+        #expect(try Data(contentsOf: directory.appending(path: "reads.corrupt.json")) == unreadable)
+        #expect(await makeCounter(in: directory).pending.map(\.articleId.rawValue) == ["10675"])
+    }
+}
