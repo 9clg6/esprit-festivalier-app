@@ -19,7 +19,7 @@ Légende : **MVP** = phase 1 · **P2** / **P3** = phases suivantes · **Non** = 
 | Fiche festival (plan, lieu, dates, timetable, infos, billets) | MVP | Billets = lien externe suivi (UTM), jamais de vente. |
 | Page partenaire personnalisée + mise en avant | P2 | Garder une base commune (thème, blocs) plutôt qu'un design libre par festival : sinon chaque partenaire devient un projet. |
 | Page de participation au jeu concours | P2 | Concours gratuits d'abord. |
-| Jeu concours payant (1 € pour gagner un pass) | Non en l'état | Payer pour un tirage = jeu de hasard interdit (CSI L320-1). Voies légales : concours gratuit + entrées bonus premium, concours d'adresse sans tirage, ou tombola autorisée par le maire (L322-3). À valider par un juriste. Apple très strict (règle 5.3). |
+| Jeu concours payant (1 € pour gagner un pass) | P2, à confirmer | **Choix retenu : concours gratuit pour tous + entrées bonus pour les premium**, sous réserve d'avis juridique. Payer pour un tirage = jeu de hasard interdit (CSI L320-1). Voies légales : concours gratuit + entrées bonus premium, concours d'adresse sans tirage, ou tombola autorisée par le maire (L322-3). À valider par un juriste. Apple très strict (règle 5.3). |
 | Lier Spotify, alerte artistes favoris | P2 | Accès Spotify très restreint depuis 2025. Commencer par Apple Music (MusicKit) et le choix manuel. |
 | Notification festival près de soi | P2 | Position approximative, opt-in explicite. |
 | Festival en favori | MVP | Cœur de la personnalisation. |
