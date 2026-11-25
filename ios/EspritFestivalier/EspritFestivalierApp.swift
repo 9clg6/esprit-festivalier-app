@@ -1,10 +1,17 @@
+import EFDesign
 import SwiftUI
 
 @main
 struct EspritFestivalierApp: App {
+    private let environment = AppEnvironment()
+
+    init() {
+        EFFonts.register()
+    }
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootView(environment: environment)
         }
     }
 }

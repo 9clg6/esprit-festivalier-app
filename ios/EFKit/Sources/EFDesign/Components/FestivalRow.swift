@@ -3,6 +3,7 @@ import SwiftUI
 /// Festival list row: 64 pt thumbnail, name, "13–15 juin 2027 · City", optional genres.
 /// One VoiceOver element. Dates are shown in fr_FR, Europe/Paris.
 public struct FestivalRow: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     private let name: String
     private let startDate: Date
     private let endDate: Date
@@ -23,7 +24,11 @@ public struct FestivalRow: View {
     }
 
     public var body: some View {
-        HStack(alignment: .top, spacing: 12) {
+        // Accessibility sizes: thumbnail above the text, so long names keep the full width.
+        let layout = dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
+            : AnyLayout(HStackLayout(alignment: .top, spacing: 12))
+        layout {
             thumbnail
             VStack(alignment: .leading, spacing: 4) {
                 Text(name)
