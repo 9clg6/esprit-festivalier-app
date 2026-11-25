@@ -52,21 +52,23 @@
     ]
   },
   {
-    "festivalId": "rock-en-seine",
+    "festivalId": "francofolies",
     "announcedOn": "2026-11-25T00:00:00Z",
     "artistIds": [
-      "tyler-the-creator",
-      "the-cure",
-      "nick-cave-the-bad-seeds",
-      "deftones",
-      "interpol",
-      "slowdive",
-      "the-black-keys",
-      "franz-ferdinand",
-      "turnstile",
-      "lorde",
-      "djo",
-      "biffy-clyro"
+      "gims",
+      "zaz",
+      "youssou-ndour",
+      "luiza",
+      "aya-nakamura",
+      "orelsan",
+      "mika",
+      "niska",
+      "louane",
+      "feu-chatterton",
+      "gaetan-roussel",
+      "julien-clerc",
+      "raphael",
+      "odezenne"
     ]
   },
   {

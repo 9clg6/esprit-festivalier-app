@@ -32,24 +32,12 @@
     "name": "Ben Harper & The Innocent Criminals"
   },
   {
-    "id": "biffy-clyro",
-    "name": "Biffy Clyro"
-  },
-  {
     "id": "bring-me-the-horizon",
     "name": "Bring Me the Horizon"
   },
   {
     "id": "deep-purple",
     "name": "Deep Purple"
-  },
-  {
-    "id": "deftones",
-    "name": "Deftones"
-  },
-  {
-    "id": "djo",
-    "name": "Djo"
   },
   {
     "id": "dolphyn",
@@ -60,8 +48,8 @@
     "name": "Feu! Chatterton"
   },
   {
-    "id": "franz-ferdinand",
-    "name": "Franz Ferdinand"
+    "id": "gaetan-roussel",
+    "name": "Gaetan Roussel"
   },
   {
     "id": "gims",
@@ -70,10 +58,6 @@
   {
     "id": "gregailh",
     "name": "Gregailh"
-  },
-  {
-    "id": "interpol",
-    "name": "Interpol"
   },
   {
     "id": "iron-maiden",
@@ -88,6 +72,10 @@
     "name": "Jean-Louis Aubert"
   },
   {
+    "id": "julien-clerc",
+    "name": "Julien Clerc"
+  },
+  {
     "id": "katy-perry",
     "name": "Katy Perry"
   },
@@ -100,8 +88,12 @@
     "name": "Limp Bizkit"
   },
   {
-    "id": "lorde",
-    "name": "Lorde"
+    "id": "louane",
+    "name": "Louane"
+  },
+  {
+    "id": "luiza",
+    "name": "Luiza"
   },
   {
     "id": "mastodon",
@@ -132,6 +124,14 @@
     "name": "Nick Cave & The Bad Seeds"
   },
   {
+    "id": "niska",
+    "name": "Niska"
+  },
+  {
+    "id": "odezenne",
+    "name": "Odezenne"
+  },
+  {
     "id": "odoneila",
     "name": "Odoneila"
   },
@@ -148,16 +148,16 @@
     "name": "Pulp"
   },
   {
+    "id": "raphael",
+    "name": "Raphael"
+  },
+  {
     "id": "rouperou",
     "name": "Rouperou"
   },
   {
     "id": "sleaford-mods",
     "name": "Sleaford Mods"
-  },
-  {
-    "id": "slowdive",
-    "name": "Slowdive"
   },
   {
     "id": "social-distortion",
@@ -168,14 +168,6 @@
     "name": "Tarta Relena"
   },
   {
-    "id": "the-black-keys",
-    "name": "The Black Keys"
-  },
-  {
-    "id": "the-cure",
-    "name": "The Cure"
-  },
-  {
     "id": "the-lumineers",
     "name": "The Lumineers"
   },
@@ -184,15 +176,15 @@
     "name": "The Offspring"
   },
   {
-    "id": "turnstile",
-    "name": "Turnstile"
-  },
-  {
-    "id": "tyler-the-creator",
-    "name": "Tyler, The Creator"
-  },
-  {
     "id": "vald",
     "name": "Vald"
+  },
+  {
+    "id": "youssou-ndour",
+    "name": "Youssou Ndour"
+  },
+  {
+    "id": "zaz",
+    "name": "Zaz"
   }
 ]

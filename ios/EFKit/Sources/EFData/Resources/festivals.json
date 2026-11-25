@@ -369,129 +369,145 @@
   },
   {
     "festival": {
-      "id": "rock-en-seine",
-      "name": "Rock en Seine",
-      "city": "Saint-Cloud",
-      "latitude": 48.8333,
-      "longitude": 2.2,
-      "startDate": "2027-08-25T00:00:00+02:00",
-      "endDate": "2027-08-29T23:59:00+02:00",
-      "website": "https://www.rockenseine.com/",
-      "description": "Festival in the Domaine national de Saint-Cloud. The organisers announced on 6 November 2026 that the 2027 edition is cancelled; the dates here are the usual late-August period. Demo data: the lineup and the timetable are for demonstration only."
+      "id": "francofolies",
+      "name": "Les Francofolies de La Rochelle",
+      "city": "La Rochelle",
+      "latitude": 46.1555,
+      "longitude": -1.1525,
+      "startDate": "2027-07-09T00:00:00+02:00",
+      "endDate": "2027-07-13T23:59:00+02:00",
+      "website": "https://www.francofolies.fr/",
+      "description": "French-language song festival in La Rochelle; the 2027 dates are not confirmed, this is the usual mid-July period. Demo data: the lineup and the timetable are for demonstration only."
     },
     "stages": [
       {
-        "id": "rock-en-seine-grande-scene",
-        "festivalId": "rock-en-seine",
-        "name": "Grande Scene"
+        "id": "francofolies-scene-jean-louis-foulquier",
+        "festivalId": "francofolies",
+        "name": "Scene Jean-Louis Foulquier"
       },
       {
-        "id": "rock-en-seine-scene-de-la-cascade",
-        "festivalId": "rock-en-seine",
-        "name": "Scene de la Cascade"
+        "id": "francofolies-grand-theatre-de-la-passerelle",
+        "festivalId": "francofolies",
+        "name": "Grand Theatre de la Passerelle"
       },
       {
-        "id": "rock-en-seine-scene-firestone",
-        "festivalId": "rock-en-seine",
-        "name": "Scene Firestone"
+        "id": "francofolies-scene-verdiere",
+        "festivalId": "francofolies",
+        "name": "Scene Verdiere"
       }
     ],
     "performances": [
       {
-        "id": "rock-en-seine-tyler-the-creator",
-        "festivalId": "rock-en-seine",
-        "stageId": "rock-en-seine-grande-scene",
-        "artistId": "tyler-the-creator",
-        "start": "2027-08-25T18:00:00+02:00",
-        "end": "2027-08-25T19:15:00+02:00"
+        "id": "francofolies-gims",
+        "festivalId": "francofolies",
+        "stageId": "francofolies-scene-jean-louis-foulquier",
+        "artistId": "gims",
+        "start": "2027-07-09T18:00:00+02:00",
+        "end": "2027-07-09T19:15:00+02:00"
       },
       {
-        "id": "rock-en-seine-the-cure",
-        "festivalId": "rock-en-seine",
-        "stageId": "rock-en-seine-scene-de-la-cascade",
-        "artistId": "the-cure",
-        "start": "2027-08-26T18:00:00+02:00",
-        "end": "2027-08-26T19:15:00+02:00"
+        "id": "francofolies-zaz",
+        "festivalId": "francofolies",
+        "stageId": "francofolies-grand-theatre-de-la-passerelle",
+        "artistId": "zaz",
+        "start": "2027-07-10T18:00:00+02:00",
+        "end": "2027-07-10T19:15:00+02:00"
       },
       {
-        "id": "rock-en-seine-nick-cave-the-bad-seeds",
-        "festivalId": "rock-en-seine",
-        "stageId": "rock-en-seine-scene-firestone",
-        "artistId": "nick-cave-the-bad-seeds",
-        "start": "2027-08-27T18:00:00+02:00",
-        "end": "2027-08-27T19:15:00+02:00"
+        "id": "francofolies-youssou-ndour",
+        "festivalId": "francofolies",
+        "stageId": "francofolies-scene-verdiere",
+        "artistId": "youssou-ndour",
+        "start": "2027-07-11T18:00:00+02:00",
+        "end": "2027-07-11T19:15:00+02:00"
       },
       {
-        "id": "rock-en-seine-deftones",
-        "festivalId": "rock-en-seine",
-        "stageId": "rock-en-seine-grande-scene",
-        "artistId": "deftones",
-        "start": "2027-08-28T18:00:00+02:00",
-        "end": "2027-08-28T19:15:00+02:00"
+        "id": "francofolies-luiza",
+        "festivalId": "francofolies",
+        "stageId": "francofolies-scene-jean-louis-foulquier",
+        "artistId": "luiza",
+        "start": "2027-07-12T18:00:00+02:00",
+        "end": "2027-07-12T19:15:00+02:00"
       },
       {
-        "id": "rock-en-seine-interpol",
-        "festivalId": "rock-en-seine",
-        "stageId": "rock-en-seine-scene-de-la-cascade",
-        "artistId": "interpol",
-        "start": "2027-08-29T18:00:00+02:00",
-        "end": "2027-08-29T19:15:00+02:00"
+        "id": "francofolies-aya-nakamura",
+        "festivalId": "francofolies",
+        "stageId": "francofolies-grand-theatre-de-la-passerelle",
+        "artistId": "aya-nakamura",
+        "start": "2027-07-13T18:00:00+02:00",
+        "end": "2027-07-13T19:15:00+02:00"
       },
       {
-        "id": "rock-en-seine-slowdive",
-        "festivalId": "rock-en-seine",
-        "stageId": "rock-en-seine-scene-firestone",
-        "artistId": "slowdive",
-        "start": "2027-08-25T20:00:00+02:00",
-        "end": "2027-08-25T21:15:00+02:00"
+        "id": "francofolies-orelsan",
+        "festivalId": "francofolies",
+        "stageId": "francofolies-scene-verdiere",
+        "artistId": "orelsan",
+        "start": "2027-07-09T20:00:00+02:00",
+        "end": "2027-07-09T21:15:00+02:00"
       },
       {
-        "id": "rock-en-seine-the-black-keys",
-        "festivalId": "rock-en-seine",
-        "stageId": "rock-en-seine-grande-scene",
-        "artistId": "the-black-keys",
-        "start": "2027-08-26T20:00:00+02:00",
-        "end": "2027-08-26T21:15:00+02:00"
+        "id": "francofolies-mika",
+        "festivalId": "francofolies",
+        "stageId": "francofolies-scene-jean-louis-foulquier",
+        "artistId": "mika",
+        "start": "2027-07-10T20:00:00+02:00",
+        "end": "2027-07-10T21:15:00+02:00"
       },
       {
-        "id": "rock-en-seine-franz-ferdinand",
-        "festivalId": "rock-en-seine",
-        "stageId": "rock-en-seine-scene-de-la-cascade",
-        "artistId": "franz-ferdinand",
-        "start": "2027-08-27T20:00:00+02:00",
-        "end": "2027-08-27T21:15:00+02:00"
+        "id": "francofolies-niska",
+        "festivalId": "francofolies",
+        "stageId": "francofolies-grand-theatre-de-la-passerelle",
+        "artistId": "niska",
+        "start": "2027-07-11T20:00:00+02:00",
+        "end": "2027-07-11T21:15:00+02:00"
       },
       {
-        "id": "rock-en-seine-turnstile",
-        "festivalId": "rock-en-seine",
-        "stageId": "rock-en-seine-scene-firestone",
-        "artistId": "turnstile",
-        "start": "2027-08-28T20:00:00+02:00",
-        "end": "2027-08-28T21:15:00+02:00"
+        "id": "francofolies-louane",
+        "festivalId": "francofolies",
+        "stageId": "francofolies-scene-verdiere",
+        "artistId": "louane",
+        "start": "2027-07-12T20:00:00+02:00",
+        "end": "2027-07-12T21:15:00+02:00"
       },
       {
-        "id": "rock-en-seine-lorde",
-        "festivalId": "rock-en-seine",
-        "stageId": "rock-en-seine-grande-scene",
-        "artistId": "lorde",
-        "start": "2027-08-29T20:00:00+02:00",
-        "end": "2027-08-29T21:15:00+02:00"
+        "id": "francofolies-feu-chatterton",
+        "festivalId": "francofolies",
+        "stageId": "francofolies-scene-jean-louis-foulquier",
+        "artistId": "feu-chatterton",
+        "start": "2027-07-13T20:00:00+02:00",
+        "end": "2027-07-13T21:15:00+02:00"
       },
       {
-        "id": "rock-en-seine-djo",
-        "festivalId": "rock-en-seine",
-        "stageId": "rock-en-seine-scene-de-la-cascade",
-        "artistId": "djo",
-        "start": "2027-08-25T22:00:00+02:00",
-        "end": "2027-08-25T23:15:00+02:00"
+        "id": "francofolies-gaetan-roussel",
+        "festivalId": "francofolies",
+        "stageId": "francofolies-grand-theatre-de-la-passerelle",
+        "artistId": "gaetan-roussel",
+        "start": "2027-07-09T22:00:00+02:00",
+        "end": "2027-07-09T23:15:00+02:00"
       },
       {
-        "id": "rock-en-seine-biffy-clyro",
-        "festivalId": "rock-en-seine",
-        "stageId": "rock-en-seine-scene-firestone",
-        "artistId": "biffy-clyro",
-        "start": "2027-08-26T22:00:00+02:00",
-        "end": "2027-08-26T23:15:00+02:00"
+        "id": "francofolies-julien-clerc",
+        "festivalId": "francofolies",
+        "stageId": "francofolies-scene-verdiere",
+        "artistId": "julien-clerc",
+        "start": "2027-07-10T22:00:00+02:00",
+        "end": "2027-07-10T23:15:00+02:00"
+      },
+      {
+        "id": "francofolies-raphael",
+        "festivalId": "francofolies",
+        "stageId": "francofolies-scene-jean-louis-foulquier",
+        "artistId": "raphael",
+        "start": "2027-07-11T22:00:00+02:00",
+        "end": "2027-07-11T23:15:00+02:00"
+      },
+      {
+        "id": "francofolies-odezenne",
+        "festivalId": "francofolies",
+        "stageId": "francofolies-grand-theatre-de-la-passerelle",
+        "artistId": "odezenne",
+        "start": "2027-07-12T22:00:00+02:00",
+        "end": "2027-07-12T23:15:00+02:00"
       }
     ]
   },
