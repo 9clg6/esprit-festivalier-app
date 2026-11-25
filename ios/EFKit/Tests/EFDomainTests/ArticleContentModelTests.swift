@@ -168,4 +168,20 @@ private func sampleContent() -> ArticleContent {
     func anAddressThatIsNotANumberedArticleHasNoKey(_ address: String) {
         #expect(numbered(address) == nil)
     }
+
+    // Decision (coordinator, 2026-11-25): only the site's host gives a key, whatever its case or `www.`.
+    @Test func theSiteHostInAnyCaseGivesTheKey() {
+        #expect(numbered("HTTPS://WWW.Esprit-Festivalier.FR/orelsan-10675/")?.rawValue == "10675")
+    }
+
+    @Test(arguments: [
+        "https://example.com/foo-10675/",
+        "https://esprit-festivalier.fr.evil.com/foo-10675/",
+        "https://evil-esprit-festivalier.fr/foo-10675/",
+        "https://news.esprit-festivalier.fr/foo-10675/",
+        "ftp://esprit-festivalier.fr/foo-10675/"
+    ])
+    func anAddressOffTheSiteHasNoKey(_ address: String) {
+        #expect(numbered(address) == nil)
+    }
 }
