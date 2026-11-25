@@ -11,7 +11,7 @@ public struct ReactionPill: View {
     private let isSelected: Bool
     private let action: () -> Void
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    /// Bumped when the pill becomes selected: the emoji's 0.3 s bounce.
+    /// Bumped when a tap selects the pill: the emoji's 0.3 s bounce.
     @State private var bounces = 0
 
     public init(emoji: String, label: String, count: Int?, isSelected: Bool, action: @escaping () -> Void) {
@@ -23,7 +23,11 @@ public struct ReactionPill: View {
     }
 
     public var body: some View {
-        Button(action: action) {
+        Button {
+            // On the tap, not on `isSelected`: a reaction already mine when the article opens stays still.
+            if !isSelected, !reduceMotion { bounces += 1 }
+            action()
+        } label: {
             HStack(spacing: 6) {
                 if isSelected {
                     Image(systemName: "checkmark").font(.caption.weight(.bold))
@@ -46,9 +50,6 @@ public struct ReactionPill: View {
             .contentShape(Capsule())
         }
         .buttonStyle(.plain)
-        .onChange(of: isSelected) { _, selected in
-            if selected, !reduceMotion { bounces += 1 }
-        }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(label)
         .accessibilityValue(count.map { $0 > 0 ? "\($0) réaction\($0 > 1 ? "s" : "")" : "" } ?? "")
