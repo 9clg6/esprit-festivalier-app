@@ -70,11 +70,16 @@ final class NotificationsModel {
         BGTaskScheduler.shared.register(forTaskWithIdentifier: Self.refreshIdentifier, using: .main) { [self] task in
             MainActor.assumeIsolated {
                 scheduleRefresh()
+                let completion = BackgroundCompletion(task: task)
                 let work = Task {
                     await checkArticles()
-                    task.setTaskCompleted(success: !Task.isCancelled)
+                    completion.finish(success: !Task.isCancelled)
                 }
-                task.expirationHandler = { work.cancel() }
+                // Stops the check (the fetch is cancelled with it) and tells iOS at once.
+                task.expirationHandler = {
+                    work.cancel()
+                    Task { @MainActor in completion.finish(success: false) }
+                }
             }
         }
     }
@@ -156,16 +161,21 @@ final class NotificationsModel {
 
     /// New articles of the feed in the followed sections; one check at a time, so a background
     /// refresh and a return to the app never notify the same article twice.
+    /// Cancelling the caller cancels the check.
     func checkArticles() async {
-        if let checking { return await checking.value }
+        if let checking { return await Self.wait(for: checking) }
         let work = Task { await runArticleCheck() }
         checking = work
-        await work.value
+        await Self.wait(for: work)
         checking = nil
     }
 
+    private static func wait(for work: Task<Void, Never>) async {
+        await withTaskCancellationHandler { await work.value } onCancel: { work.cancel() }
+    }
+
     private func runArticleCheck() async {
-        guard let feed = try? await articles.articles(category: nil) else { return }
+        guard let feed = try? await articles.articles(category: nil), !Task.isCancelled else { return }
         let stored: [Article.ID]? = Self.read(seenFile)
         let result = NewArticles.check(feed: feed, seen: stored.map(Set.init), preferences: preferences)
         let feedIDs = feed.map(\.id)
@@ -192,6 +202,18 @@ final class NotificationsModel {
 
     private static func read<Value: Decodable>(_ file: URL) -> Value? {
         (try? Data(contentsOf: file)).flatMap { try? JSONDecoder().decode(Value.self, from: $0) }
+    }
+}
+
+/// Calls `setTaskCompleted` once, whether the check ends or iOS stops it first.
+@MainActor private final class BackgroundCompletion {
+    private var task: BGTask?
+
+    init(task: BGTask) { self.task = task }
+
+    func finish(success: Bool) {
+        task?.setTaskCompleted(success: success)
+        task = nil
     }
 }
 
