@@ -14,7 +14,8 @@ struct SignInSheet: View {
     @State private var email = ""
     @State private var code = ""
     @State private var error: String?
-    @State private var canResend = false
+    /// Seconds before "Renvoyer le code" works again (UX P6: 30 s after each sending).
+    @State private var resendIn = 0
     @State private var resendDelay: Task<Void, Never>?
     /// The raw nonce of the Apple request in flight; Apple gets its SHA-256.
     @State private var nonce = ""
@@ -118,7 +119,9 @@ struct SignInSheet: View {
                 .foregroundStyle(EFTextColor.ink2.color)
             PrimaryButton("Vérifier", action: verify).disabled(code.count != 6)
             HStack {
-                Button("Renvoyer le code", action: send).disabled(!canResend)
+                Button(resendIn > 0 ? "Renvoyer le code (\(resendIn) s)" : "Renvoyer le code", action: send)
+                    .disabled(resendIn > 0)
+                    .accessibilityHint(resendIn > 0 ? "Possible dans \(resendIn) secondes" : "")
                 Spacer()
                 Button("Changer d'adresse") {
                     error = nil
@@ -144,13 +147,16 @@ struct SignInSheet: View {
         }
     }
 
-    /// "Renvoyer le code" waits 30 s after each sending (UX P6).
+    /// "Renvoyer le code" waits 30 s after each sending (UX P6), counting down.
     private func startResendDelay() {
-        canResend = false
         resendDelay?.cancel()
+        resendIn = 30
         resendDelay = Task {
-            try? await Task.sleep(for: .seconds(30))
-            if !Task.isCancelled { canResend = true }
+            while resendIn > 0 {
+                try? await Task.sleep(for: .seconds(1))
+                if Task.isCancelled { return }
+                resendIn -= 1
+            }
         }
     }
 
