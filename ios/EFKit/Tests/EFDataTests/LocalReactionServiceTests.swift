@@ -65,20 +65,20 @@ private func entry(_ reaction: Reaction, on article: ArticleKey, in service: Loc
         #expect(try await service.summary(for: article).mine == [.love])
     }
 
-    @Test func tappingAgainRemovesIt() async throws {
+    @Test func settingItInactiveRemovesIt() async throws {
         let service = makeService(in: temporaryDirectory())
 
-        #expect(try await service.toggle(.fire, on: article).mine == [.fire])
-        #expect(try await service.toggle(.fire, on: article).mine.isEmpty)
+        #expect(try await service.set(.fire, active: true, on: article).mine == [.fire])
+        #expect(try await service.set(.fire, active: false, on: article).mine.isEmpty)
         #expect(try await service.summary(for: article).mine.isEmpty)
     }
 
     @Test func severalReactionTypesOnOneArticleAreAllowed() async throws {
         let service = makeService(in: temporaryDirectory())
 
-        try await service.toggle(.love, on: article)
-        try await service.toggle(.clap, on: article)
-        try await service.toggle(.insight, on: article)
+        try await service.set(.love, active: true, on: article)
+        try await service.set(.clap, active: true, on: article)
+        try await service.set(.insight, active: true, on: article)
 
         #expect(try await service.summary(for: article).mine == [.love, .clap, .insight])
     }
@@ -86,7 +86,7 @@ private func entry(_ reaction: Reaction, on article: ArticleKey, in service: Loc
     @Test func reactionsBelongToTheirArticle() async throws {
         let service = makeService(in: temporaryDirectory())
 
-        try await service.toggle(.wow, on: article)
+        try await service.set(.wow, active: true, on: article)
 
         #expect(try await service.summary(for: article).mine == [.wow])
         #expect(try await service.summary(for: otherArticle).mine.isEmpty)
@@ -130,9 +130,9 @@ private func entry(_ reaction: Reaction, on article: ArticleKey, in service: Loc
     @Test func reactionsAreKeptAcrossInstances() async throws {
         let directory = temporaryDirectory()
         let first = makeService(in: directory)
-        try await first.toggle(.love, on: article)
-        try await first.toggle(.fire, on: article)
-        try await first.toggle(.fire, on: article)
+        try await first.set(.love, active: true, on: article)
+        try await first.set(.fire, active: true, on: article)
+        try await first.set(.fire, active: false, on: article)
 
         let reopened = makeService(in: directory)
 
@@ -143,7 +143,7 @@ private func entry(_ reaction: Reaction, on article: ArticleKey, in service: Loc
     @Test func theReactionsLiveInReactionsJSONInTheGivenDirectory() async throws {
         let directory = temporaryDirectory()
 
-        try await makeService(in: directory).toggle(.love, on: article)
+        try await makeService(in: directory).set(.love, active: true, on: article)
 
         let file = directory.appending(path: "reactions.json")
         #expect(FileManager.default.fileExists(atPath: file.path))
@@ -154,7 +154,7 @@ private func entry(_ reaction: Reaction, on article: ArticleKey, in service: Loc
 
     @Test func deletingTheDirectoryResetsTheReactions() async throws {
         let directory = temporaryDirectory()
-        try await makeService(in: directory).toggle(.love, on: article)
+        try await makeService(in: directory).set(.love, active: true, on: article)
 
         try FileManager.default.removeItem(at: directory)
 
@@ -171,7 +171,7 @@ private func entry(_ reaction: Reaction, on article: ArticleKey, in service: Loc
 
         let service = makeService(in: directory)
         #expect(try await service.summary(for: article).mine.isEmpty)
-        try await service.toggle(.clap, on: article)
+        try await service.set(.clap, active: true, on: article)
 
         #expect(try Data(contentsOf: directory.appending(path: "reactions.corrupt.json")) == unreadable)
         #expect(try await makeService(in: directory).summary(for: article).mine == [.clap])
@@ -181,7 +181,7 @@ private func entry(_ reaction: Reaction, on article: ArticleKey, in service: Loc
         let service = makeService(in: temporaryDirectory())
 
         let before = try await service.summary(for: article)
-        let after = try await service.toggle(.love, on: article)
+        let after = try await service.set(.love, active: true, on: article)
 
         #expect(before.counts == nil)
         #expect(after.counts == nil)
@@ -210,8 +210,8 @@ private func entry(_ reaction: Reaction, on article: ArticleKey, in service: Loc
         let service = makeService(in: temporaryDirectory(), demoCounts: true)
         let before = try #require(try await service.summary(for: article).counts)
 
-        let reacted = try await service.toggle(.fire, on: article)
-        let removed = try await service.toggle(.fire, on: article)
+        let reacted = try await service.set(.fire, active: true, on: article)
+        let removed = try await service.set(.fire, active: false, on: article)
 
         #expect(reacted.isDemo)
         #expect(reacted.counts?[.fire] == (before[.fire] ?? 0) + 1)
@@ -229,7 +229,7 @@ private func entry(_ reaction: Reaction, on article: ArticleKey, in service: Loc
     ])
     func anotherAddressOfTheSameArticleKeepsMyReactions(_ otherAddress: String) async throws {
         let service = makeService(in: temporaryDirectory())
-        try await service.toggle(.love, on: try key(articleAddress))
+        try await service.set(.love, active: true, on: try key(articleAddress))
 
         #expect(try await service.summary(for: try key(otherAddress)).mine == [.love])
     }
@@ -238,7 +238,7 @@ private func entry(_ reaction: Reaction, on article: ArticleKey, in service: Loc
         let directory = temporaryDirectory()
         let service = makeService(in: directory)
 
-        try await service.toggle(.love, on: try key(articleAddress))
+        try await service.set(.love, active: true, on: try key(articleAddress))
 
         #expect(await service.entries.map(\.articleId) == [article])
         let text = try String(contentsOf: directory.appending(path: "reactions.json"), encoding: .utf8)
@@ -253,7 +253,7 @@ private func entry(_ reaction: Reaction, on article: ArticleKey, in service: Loc
         let service = makeService(in: directory)
         let refused = ArticleKey(rawValue: rawKey)
 
-        let summary = try await service.toggle(.love, on: refused)
+        let summary = try await service.set(.love, active: true, on: refused)
 
         #expect(summary.mine.isEmpty)
         #expect(try await service.summary(for: refused).mine.isEmpty)

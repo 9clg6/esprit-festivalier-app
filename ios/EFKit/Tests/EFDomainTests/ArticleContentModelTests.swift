@@ -158,6 +158,18 @@ private func sampleContent() -> ArticleContent {
         #expect(numbered("https://esprit-festivalier.fr/un-article-123456789/")?.rawValue == "123456789")
     }
 
+    // Review B: one article, one key. Leading zeros are stripped; an all-zero number is no number.
+    @Test func leadingZerosAreStrippedSoOneArticleHasOneKey() {
+        #expect(numbered("https://esprit-festivalier.fr/x-0012/")?.rawValue == "12")
+        #expect(numbered("https://esprit-festivalier.fr/x-12/")?.rawValue == "12")
+        #expect(numbered("https://esprit-festivalier.fr/x-0012/") == numbered("https://esprit-festivalier.fr/x-12/"))
+    }
+
+    @Test func aNumberOfOnlyZerosHasNoKey() {
+        #expect(numbered("https://esprit-festivalier.fr/x-000/") == nil)
+        #expect(numbered("https://esprit-festivalier.fr/x-0/") == nil)
+    }
+
     @Test(arguments: [
         "https://esprit-festivalier.fr/a-propos/",
         "https://esprit-festivalier.fr/",

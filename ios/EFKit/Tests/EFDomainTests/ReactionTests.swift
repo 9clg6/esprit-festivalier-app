@@ -19,8 +19,7 @@ import EFDomain
 //     func summary(for article: ArticleKey) async throws -> ReactionSummary
 //     func set(_ reaction: Reaction, active: Bool, on article: ArticleKey) async throws -> ReactionSummary
 //   }
-//   + `toggle(_:on:) async throws -> ReactionSummary` usable on `any ReactionService`
-//     (requirement or extension): tapping a pill toggles it.
+//   + `set(_:active:on:) async throws -> ReactionSummary` usable on `any ReactionService`.
 // Keyed by `ArticleKey` (the number of `/<slug>-<number>/`, ADR-007), not by the article's URL.
 
 @Suite struct ReactionTests {
@@ -80,12 +79,12 @@ private actor OneArticleReactions: ReactionService {
     }
 }
 
-@Test func aReactionServiceCanBeUsedThroughItsProtocolAndToggles() async throws {
+@Test func aReactionServiceCanBeUsedThroughItsProtocolAndSetsReactions() async throws {
     let service: any ReactionService = OneArticleReactions()
 
     let article = ArticleKey(rawValue: "10675")
 
     #expect(try await service.summary(for: article).mine.isEmpty)
-    #expect(try await service.toggle(.fire, on: article).mine == [.fire])
-    #expect(try await service.toggle(.fire, on: article).mine.isEmpty)
+    #expect(try await service.set(.fire, active: true, on: article).mine == [.fire])
+    #expect(try await service.set(.fire, active: false, on: article).mine.isEmpty)
 }
