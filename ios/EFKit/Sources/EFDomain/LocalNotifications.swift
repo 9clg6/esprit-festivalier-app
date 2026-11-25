@@ -27,6 +27,7 @@ public struct NotificationPreferences: Sendable, Hashable, Codable {
 }
 
 public enum FestivalReminderKind: String, CaseIterable, Sendable {
+    // swiftlint:disable:next identifier_name
     case j7, j1
 
     var daysBefore: Int { self == .j7 ? 7 : 1 }
