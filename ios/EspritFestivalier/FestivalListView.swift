@@ -78,7 +78,7 @@ struct FestivalListView: View {
         .task { await model.load() }
         .onChange(of: requestedPeriod, initial: true) {
             guard let period = requestedPeriod else { return }
-            model.filter.period = period
+            model.filter = FestivalFilter(period: period)
             path = []
             requestedPeriod = nil
         }
