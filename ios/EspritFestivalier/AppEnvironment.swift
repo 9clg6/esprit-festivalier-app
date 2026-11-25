@@ -22,9 +22,7 @@ struct AppEnvironment: Sendable {
         articleFeed = feed
         articles = RSSArticleSource(load: { try await feed.data() })
         let directory = URL.applicationSupportDirectory.appending(path: "EspritFestivalier")
-        let offline = OfflineCache(directory: directory.appending(path: "Offline")) { url in
-            try await URLSession.shared.data(from: url).0
-        }
+        let offline = OfflineCache(directory: directory.appending(path: "Offline"), fetchImage: OfflineImage.fetch)
         let catalog: any FestivalSource
         switch kind {
         case .mock, .snapshot, .backoffice:

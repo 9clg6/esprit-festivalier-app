@@ -12,15 +12,17 @@ public actor OfflineCache {
         self.fetchImage = fetchImage
     }
 
-    /// Stores the sheet and the bytes of its image; an image that cannot be fetched is skipped.
+    /// Stores the sheet and the bytes of its image. An image that cannot be fetched is skipped and
+    /// never replaces the one already stored.
     public func save(_ detail: FestivalDetail) async throws {
         let id = detail.festival.id
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         try Self.encoder.encode(detail).write(to: sheetFile(id), options: .atomic)
-        guard let url = detail.festival.imageURL, let bytes = try? await fetchImage(url) else {
+        guard let url = detail.festival.imageURL else {
             try? FileManager.default.removeItem(at: imageFile(id))
             return
         }
+        guard let bytes = try? await fetchImage(url) else { return }
         try bytes.write(to: imageFile(id), options: .atomic)
     }
 
