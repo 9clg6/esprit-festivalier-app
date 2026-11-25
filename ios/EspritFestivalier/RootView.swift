@@ -81,7 +81,8 @@ struct RootView: View {
                 break
             }
         }
-        .onChange(of: environment.notifications.opened) { open(environment.notifications.opened) }
+        // initial: a tap that launched the app is set before the first render.
+        .onChange(of: environment.notifications.opened, initial: true) { open(environment.notifications.opened) }
     }
 
     /// E14, once, on the first pick or favorite (UX P5): one sheet for the whole app.
