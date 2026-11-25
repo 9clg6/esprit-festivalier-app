@@ -100,6 +100,12 @@ func tokenRendersTheDAColourInDarkAppearance(_ c: TokenCase) {
     #expect(rgbHex(EFTextColor.accentDark.color, .dark) == "#5cc3e4")
 }
 
+// Lead decision 2026-11-25: badge text is a fixed #0e1a26, never the dark ink (1.3:1 on sun).
+@Test func textOnSunIsTheFixedDarkInkInBothAppearances() {
+    #expect(rgbHex(EFTextColor.onSun.color, .light) == "#0e1a26")
+    #expect(rgbHex(EFTextColor.onSun.color, .dark) == "#0e1a26")
+}
+
 @Test func textOnFilledButtonsIsWhiteInBothAppearances() {
     #expect(rgbHex(EFTextColor.onFill.color, .light) == "#ffffff")
     #expect(rgbHex(EFTextColor.onFill.color, .dark) == "#ffffff")
@@ -123,25 +129,11 @@ let allowedTextPairs: [TextPair] = [
     TextPair(text: .onFill, background: .deep, source: "Contrastes vérifiés: blanc sur deep"),
     TextPair(text: .accentDark, background: .sky, source: "Composants: SecondaryButton"),
     TextPair(text: .ink2, background: .card, source: "DA: ink2 texte secondaire"),
+    TextPair(text: .onSun, background: .sun, source: "Composants: Badge, alertes de conflit"),
 ]
 
 @Test(arguments: allowedTextPairs, [ColorScheme.light, .dark])
 func allowedTextPairReachesWCAGAA(_ pair: TextPair, _ scheme: ColorScheme) {
     let ratio = contrastRatio(rgbHex(pair.text.color, scheme), rgbHex(pair.background.color, scheme))
     #expect(ratio >= 4.5, "\(pair.testDescription) in \(scheme): \(ratio):1")
-}
-
-// Badge: "Fond sun, texte ink" (Composants) and "ink sur sun 12,2:1" (Contrastes vérifiés).
-@Test func badgeTextOnSunReachesWCAGAAInLight() {
-    let ratio = contrastRatio(rgbHex(EFTextColor.ink.color, .light), rgbHex(EFColorToken.sun.color, .light))
-    #expect(ratio >= 4.5, "ink on sun in light: \(ratio):1")
-}
-
-@Test func badgeTextOnSunInDark() {
-    // ponytail: the DA values make dark ink (#eef4f8) on sun (#ffd23f) about 1.3:1.
-    // The need does not say which text colour a badge uses in dark: open question, not settled here.
-    withKnownIssue("UX doc: Badge = ink on sun, but dark ink on sun fails WCAG AA (open question)") {
-        let ratio = contrastRatio(rgbHex(EFTextColor.ink.color, .dark), rgbHex(EFColorToken.sun.color, .dark))
-        #expect(ratio >= 4.5, "ink on sun in dark: \(ratio):1")
-    }
 }
