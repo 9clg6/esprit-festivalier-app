@@ -44,7 +44,10 @@ final class FavoritesModel {
         }
         #endif
         ids = await store.favoriteIDs
-        // Favorites saved before the offline copy existed, or whose copy failed: copy them now.
+        // Copies left by an interrupted removal go; favorites without a copy get one.
+        for stored in await offline.storedFestivals() where !ids.contains(stored.id) {
+            try? await offline.remove(stored.id)
+        }
         for id in ids { await keepOffline(id, true) }
     }
 
@@ -102,6 +105,8 @@ final class FavoritesModel {
         if isFavorite, await !offline.isAvailableOffline(id),
            let detail = try? await festivals.festival(id: id) {
             try? await offline.save(detail)
+            // Removed while the copy was being made: the removal's own cleanup may have run already.
+            if !contains(id) { try? await offline.remove(id) }
         } else if !isFavorite {
             try? await offline.remove(id)
         }
