@@ -26,7 +26,7 @@ struct HomeView: View {
 
     var body: some View {
         NavigationStack(path: $path) {
-            Loaded {
+            Loaded(reloadsOnActive: true) {
                 let data = try await environment.lineupData()
                 // Articles come from the site: offline, the other sections still show.
                 let articles = (try? await environment.articles.articles(category: nil)) ?? []

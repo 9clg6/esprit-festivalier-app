@@ -25,17 +25,20 @@ extension View {
     }
 }
 
-/// Loads a value, then shows it: skeletons while loading, "Réessayer" on failure.
-/// A failed or cancelled reload keeps what is shown.
+/// Loads a value once, then shows it: skeletons while loading, "Réessayer" on failure.
+/// Coming back to the screen does not reload; `reloadsOnActive` reloads when the app comes back to the
+/// foreground. A failed or cancelled reload keeps what is shown.
 struct Loaded<Value, Content: View>: View {
     enum State {
         case loading, failed
         case loaded(Value)
     }
 
+    var reloadsOnActive = false
     let load: @MainActor () async throws -> Value
     @ViewBuilder let content: (Value, _ reload: @escaping @MainActor () async -> Void) -> Content
     @SwiftUI.State private var state = State.loading
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         Group {
@@ -60,7 +63,12 @@ struct Loaded<Value, Content: View>: View {
             }
         }
         .background(EFColorToken.bg.color)
-        .task { await reload() }
+        .task {
+            if case .loading = state { await reload() }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if reloadsOnActive, phase == .active { Task { await reload() } }
+        }
     }
 
     private func reload() async {

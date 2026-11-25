@@ -12,7 +12,7 @@ struct LineupsView: View {
     let environment: AppEnvironment
 
     var body: some View {
-        Loaded {
+        Loaded(reloadsOnActive: true) {
             let data = try await environment.lineupData()
             return Lineups.feed(lineups: data.lineups, festivals: data.festivals, artists: data.artists, now: Date())
         } content: { feed, reload in
