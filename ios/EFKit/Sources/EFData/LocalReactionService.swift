@@ -32,6 +32,10 @@ public actor LocalReactionService: ReactionService {
     /// Reads the file again, after something else changed it (the account deletion erases it).
     public func reload() { entries = file.read() }
 
+    /// Forgets the reactions in memory, before the account deletion erases the file: a write that
+    /// lands in between cannot put them back.
+    public func reset() { entries = [] }
+
     public func summary(for article: ArticleKey) -> ReactionSummary {
         let mine = Set(entries.filter { $0.articleId == article && !$0.deleted }.map(\.reaction))
         guard demoCounts else { return ReactionSummary(mine: mine, counts: nil, isDemo: false) }

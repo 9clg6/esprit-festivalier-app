@@ -32,6 +32,10 @@ public actor ReadCounter {
     /// Reads the file again, after something else changed it (the account deletion erases it).
     public func reload() { entries = file.read() }
 
+    /// Forgets the reads in memory, before the account deletion erases the file: a write that lands
+    /// in between cannot put them back.
+    public func reset() { entries = [] }
+
     /// What is still to send; reading it changes nothing.
     public var pending: [ArticleReadCount] {
         kept.filter { !$0.acknowledged }.map { ArticleReadCount(articleId: $0.articleId, day: $0.day, count: 1) }

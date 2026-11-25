@@ -73,6 +73,9 @@ final class AccountModel {
     /// On failure too, the screens show what is left on disk.
     func deleteAccount() async throws {
         removeExportFile()
+        // Before the erase: a reaction or read written in between must not rewrite the old ones.
+        await reactions.reset()
+        await reads.reset()
         do {
             try await auth.deleteAccount()
         } catch {
