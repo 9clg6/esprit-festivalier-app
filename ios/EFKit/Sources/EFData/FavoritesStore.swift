@@ -46,6 +46,11 @@ public actor FavoritesStore {
         try save(entries.map { $0.festivalId == id ? removed : $0 })
     }
 
+    /// Sets the wanted state; idempotent (a second call with the same value changes nothing).
+    public func setFavorite(_ id: Festival.ID, _ isFavorite: Bool) throws {
+        if isFavorite { try add(id) } else { try remove(id) }
+    }
+
     /// Returns the new state: `true` when the festival is now a favorite.
     @discardableResult
     public func toggle(_ id: Festival.ID) throws -> Bool {

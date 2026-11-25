@@ -9,6 +9,8 @@ import Observation
 final class FavoritesModel {
     /// Most recently added first.
     private(set) var ids: [Festival.ID] = []
+    /// Short non-blocking message after a failed write; cleared after a few seconds.
+    private(set) var saveError: String?
     private let store: FavoritesStore
 
     init(store: FavoritesStore) { self.store = store }
@@ -25,12 +27,24 @@ final class FavoritesModel {
         ids = await store.favoriteIDs
     }
 
+    /// Sets the state the user sees the heart move to, decided at tap time (never flipped on disk).
     func toggle(_ id: Festival.ID) {
-        // Instant feedback; the store has the last word (a failed write puts the heart back).
-        ids = contains(id) ? ids.filter { $0 != id } : [id] + ids
+        let target = !contains(id)
+        apply(id, target)
         Task {
-            _ = try? await store.toggle(id)
-            ids = await store.favoriteIDs
+            do {
+                try await store.setFavorite(id, target)
+            } catch {
+                apply(id, await store.contains(id))
+                saveError = "Impossible d'enregistrer le favori"
+                try? await Task.sleep(for: .seconds(3))
+                saveError = nil
+            }
         }
+    }
+
+    private func apply(_ id: Festival.ID, _ isFavorite: Bool) {
+        let others = ids.filter { $0 != id }
+        ids = isFavorite ? (contains(id) ? ids : [id] + others) : others
     }
 }
