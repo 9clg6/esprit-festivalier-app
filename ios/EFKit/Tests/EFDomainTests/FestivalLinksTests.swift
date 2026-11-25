@@ -7,8 +7,9 @@ import EFDomain
 //   utm_source=esprit-festivalier-app, utm_medium=app, utm_campaign=festival-<id>
 // Query items already in the link are kept; our utm_* replace any existing ones (never duplicated).
 //
-// STORY-015 / FR-004 "Itinéraire ouvre Plans": Apple Maps URL from the festival's coordinates and name:
-//   https://maps.apple.com/?ll=<lat>,<lon>&q=<name, percent-encoded>
+// STORY-015 / FR-004 "Itinéraire ouvre Plans": Apple Maps starts a route to the festival's coordinates
+// (lead decision 2026-11-25: daddr, not ll):
+//   https://maps.apple.com/?daddr=<lat>,<lon>&q=<name, percent-encoded>
 
 private func festival(
     id: String = "hellfest", name: String = "Hellfest",
@@ -82,10 +83,10 @@ private func values(_ name: String, in url: URL?) -> [String?] {
 }
 
 @Suite struct DirectionsLinkTests {
-    @Test func directionsOpenAppleMapsOnTheFestivalCoordinates() {
+    @Test func directionsStartARouteToTheFestivalCoordinates() {
         let url = Directions.appleMapsURL(for: festival())
 
-        #expect(url.absoluteString == "https://maps.apple.com/?ll=47.09583,-1.26806&q=Hellfest")
+        #expect(url.absoluteString == "https://maps.apple.com/?daddr=47.09583,-1.26806&q=Hellfest")
     }
 
     @Test func spacesAndAccentsInTheNameArePercentEncoded() {
@@ -93,13 +94,13 @@ private func values(_ name: String, in url: URL?) -> [String?] {
             name: "Les Eurockéennes", latitude: 47.686167, longitude: 6.8081694
         ))
 
-        #expect(url.absoluteString == "https://maps.apple.com/?ll=47.686167,6.8081694&q=Les%20Eurock%C3%A9ennes")
+        #expect(url.absoluteString == "https://maps.apple.com/?daddr=47.686167,6.8081694&q=Les%20Eurock%C3%A9ennes")
     }
 
     @Test func anAmpersandInTheNameDoesNotBreakTheQuery() {
         let url = Directions.appleMapsURL(for: festival(name: "Rock & Folk"))
 
         #expect(values("q", in: url) == ["Rock & Folk"])
-        #expect(queryItems(url).map { $0.name } == ["ll", "q"])
+        #expect(queryItems(url).map { $0.name } == ["daddr", "q"])
     }
 }

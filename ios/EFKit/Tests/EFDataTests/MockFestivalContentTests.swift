@@ -62,11 +62,12 @@ private func isBlank(_ text: String?) -> Bool {
         }
     }
 
-    @Test func aDemoTicketLinkIsHttps() async throws {
+    // Lead decision 2026-11-25: the demo shows the "Billets" button, so every festival
+    // links to its official ticketing page.
+    @Test func everyDemoFestivalHasAnHttpsTicketLink() async throws {
         for festival in try await demoFestivals() {
-            if let ticket = festival.ticketURL {
-                #expect(ticket.scheme == "https", "\(festival.id) \(ticket)")
-            }
+            let ticket = try #require(festival.ticketURL, "\(festival.id) has no ticket link")
+            #expect(ticket.scheme == "https", "\(festival.id) \(ticket)")
         }
     }
 
