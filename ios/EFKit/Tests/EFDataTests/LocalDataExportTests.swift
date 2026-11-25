@@ -32,8 +32,14 @@ private let emailAccount = AuthSession(
     createdAt: try! Date("2026-11-20T12:00:00Z", strategy: .iso8601)
 )
 
+private struct StoredData {
+    let favorites: [FavoriteEntry]
+    let picks: [PickEntry]
+    let reactions: [ReactionEntry]
+}
+
 /// A favorite, a pick and a reaction kept, one of each removed (tombstones), all dated `addedAt`.
-private func storedData() async throws -> (favorites: [FavoriteEntry], picks: [PickEntry], reactions: [ReactionEntry]) {
+private func storedData() async throws -> StoredData {
     let directory = temporaryDirectory()
     let favorites = FavoritesStore(directory: directory, now: { addedAt })
     try await favorites.add("hellfest")
@@ -47,7 +53,7 @@ private func storedData() async throws -> (favorites: [FavoriteEntry], picks: [P
     _ = try await reactions.set(.love, active: true, on: "10675")
     _ = try await reactions.set(.fire, active: true, on: "99999")
     _ = try await reactions.set(.fire, active: false, on: "99999")
-    return (await favorites.entries, await picks.entries, await reactions.entries)
+    return StoredData(favorites: await favorites.entries, picks: await picks.entries, reactions: await reactions.entries)
 }
 
 private func export(account: AuthSession? = emailAccount) async throws -> LocalDataExport {
