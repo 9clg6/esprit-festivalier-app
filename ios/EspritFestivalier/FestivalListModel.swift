@@ -18,10 +18,7 @@ final class FestivalListModel {
 
     init(source: any FestivalSource) {
         self.source = source
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.locale = Locale(identifier: "fr_FR")
-        calendar.timeZone = TimeZone(identifier: "Europe/Paris") ?? .current
-        self.calendar = calendar
+        self.calendar = AppEnvironment.calendar
     }
 
     func load() async {
