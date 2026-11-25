@@ -23,6 +23,9 @@ public actor PicksStore {
         self.now = now
     }
 
+    /// Reads the file again, after something else changed it (the account deletion erases it).
+    public func reload() { entries = file.read() }
+
     public var pickedIDs: Set<Performance.ID> { Set(entries.filter { !$0.deleted }.map(\.performanceId)) }
 
     /// Live picks with their festival (nil when unknown).
