@@ -34,7 +34,7 @@ workflow_status:
 
   - name: create-ux-design
     phase: 2
-    status: "recommended"
+    status: "docs/ux-design-esprit-festivalier-app-2026-11-25.md"
     description: "UX/UI design workflow (DA : docs/design/direction-artistique.md)"
 
   - name: architecture

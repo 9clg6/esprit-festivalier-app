@@ -23,6 +23,8 @@ Source : CSS inline de https://esprit-festivalier.fr/ (relevé le 2026-11-25). L
 | `hover` | `#e9f2f8` | `#1a2836` | Survol / état pressé |
 | `thumb` | `#d9e8f0` | `#1c2a38` | Fond de vignette en chargement |
 
+**Règle de contraste (WCAG AA) :** `accent` (#1d9fc9) n'atteint que 3,1:1 sur blanc. Il sert aux icônes et aux grands titres seulement. Texte d'accent : `accent-dark` (5,5:1). Fond de bouton : `accent-fill` avec texte blanc (5,5:1). Détail dans `docs/ux-design-esprit-festivalier-app-2026-11-25.md`.
+
 ## Typographie
 
 | Rôle | Police | Repli |
