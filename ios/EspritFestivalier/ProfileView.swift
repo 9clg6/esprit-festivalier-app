@@ -76,6 +76,7 @@ struct ProfileView: View {
         } footer: {
             if let accountError {
                 Text(accountError)
+                    .onAppear { AccessibilityNotification.Announcement(accountError).post() }
             } else if account.session == nil {
                 Text("Facultatif : tes favoris et tes concerts cochés marchent sans compte.")
             }

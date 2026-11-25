@@ -90,7 +90,7 @@ struct SignInSheet: View {
     private var emailStep: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Ton adresse e-mail").efText(.strongLabel).foregroundStyle(EFTextColor.ink.color)
-            TextField("prenom@exemple.fr", text: $email)
+            TextField("Adresse e-mail", text: $email, prompt: Text("prenom@exemple.fr"))
                 .textContentType(.emailAddress)
                 .keyboardType(.emailAddress)
                 .textInputAutocapitalization(.never)
@@ -108,7 +108,7 @@ struct SignInSheet: View {
             Text("Code envoyé à \(email.trimmingCharacters(in: .whitespacesAndNewlines))")
                 .efText(.body)
                 .foregroundStyle(EFTextColor.ink.color)
-            TextField("Code à 6 chiffres", text: $code)
+            TextField("Code à 6 chiffres", text: $code, prompt: Text("Code à 6 chiffres"))
                 .textContentType(.oneTimeCode)
                 .keyboardType(.numberPad)
                 .textFieldStyle(.roundedBorder)
