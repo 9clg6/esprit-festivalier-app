@@ -1,3 +1,4 @@
+import CryptoKit
 import EFDomain
 import Foundation
 
@@ -26,8 +27,9 @@ public actor CachedArticleContentSource: ArticleContentSource {
     }
 
     public func content(at url: URL) async throws -> ArticleContent {
-        let file = directory.appending(path: Self.fileName(ArticleKey(url: url)))
-        let copy = Self.copy(at: file)
+        let key = ArticleKey(url: url)
+        let file = directory.appending(path: Self.fileName(key))
+        let copy = Self.copy(at: file).flatMap { $0.content.key == key ? $0 : nil }
         if let copy, copy.content.parserVersion == parserVersion, now().timeIntervalSince(copy.storedAt) < maxAge {
             return copy.content
         }
@@ -74,8 +76,9 @@ public actor CachedArticleContentSource: ArticleContentSource {
         for (file, _) in byAge.prefix(copies.count - limit) { try? FileManager.default.removeItem(at: file) }
     }
 
-    /// The key is a number, or a path for an address without one.
+    /// A hash of the key (a number, or a path for an address without one): two keys never share a file;
+    /// the copy's own key is checked on read.
     private static func fileName(_ key: ArticleKey) -> String {
-        key.rawValue.replacingOccurrences(of: "/", with: "_") + ".json"
+        SHA256.hash(data: Data(key.rawValue.utf8)).map { String(format: "%02x", $0) }.joined() + ".json"
     }
 }
