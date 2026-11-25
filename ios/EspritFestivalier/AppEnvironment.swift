@@ -15,6 +15,8 @@ struct AppEnvironment: Sendable {
     let picks: PicksModel
     /// Favorite sheets and images kept on the device (STORY-008).
     let offline: OfflineCache
+    /// The account and the data export (STORY-022, STORY-032).
+    let account: AccountModel
     /// Lineups and artists are demo data: the screens say so.
     let isDemo: Bool
 
@@ -27,6 +29,8 @@ struct AppEnvironment: Sendable {
         let offline = OfflineCache(directory: directory.appending(path: "Offline"), fetchImage: OfflineImage.fetch)
         self.offline = offline
         let catalog: any FestivalSource
+        let auth: any AuthService
+        let sync: any SyncService
         switch kind {
         case .mock, .snapshot, .backoffice:
             // ponytail: only mock exists; snapshot and backoffice fall back to it until STORY-007.
@@ -34,6 +38,10 @@ struct AppEnvironment: Sendable {
             lineups = MockLineupSource()
             artists = MockArtistSource()
             isDemo = true
+            // ponytail: mock account for every kind until the Better Auth client (STORY-021) and the
+            // `/v1/me/sync` client (STORY-023) replace them. The deletion erases this whole folder.
+            auth = MockAuthService(directory: directory.appending(path: "Account"), userDataDirectories: [directory])
+            sync = NoopSyncService()
         }
         // Every screen reads a favorite's sheet through the offline copy (STORY-008).
         festivals = OfflineFestivalSource(source: catalog, cache: offline)
@@ -42,6 +50,7 @@ struct AppEnvironment: Sendable {
             store: PicksStore(directory: directory),
             reminders: ConcertReminderScheduler(festivals: festivals, artists: artists)
         )
+        account = AccountModel(auth: auth, sync: sync, favorites: favorites, picks: picks)
     }
 
     /// Festival dates are read on the Paris calendar, in French.

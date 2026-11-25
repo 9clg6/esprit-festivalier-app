@@ -44,6 +44,19 @@ final class PicksModel {
         rescheduleReminders()
     }
 
+    /// What "Exporter mes données" writes.
+    func entries() async -> [PickEntry] { await store.entries }
+
+    /// After the account deletion erased the files: no pick, so every reminder goes.
+    func reloadAfterErase() async {
+        await store.reload()
+        ids = await store.pickedIDs
+        rescheduleReminders()
+    }
+
+    /// The delay chosen in Profil.
+    static var lead: ReminderLead { ReminderLead(rawValue: UserDefaults.standard.integer(forKey: leadKey)) ?? .default }
+
     func toggle(_ performance: Performance) {
         let id = performance.id
         let target = !contains(id)
@@ -94,7 +107,7 @@ final class PicksModel {
         // One at a time: the newer plan waits for the older one, which stops at its next step.
         let previous = scheduling
         previous?.cancel()
-        let lead = ReminderLead(rawValue: UserDefaults.standard.integer(forKey: Self.leadKey)) ?? .default
+        let lead = Self.lead
         scheduling = Task {
             await previous?.value
             guard !Task.isCancelled else { return }

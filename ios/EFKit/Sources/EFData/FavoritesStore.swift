@@ -25,6 +25,9 @@ public actor FavoritesStore {
         self.now = now
     }
 
+    /// Reads the file again, after something else changed it (the account deletion erases it).
+    public func reload() { entries = file.read() }
+
     /// Live favorites, most recently added first.
     public var favoriteIDs: [Festival.ID] { entries.filter { !$0.deleted }.reversed().map(\.festivalId) }
 

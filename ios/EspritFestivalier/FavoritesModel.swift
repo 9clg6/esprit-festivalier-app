@@ -51,6 +51,18 @@ final class FavoritesModel {
         for id in ids { await keepOffline(id, true) }
     }
 
+    /// What "Exporter mes données" writes.
+    func entries() async -> [FavoriteEntry] { await store.entries }
+
+    /// After the account deletion erased the files and the offline copies (or failed halfway).
+    func reloadAfterErase() async {
+        await store.reload()
+        ids = await store.favoriteIDs
+        var stored = Set<Festival.ID>()
+        for id in ids where await offline.isAvailableOffline(id) { stored.insert(id) }
+        offlineIDs = stored
+    }
+
     /// The stored image of a favorite, shown instead of the network one.
     func offlineImage(_ id: Festival.ID) async -> Data? { await offline.imageData(id) }
 
