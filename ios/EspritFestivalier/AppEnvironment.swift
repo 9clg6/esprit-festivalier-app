@@ -11,8 +11,10 @@ struct AppEnvironment: Sendable {
     let artists: any ArtistSource
     /// Favorites, kept in Application Support (not Caches: the system may empty Caches).
     let favorites: FavoritesModel
-    /// Picked sets of the timetables and their reminders.
+    /// Picked sets of the timetables.
     let picks: PicksModel
+    /// Every local notification: reminders, new articles, Profil switches.
+    let notifications: NotificationsModel
     /// Favorite sheets and images kept on the device (STORY-008).
     let offline: OfflineCache
     /// The account and the data export (STORY-022, STORY-032).
@@ -45,12 +47,19 @@ struct AppEnvironment: Sendable {
         }
         // Every screen reads a favorite's sheet through the offline copy (STORY-008).
         festivals = OfflineFestivalSource(source: catalog, cache: offline)
-        favorites = FavoritesModel(store: FavoritesStore(directory: directory), offline: offline, festivals: festivals)
-        picks = PicksModel(
-            store: PicksStore(directory: directory),
-            reminders: ConcertReminderScheduler(festivals: festivals, artists: artists)
+        let favoritesStore = FavoritesStore(directory: directory)
+        let picksStore = PicksStore(directory: directory)
+        notifications = NotificationsModel(
+            directory: directory, picks: picksStore, favorites: favoritesStore, articles: articles,
+            scheduler: NotificationScheduler(festivals: festivals, artists: artists, offline: offline)
         )
-        account = AccountModel(auth: auth, sync: sync, favorites: favorites, picks: picks)
+        favorites = FavoritesModel(
+            store: favoritesStore, offline: offline, festivals: festivals, notifications: notifications
+        )
+        picks = PicksModel(store: picksStore, notifications: notifications)
+        account = AccountModel(
+            auth: auth, sync: sync, favorites: favorites, picks: picks, notifications: notifications
+        )
     }
 
     /// Festival dates are read on the Paris calendar, in French.

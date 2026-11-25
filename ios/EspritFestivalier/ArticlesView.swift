@@ -7,9 +7,12 @@ import SwiftUI
 struct ArticlesView: View {
     @State private var model: ArticlesModel
     @State private var path: [Article] = []
+    /// Set by a tapped article notification.
+    @Binding private var opened: Article?
 
-    init(source: any ArticleSource, feed: SiteFeed?) {
+    init(source: any ArticleSource, feed: SiteFeed?, opened: Binding<Article?>) {
         _model = State(initialValue: ArticlesModel(source: source, feed: feed))
+        _opened = opened
     }
 
     var body: some View {
@@ -29,6 +32,11 @@ struct ArticlesView: View {
             .navigationTitle("Articles")
             .navigationBarTitleDisplayMode(.large)
             .navigationDestination(for: Article.self) { ArticleView(article: $0) }
+        }
+        .onChange(of: opened, initial: true) {
+            guard let opened else { return }
+            path = [opened]
+            self.opened = nil
         }
         .task {
             await model.load()

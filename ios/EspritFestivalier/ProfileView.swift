@@ -5,7 +5,7 @@ import UserNotifications
 
 /// E12: account, notifications, privacy, about (STORY-022, STORY-032).
 struct ProfileView: View {
-    @Environment(PicksModel.self) private var picks
+    @Environment(NotificationsModel.self) private var notificationsModel
     @Environment(AccountModel.self) private var account
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.openURL) private var openURL
@@ -20,8 +20,10 @@ struct ProfileView: View {
         NavigationStack {
             Form {
                 accountSection
+                Section("Notifications") { notifications }
+                favoriteRemindersSection
+                articlesSection
                 Section {
-                    notifications
                     Picker("Prévenir", selection: $lead) {
                         ForEach(ReminderLead.allCases, id: \.rawValue) { lead in
                             Text("\(lead.rawValue) min avant").tag(lead.rawValue)
@@ -38,11 +40,11 @@ struct ProfileView: View {
             .scrollContentBackground(.hidden)
             .background(EFColorToken.bg.color)
             .navigationTitle("Profil")
-            .onChange(of: lead) { picks.rescheduleReminders() }
+            .onChange(of: lead) { notificationsModel.reschedule() }
         }
         .task(id: scenePhase) {
             // Back from Réglages: the status may have changed.
-            if scenePhase == .active { status = await PicksModel.notificationStatus() }
+            if scenePhase == .active { status = await NotificationsModel.status() }
         }
         #if DEBUG
         // Debug builds only: `-showSignIn YES`, `-confirmDeletion YES` (screenshots).
@@ -79,6 +81,42 @@ struct ProfileView: View {
                     .onAppear { AccessibilityNotification.Announcement(accountError).post() }
             } else if account.session == nil {
                 Text("Facultatif : tes favoris et tes concerts cochés marchent sans compte.")
+            }
+        }
+    }
+
+    private var favoriteRemindersSection: some View {
+        @Bindable var model = notificationsModel
+        return Section {
+            Toggle("J-7", isOn: $model.preferences.festivalJ7)
+            Toggle("J-1", isOn: $model.preferences.festivalJ1)
+        } header: {
+            Text("Festivals favoris")
+        } footer: {
+            Text("À 10 h, une semaine puis la veille du début de chaque festival favori.")
+        }
+    }
+
+    private var articlesSection: some View {
+        Section {
+            ForEach(ArticlesModel.chips.filter { $0.category != nil }, id: \.label) { chip in
+                if let category = chip.category { Toggle(chip.label, isOn: following(category)) }
+            }
+        } header: {
+            Text("Nouveaux articles")
+        } footer: {
+            Text("Une notification quand le site publie dans ces rubriques.")
+        }
+    }
+
+    private func following(_ category: Article.Category) -> Binding<Bool> {
+        Binding {
+            notificationsModel.preferences.articleCategories.contains(category)
+        } set: { isOn in
+            if isOn {
+                notificationsModel.preferences.articleCategories.insert(category)
+            } else {
+                notificationsModel.preferences.articleCategories.remove(category)
             }
         }
     }
@@ -137,13 +175,13 @@ struct ProfileView: View {
 
     /// UX P5 step 2: the state, and the way to change it.
     @ViewBuilder private var notifications: some View {
-        LabeledContent("Notifications", value: statusText)
+        LabeledContent("Autorisation", value: statusText)
         switch status {
         case .notDetermined:
             Button("Activer") {
                 Task {
-                    await picks.requestNotifications()
-                    status = await PicksModel.notificationStatus()
+                    await notificationsModel.requestAuthorization()
+                    status = await NotificationsModel.status()
                 }
             }
         case .denied:

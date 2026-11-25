@@ -37,6 +37,9 @@ struct RootView: View {
         "\($0)" == UserDefaults.standard.string(forKey: "initialTab")
     } ?? .home
     @State private var festivalsPeriod: FestivalFilter.Period?
+    /// Opened by a tapped notification.
+    @State private var openedArticle: Article?
+    @State private var openedFestival: Festival.ID?
 
     var body: some View {
         Group {
@@ -57,27 +60,58 @@ struct RootView: View {
         .sensoryFeedback(.impact(weight: .light), trigger: environment.favorites.additions)
         .environment(environment.picks)
         .environment(environment.account)
+        .environment(environment.notifications)
         .sheet(isPresented: Binding(
-            get: { environment.picks.asksForReminders }, set: { environment.picks.asksForReminders = $0 }
-        )) { remindersSheet }
+            get: { environment.notifications.asksPermission },
+            set: { environment.notifications.asksPermission = $0 }
+        )) { notificationsSheet }
         .task { await environment.favorites.load() }
         .task { await environment.picks.load() }
         .task { await environment.account.load() }
-        // Back to the app: the next reminders take the places of those already shown (64 at most).
-        .onChange(of: scenePhase) { if scenePhase == .active { environment.picks.rescheduleReminders() } }
+        .task { await environment.notifications.checkArticles() }
+        .onChange(of: scenePhase) {
+            switch scenePhase {
+            case .active:
+                // The next reminders take the places of those already shown (64 at most).
+                environment.notifications.reschedule()
+                Task { await environment.notifications.checkArticles() }
+            case .background:
+                environment.notifications.scheduleRefresh()
+            default:
+                break
+            }
+        }
+        .onChange(of: environment.notifications.opened) { open(environment.notifications.opened) }
     }
 
-    /// E14 for the reminders, once, on the first pick: one sheet for the whole app.
-    private var remindersSheet: some View {
+    /// E14, once, on the first pick or favorite (UX P5): one sheet for the whole app.
+    private var notificationsSheet: some View {
         PermissionSheet(
-            systemImage: "bell.badge.fill", title: "Ne rate aucun concert",
+            systemImage: "bell.badge.fill", title: "Ne rate rien",
             examples: [
-                "Un rappel \(lead) min avant chaque concert coché", "Les rappels marchent même sans réseau",
-                "Le délai se règle dans Profil"
+                "Les nouvelles programmations du site", "J-7 et J-1 avant tes festivals favoris",
+                "Un rappel \(lead) min avant chaque concert coché"
             ],
-            onActivate: environment.picks.enableReminders,
-            onLater: { environment.picks.asksForReminders = false }
+            onActivate: environment.notifications.enable,
+            onLater: { environment.notifications.asksPermission = false }
         )
+    }
+
+    /// A tapped notification: the article (E11), the Articles tab for a summary, or the festival (E5).
+    private func open(_ opened: NotificationsModel.Opened?) {
+        guard let opened else { return }
+        hasSeenWelcome = true
+        switch opened {
+        case .article(let article):
+            tab = .articles
+            openedArticle = article
+        case .articles:
+            tab = .articles
+        case .festival(let id):
+            tab = .mine
+            openedFestival = id
+        }
+        environment.notifications.opened = nil
     }
 
     @ViewBuilder private var saveError: some View {
@@ -117,9 +151,9 @@ struct RootView: View {
         case .festivals:
             FestivalListView(environment: environment, requestedPeriod: $festivalsPeriod)
         case .articles:
-            ArticlesView(source: environment.articles, feed: environment.articleFeed)
+            ArticlesView(source: environment.articles, feed: environment.articleFeed, opened: $openedArticle)
         case .mine:
-            MyFestivalsView(environment: environment) { self.tab = .festivals }
+            MyFestivalsView(environment: environment, opened: $openedFestival) { self.tab = .festivals }
         case .profile:
             ProfileView()
         }

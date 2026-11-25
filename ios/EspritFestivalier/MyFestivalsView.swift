@@ -14,11 +14,14 @@ struct MyFestivalsView: View {
     @State private var load = Load.loading
     @State private var path = Self.initialPath
     private let environment: AppEnvironment
+    /// Set by a tapped festival reminder.
+    @Binding private var opened: Festival.ID?
     private let explore: () -> Void
     private let calendar = AppEnvironment.calendar
 
-    init(environment: AppEnvironment, explore: @escaping () -> Void) {
+    init(environment: AppEnvironment, opened: Binding<Festival.ID?>, explore: @escaping () -> Void) {
         self.environment = environment
+        _opened = opened
         self.explore = explore
     }
 
@@ -43,6 +46,11 @@ struct MyFestivalsView: View {
             .background(EFColorToken.bg.color)
             .navigationTitle("Mes festivals")
             .routes(environment)
+        }
+        .onChange(of: opened, initial: true) {
+            guard let opened else { return }
+            path = [.festival(opened)]
+            self.opened = nil
         }
         .task { await refresh() }
     }
