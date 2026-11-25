@@ -12,19 +12,23 @@ struct MyFestivalsView: View {
 
     @Environment(FavoritesModel.self) private var favorites
     @State private var load = Load.loading
-    @State private var path: [Route] = []
+    @State private var path = Self.initialPath
     private let environment: AppEnvironment
     private let explore: () -> Void
-    private let calendar: Calendar = {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.locale = Locale(identifier: "fr_FR")
-        calendar.timeZone = TimeZone(identifier: "Europe/Paris") ?? .current
-        return calendar
-    }()
+    private let calendar = AppEnvironment.calendar
 
     init(environment: AppEnvironment, explore: @escaping () -> Void) {
         self.environment = environment
         self.explore = explore
+    }
+
+    /// Debug builds only: `-openTimetable <id>` opens a festival's timetable at launch (simulator runs).
+    private static var initialPath: [Route] {
+        #if DEBUG
+        UserDefaults.standard.string(forKey: "openTimetable").map { [.timetable($0)] } ?? []
+        #else
+        []
+        #endif
     }
 
     var body: some View {
@@ -32,7 +36,7 @@ struct MyFestivalsView: View {
             // Re-evaluated every minute, so "Demain" becomes "Aujourd'hui" without leaving the tab.
             TimelineView(.everyMinute) { context in
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 12) { content(now: Self.now(context.date)) }
+                    VStack(alignment: .leading, spacing: 12) { content(now: appNow(context.date)) }
                         .padding(.horizontal, 16)
                 }
             }
@@ -43,19 +47,9 @@ struct MyFestivalsView: View {
         .task { await refresh() }
     }
 
-    /// Debug builds only: `-fakeNow 2026-12-01T12:00:00Z` shows the "Prochain" card with the demo data.
-    private static func now(_ date: Date) -> Date {
-        #if DEBUG
-        if let text = UserDefaults.standard.string(forKey: "fakeNow"), let fake = try? Date(text, strategy: .iso8601) {
-            return fake
-        }
-        #endif
-        return date
-    }
-
     private func refresh() async {
         do {
-            load = .loaded(try await environment.festivals.festivals(updatedSince: nil))
+            load = .loaded(try await environment.myFestivals())
         } catch is CancellationError {
             // Leaving the tab keeps what is shown.
         } catch {
@@ -115,30 +109,38 @@ struct MyFestivalsView: View {
         }
     }
 
+    /// The card opens the sheet; its button opens the timetable (UX P2).
     private func nextCard(_ next: NextFestival) -> some View {
         let festival = next.festival
-        return Button { path.append(.festival(festival.id)) } label: {
-            VStack(alignment: .leading, spacing: 8) {
-                Text(next.when.title.uppercased(with: calendar.locale))
-                    .efText(.sectionHeader)
-                Text(festival.name)
-                    .efText(.title2)
-                Text("\(FestivalDates.text(from: festival.startDate, to: festival.endDate)) · \(festival.city)")
-                    .efText(.bodySecondary)
-                Text("Voir la fiche")
+        return VStack(alignment: .leading, spacing: 8) {
+            Button { path.append(.festival(festival.id)) } label: {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(next.when.title.uppercased(with: calendar.locale))
+                        .efText(.sectionHeader)
+                    Text(festival.name)
+                        .efText(.title2)
+                    Text("\(FestivalDates.text(from: festival.startDate, to: festival.endDate)) · \(festival.city)")
+                        .efText(.bodySecondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+                .accessibilityElement(children: .combine)
+            }
+            .buttonStyle(.plain)
+            Button { path.append(.timetable(festival.id)) } label: {
+                Text("Ma timetable")
                     .efText(.strongLabel)
                     .foregroundStyle(EFTextColor.onSun.color)
                     .padding(.horizontal, 24)
                     .frame(minHeight: 44)
                     .background(EFColorToken.sun.color, in: Capsule())
-                    .padding(.top, 8)
             }
-            .foregroundStyle(EFTextColor.onFill.color)
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(EFColorToken.deep.color, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .accessibilityElement(children: .combine)
+            .buttonStyle(.plain)
+            .padding(.top, 8)
         }
-        .buttonStyle(.plain)
+        .foregroundStyle(EFTextColor.onFill.color)
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(EFColorToken.deep.color, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 }

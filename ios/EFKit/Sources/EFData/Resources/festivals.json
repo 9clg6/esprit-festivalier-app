@@ -662,8 +662,8 @@
         "festivalId": "trans-musicales",
         "stageId": "trans-musicales-greenroom",
         "artistId": "angine-de-poitrine",
-        "start": "2026-12-02T20:00:00+01:00",
-        "end": "2026-12-02T21:15:00+01:00"
+        "start": "2026-12-02T18:45:00+01:00",
+        "end": "2026-12-02T20:00:00+01:00"
       },
       {
         "id": "trans-musicales-tarta-relena",
@@ -678,8 +678,8 @@
         "festivalId": "trans-musicales",
         "stageId": "trans-musicales-hall-9",
         "artistId": "dolphyn",
-        "start": "2026-12-04T20:00:00+01:00",
-        "end": "2026-12-04T21:15:00+01:00"
+        "start": "2026-12-05T00:30:00+01:00",
+        "end": "2026-12-05T01:45:00+01:00"
       }
     ],
     "summary": "Les Trans Musicales font découvrir à Rennes, chaque début décembre, les nouveaux visages des musiques actuelles, avec une programmation éclectique au Parc Expo et dans plusieurs salles de la ville."

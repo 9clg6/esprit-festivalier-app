@@ -11,6 +11,10 @@ struct AppEnvironment: Sendable {
     let artists: any ArtistSource
     /// Favorites, kept in Application Support (not Caches: the system may empty Caches).
     let favorites: FavoritesModel
+    /// Picked sets of the timetables and their reminders.
+    let picks: PicksModel
+    /// Favorite sheets and images kept on the device (STORY-008).
+    let offline: OfflineCache
     /// Lineups and artists are demo data: the screens say so.
     let isDemo: Bool
 
@@ -19,16 +23,24 @@ struct AppEnvironment: Sendable {
         let feed = SiteFeed()
         articleFeed = feed
         articles = RSSArticleSource(load: { try await feed.data() })
+        let directory = URL.applicationSupportDirectory.appending(path: "EspritFestivalier")
+        let offline = OfflineCache(directory: directory.appending(path: "Offline"), fetchImage: OfflineImage.fetch)
+        self.offline = offline
+        let catalog: any FestivalSource
         switch kind {
         case .mock, .snapshot, .backoffice:
             // ponytail: only mock exists; snapshot and backoffice fall back to it until STORY-007.
-            festivals = MockFestivalSource()
+            catalog = MockFestivalSource()
             lineups = MockLineupSource()
             artists = MockArtistSource()
             isDemo = true
         }
-        favorites = FavoritesModel(
-            store: FavoritesStore(directory: .applicationSupportDirectory.appending(path: "EspritFestivalier"))
+        // Every screen reads a favorite's sheet through the offline copy (STORY-008).
+        festivals = OfflineFestivalSource(source: catalog, cache: offline)
+        favorites = FavoritesModel(store: FavoritesStore(directory: directory), offline: offline, festivals: festivals)
+        picks = PicksModel(
+            store: PicksStore(directory: directory),
+            reminders: ConcertReminderScheduler(festivals: festivals, artists: artists)
         )
     }
 
@@ -39,6 +51,18 @@ struct AppEnvironment: Sendable {
         calendar.timeZone = TimeZone(identifier: "Europe/Paris") ?? .current
         return calendar
     }()
+
+    /// Mes festivals: the catalogue, or offline the stored favorites. Other screens keep their error
+    /// state, so they never pass the favorites off as the whole catalogue.
+    func myFestivals() async throws -> [Festival] {
+        do {
+            return try await festivals.festivals(updatedSince: nil)
+        } catch {
+            let stored = await offline.storedFestivals()
+            if stored.isEmpty { throw error }
+            return stored
+        }
+    }
 
     /// Festivals, lineups and the artists the lineups name: what E1, E7 and E8 are built from.
     func lineupData() async throws -> LineupData {
@@ -53,6 +77,30 @@ struct AppEnvironment: Sendable {
         let value = bundle.object(forInfoDictionaryKey: "EF_DATA_SOURCE") as? String ?? ""
         self.init(kind: DataSourceKind(rawValue: value) ?? .mock)
     }
+}
+
+/// A festival source whose detail falls back to the offline copy of a favorite.
+struct OfflineFestivalSource: FestivalSource {
+    let source: any FestivalSource
+    let cache: OfflineCache
+
+    func festivals(updatedSince: Date?) async throws -> [Festival] {
+        try await source.festivals(updatedSince: updatedSince)
+    }
+
+    func festival(id: Festival.ID) async throws -> FestivalDetail {
+        try await cache.festival(id: id, from: source)
+    }
+}
+
+/// Now, or in debug builds `-fakeNow 2026-12-02T18:30:00+01:00` (simulator runs, screenshots).
+func appNow(_ date: Date = Date()) -> Date {
+    #if DEBUG
+    if let text = UserDefaults.standard.string(forKey: "fakeNow"), let fake = try? Date(text, strategy: .iso8601) {
+        return fake
+    }
+    #endif
+    return date
 }
 
 struct LineupData {

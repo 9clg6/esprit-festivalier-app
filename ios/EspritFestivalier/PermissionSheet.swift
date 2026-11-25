@@ -1,27 +1,28 @@
 import EFDesign
 import SwiftUI
 
-/// E14: explains why the position is asked, before the iOS prompt.
-struct LocationPermissionSheet: View {
+/// E14: explains why a permission is asked, before the iOS prompt (position, notifications).
+struct PermissionSheet: View {
+    let systemImage: String
+    let title: String
+    let examples: [String]
     let onActivate: () -> Void
     let onLater: () -> Void
 
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
-                Image(systemName: "location.circle.fill")
+                Image(systemName: systemImage)
                     .font(.system(size: 56))
                     .foregroundStyle(EFColorToken.accent.color)
                     .accessibilityHidden(true)
-                Text("Festivals autour de toi")
+                Text(title)
                     .efText(.title2)
                     .foregroundStyle(EFTextColor.ink.color)
                     .multilineTextAlignment(.center)
                     .accessibilityAddTraits(.isHeader)
                 VStack(alignment: .leading, spacing: 8) {
-                    line("Les festivals à moins de 25, 50 ou 100 km")
-                    line("Le plus proche ce week-end")
-                    line("Ta position reste sur ton téléphone")
+                    ForEach(examples, id: \.self, content: line)
                 }
                 PrimaryButton("Activer", action: onActivate).padding(.top, 8)
                 Button("Plus tard", action: onLater)
@@ -52,7 +53,14 @@ extension View {
         return sheet(isPresented: Binding(
             get: { isOn && aroundMe.showExplanation }, set: { if !$0 { aroundMe.declineExplanation() } }
         )) {
-            LocationPermissionSheet(onActivate: aroundMe.confirmExplanation, onLater: aroundMe.declineExplanation)
+            PermissionSheet(
+                systemImage: "location.circle.fill", title: "Festivals autour de toi",
+                examples: [
+                    "Les festivals à moins de 25, 50 ou 100 km", "Le plus proche ce week-end",
+                    "Ta position reste sur ton téléphone"
+                ],
+                onActivate: aroundMe.confirmExplanation, onLater: aroundMe.declineExplanation
+            )
         }
         .alert("Position désactivée", isPresented: Binding(
             get: { isOn && aroundMe.showDenied }, set: { aroundMe.showDenied = $0 }

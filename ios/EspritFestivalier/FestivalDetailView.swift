@@ -48,6 +48,8 @@ final class FestivalDetailModel {
 struct FestivalDetailView: View {
     @Environment(FavoritesModel.self) private var favorites
     @State private var model: FestivalDetailModel
+    /// The offline copy of a favorite's image, shown instead of the network one.
+    @State private var storedImage: UIImage?
 
     private let id: Festival.ID
     private let isDemo: Bool
@@ -72,7 +74,10 @@ struct FestivalDetailView: View {
                 ) { Task { await model.load() } }
                 .frame(maxHeight: .infinity)
             case .loaded(let detail, let lineup):
-                FestivalDetailContent(detail: detail, lineup: lineup, isDemo: isDemo)
+                FestivalDetailContent(
+                    detail: detail, lineup: lineup, isDemo: isDemo, storedImage: storedImage,
+                    isAvailableOffline: favorites.offlineIDs.contains(id)
+                )
             }
         }
         .background(EFColorToken.bg.color)
@@ -82,6 +87,9 @@ struct FestivalDetailView: View {
             }
         }
         .task { await model.load() }
+        .task(id: favorites.offlineIDs.contains(id)) {
+            storedImage = await favorites.offlineImage(id).flatMap(UIImage.init(data:))
+        }
     }
 }
 
@@ -109,6 +117,8 @@ private struct FestivalDetailContent: View {
     let detail: FestivalDetail
     let lineup: [Artist]
     let isDemo: Bool
+    let storedImage: UIImage?
+    let isAvailableOffline: Bool
 
     private var festival: Festival { detail.festival }
 
@@ -119,6 +129,16 @@ private struct FestivalDetailContent: View {
                 VStack(alignment: .leading, spacing: 24) {
                     header
                     actions
+                    if !detail.performances.isEmpty {
+                        NavigationLink(value: Route.timetable(festival.id)) {
+                            Text("Timetable")
+                                .efText(.strongLabel)
+                                .foregroundStyle(EFTextColor.accentDark.color)
+                                .frame(maxWidth: .infinity, minHeight: 44)
+                                .background(EFColorToken.sky.color, in: Capsule())
+                        }
+                        .buttonStyle(.plain)
+                    }
                     if let summary = detail.summary, !summary.isEmpty {
                         section("À propos") { Text(summary).efText(.body).foregroundStyle(EFTextColor.ink.color) }
                     }
@@ -151,6 +171,11 @@ private struct FestivalDetailContent: View {
                                 .frame(minHeight: 44, alignment: .leading)
                         }
                     }
+                    if isAvailableOffline {
+                        Label("Disponible hors ligne", systemImage: "checkmark.circle.fill")
+                            .efText(.bodySecondary)
+                            .foregroundStyle(EFTextColor.ink2.color)
+                    }
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 24)
@@ -171,29 +196,37 @@ private struct FestivalDetailContent: View {
             .accessibilityHidden(true)
     }
 
-    private var heroImage: some View {
-        AsyncImage(url: festival.imageURL) { phase in
-            if let image = phase.image {
-                ZStack(alignment: .bottomLeading) {
-                    // The overlay takes the hero's size: the fill overflow is clipped, not laid out.
-                    Color.clear.overlay { image.resizable().scaledToFill() }.clipped()
-                    // Top scrim (page colour): status bar and back button; bottom scrim: the credit.
-                    LinearGradient(
-                        stops: [.init(color: EFColorToken.bg.color.opacity(0.8), location: 0),
-                                .init(color: .clear, location: 0.22),
-                                .init(color: .clear, location: 0.6),
-                                .init(color: EFColorToken.night.color.opacity(0.85), location: 1)],
-                        startPoint: .top, endPoint: .bottom
-                    )
-                    if let credit = festival.imageCredit {
-                        Text("Photo : \(credit)")
-                            .efText(.caption)
-                            .foregroundStyle(EFTextColor.onFill.color)
-                            .padding(.horizontal, 16).padding(.bottom, 10)
-                    }
+    @ViewBuilder private var heroImage: some View {
+        if let storedImage {
+            heroPhoto(Image(uiImage: storedImage))
+        } else {
+            AsyncImage(url: festival.imageURL) { phase in
+                if let image = phase.image {
+                    heroPhoto(image)
+                } else {
+                    Image(systemName: "music.note").font(.largeTitle).foregroundStyle(EFTextColor.muted.color)
                 }
-            } else {
-                Image(systemName: "music.note").font(.largeTitle).foregroundStyle(EFTextColor.muted.color)
+            }
+        }
+    }
+
+    private func heroPhoto(_ image: Image) -> some View {
+        ZStack(alignment: .bottomLeading) {
+            // The overlay takes the hero's size: the fill overflow is clipped, not laid out.
+            Color.clear.overlay { image.resizable().scaledToFill() }.clipped()
+            // Top scrim (page colour): status bar and back button; bottom scrim: the credit.
+            LinearGradient(
+                stops: [.init(color: EFColorToken.bg.color.opacity(0.8), location: 0),
+                        .init(color: .clear, location: 0.22),
+                        .init(color: .clear, location: 0.6),
+                        .init(color: EFColorToken.night.color.opacity(0.85), location: 1)],
+                startPoint: .top, endPoint: .bottom
+            )
+            if let credit = festival.imageCredit {
+                Text("Photo : \(credit)")
+                    .efText(.caption)
+                    .foregroundStyle(EFTextColor.onFill.color)
+                    .padding(.horizontal, 16).padding(.bottom, 10)
             }
         }
     }
@@ -272,6 +305,6 @@ private struct FestivalDetailPreview: View {
         NavigationStack {
             FestivalDetailView(id: "eurockeennes", environment: AppEnvironment(kind: .mock))
         }
-        .environment(FavoritesModel(store: FavoritesStore(directory: .temporaryDirectory.appending(path: "preview"))))
+        .environment(AppEnvironment(kind: .mock).favorites)
     }
 }
