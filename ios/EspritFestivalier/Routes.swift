@@ -21,7 +21,7 @@ extension View {
             case .lineups: LineupsView(environment: environment)
             case .festivalLineup(let id): FestivalLineupView(festivalId: id, environment: environment)
             case .artist(let id): ArtistView(artistId: id, environment: environment)
-            case .article(let article): ArticleView(article: article)
+            case .article(let article): ArticleView(article: article, environment: environment)
             }
         }
     }
@@ -92,8 +92,10 @@ struct Loaded<Value, Content: View>: View {
 
 /// Said wherever lineups are shown while they come from the demo data.
 struct DemoCaption: View {
+    var text = "Données de démonstration (dernière édition)"
+
     var body: some View {
-        Text("Données de démonstration (dernière édition)")
+        Text(text)
             .efText(.caption)
             .foregroundStyle(EFTextColor.muted.color)
     }

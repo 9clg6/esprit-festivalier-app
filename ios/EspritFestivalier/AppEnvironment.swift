@@ -17,6 +17,10 @@ struct AppEnvironment: Sendable {
     let notifications: NotificationsModel
     /// Favorite sheets and images kept on the device (STORY-008).
     let offline: OfflineCache
+    /// My reactions on articles, on the device until the server (STORY-058, STORY-061).
+    let reactions: LocalReactionService
+    /// Anonymous article reads, queued until STORY-030 sends them (STORY-066).
+    let reads: ReadCounter
     /// The account and the data export (STORY-022, STORY-032).
     let account: AccountModel
     /// Lineups and artists are demo data: the screens say so.
@@ -57,8 +61,12 @@ struct AppEnvironment: Sendable {
             store: favoritesStore, offline: offline, festivals: festivals, notifications: notifications
         )
         picks = PicksModel(store: picksStore, notifications: notifications)
+        // Demo counts only with the demo data; the account deletion erases both files with the folder.
+        reactions = LocalReactionService(directory: directory, demoCounts: kind == .mock)
+        reads = ReadCounter(directory: directory)
         account = AccountModel(
-            auth: auth, sync: sync, favorites: favorites, picks: picks, notifications: notifications
+            auth: auth, sync: sync, favorites: favorites, picks: picks, notifications: notifications,
+            reactions: reactions, reads: reads
         )
     }
 

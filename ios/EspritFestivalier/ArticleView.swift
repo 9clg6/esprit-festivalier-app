@@ -5,6 +5,7 @@ import SwiftUI
 /// E11: reads the excerpt or text the feed carries, then sends the reader to the site.
 struct ArticleView: View {
     let article: Article
+    let environment: AppEnvironment
     @State private var safariURL: SafariItem?
 
     var body: some View {
@@ -36,6 +37,7 @@ struct ArticleView: View {
                         // 17 pt, line height about 1.5.
                         Text(paragraph).efText(.body).lineSpacing(8).foregroundStyle(EFTextColor.ink.color)
                     }
+                    ReactionBar(article: article.id, service: environment.reactions).padding(.top, 8)
                     PrimaryButton("Lire l'article complet") { safariURL = SafariItem(url: article.link) }
                         .padding(.top, 8)
                     ShareLink(item: article.link) {
@@ -56,6 +58,12 @@ struct ArticleView: View {
         .background(EFColorToken.bg.color)
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $safariURL) { SafariView(url: $0.url, readerMode: true).ignoresSafeArea() }
+        .task {
+            // Anonymous: the article and the Paris day only (FR-036), once per day on this device.
+            // swiftlint:disable:next todo
+            // TODO(STORY-030): skip when the audience-measurement setting is off; counted by default until it exists.
+            try? await environment.reads.record(article.id, at: Date())
+        }
     }
 
     private var paragraphs: [String] {
