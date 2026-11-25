@@ -162,9 +162,9 @@ private struct FestivalDetailContent: View {
         AsyncImage(url: festival.imageURL) { phase in
             if let image = phase.image {
                 ZStack(alignment: .bottomLeading) {
-                    // The overlay takes the hero's size, so the fill overflow is clipped instead of resizing the ZStack.
+                    // The overlay takes the hero's size: the fill overflow is clipped, not laid out.
                     Color.clear.overlay { image.resizable().scaledToFill() }.clipped()
-                    // Top scrim in the page colour keeps the status bar and back button readable in both schemes; the bottom one the credit.
+                    // Top scrim (page colour): status bar and back button; bottom scrim: the credit.
                     LinearGradient(
                         stops: [.init(color: EFColorToken.bg.color.opacity(0.8), location: 0),
                                 .init(color: .clear, location: 0.22),
