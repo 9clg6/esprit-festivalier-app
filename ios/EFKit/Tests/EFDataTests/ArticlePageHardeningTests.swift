@@ -6,7 +6,7 @@ import EFData
 // Opus review of PR #25 (STORY-053, ADR-007, NFR-005), each finding measured by a probe on 2026-11-25.
 // Decisions pinned here:
 // - a page nested 10 000 deep (divs or spans) never crashes the app and keeps its text; the reader is
-//   linear: 20 000 orphan closings or 20 000 <hr> under 20 000 open tags read in well under 0.5 s
+//   linear: 20 000 orphan closings or 20 000 <hr> under 20 000 open tags read in well under 2 s
 //   (debug). They run in-process (exit tests need Swift 6.2, CI has 6.1): a
 //   regression overflows the stack and crashes the runner, which fails CI;
 // - only http/https addresses become links; javascript:, file:, data: are dropped (text kept);
@@ -28,7 +28,8 @@ import EFData
 //   static func followsRedirect(to url: URL) -> Bool                    // the redirect decision
 //   ArticleContentError.redirectedOffSite(URL), ArticleContentError.httpStatus(Int)
 
-private let deepBound = Duration.milliseconds(500)
+// 2 s: the quadratic reader took 5-28 s; the slower Intel CI runner (debug) needs room.
+private let deepBound = Duration.seconds(2)
 
 // MARK: - Deep nesting and linear time (in-process: a regression crashes the runner)
 
