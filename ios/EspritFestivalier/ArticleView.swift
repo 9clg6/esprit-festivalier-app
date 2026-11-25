@@ -60,9 +60,10 @@ struct ArticleView: View {
         .sheet(item: $safariURL) { SafariView(url: $0.url, readerMode: true).ignoresSafeArea() }
         .task {
             // Anonymous: the article and the Paris day only (FR-036), once per day on this device.
+            // Only the full text counts: the feed carries excerpts until the native reader (STORY-055).
             // swiftlint:disable:next todo
             // TODO(STORY-030): skip when the audience-measurement setting is off; counted by default until it exists.
-            try? await environment.reads.record(article.id, at: Date())
+            try? await environment.reads.articleShown(article.id, fullText: false, at: .now)
         }
     }
 
