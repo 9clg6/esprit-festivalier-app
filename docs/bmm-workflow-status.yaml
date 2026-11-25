@@ -39,7 +39,7 @@ workflow_status:
 
   - name: architecture
     phase: 3
-    status: "required"
+    status: "docs/architecture-esprit-festivalier-app-2026-11-25.md"
     description: "System architecture design"
 
   - name: solutioning-gate-check
