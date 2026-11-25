@@ -82,7 +82,13 @@ struct MyFestivalsView: View {
             let sections = MyFestivals.sections(
                 favorites: favorites.ids.compactMap { byID[$0] }, now: now, calendar: calendar
             )
-            if sections.isEmpty {
+            if sections.isEmpty, !favorites.ids.isEmpty {
+                // Favorites saved, none in the catalogue (removed, or not loaded yet): not "no favorite".
+                Text("Tes favoris ne figurent pas dans le catalogue actuel.")
+                    .efText(.bodySecondary)
+                    .foregroundStyle(EFTextColor.ink2.color)
+                    .padding(.top, 24)
+            } else if sections.isEmpty {
                 EmptyState(
                     systemImage: "heart", title: "Pas encore de favori",
                     message: "Ajoute des festivals en favori pour les retrouver ici, même sans réseau.",
