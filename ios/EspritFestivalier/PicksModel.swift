@@ -78,10 +78,16 @@ final class PicksModel {
     /// Plans the nearest reminders again: on launch, back to the app, picks or lead changed.
     func rescheduleReminders() {
         guard loaded else { return }
-        scheduling?.cancel()
+        // One at a time: the newer plan waits for the older one, which stops at its next step.
+        let previous = scheduling
+        previous?.cancel()
         let picks = ids
         let lead = ReminderLead(rawValue: UserDefaults.standard.integer(forKey: Self.leadKey)) ?? .default
-        scheduling = Task { await reminders.reschedule(picks: picks, lead: lead) }
+        scheduling = Task {
+            await previous?.value
+            guard !Task.isCancelled else { return }
+            await reminders.reschedule(picks: picks, lead: lead)
+        }
     }
 
     /// Once: refused or postponed, the sheet does not come back by itself (UX P5).
@@ -140,6 +146,7 @@ struct ConcertReminderScheduler {
         guard !Task.isCancelled else { return }
         center.removePendingNotificationRequests(withIdentifiers: scheduled)
         for reminder in plan {
+            guard !Task.isCancelled else { return }
             let content = UNMutableNotificationContent()
             content.title = festivalOf[reminder.performanceId].flatMap { festivalNames[$0] } ?? ""
             content.body = reminder.body
