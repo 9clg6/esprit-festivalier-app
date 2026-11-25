@@ -12,13 +12,15 @@ import EFData
 //   @MainActor @Observable public final class ArticleReaderModel {
 //     public enum State: Equatable { case loading, loaded(ArticleContent), failed(Failure) }
 //     public enum Failure: Equatable, Sendable {
-//       case offline      // no network and no copy: "Article complet indisponible hors ligne"
-//       case unreadable   // any other read failure: "Impossible d'afficher cet article dans l'app"
+//       case offline      // URLError notConnectedToInternet, timedOut, networkConnectionLost, cannotFindHost,
+//                         // cannotConnectToHost, dataNotAllowed, and no copy: "Article complet indisponible hors ligne"
+//       case unreadable   // any other read failure (ArticleContentError.*, other errors):
+//                         // "Impossible d'afficher cet article dans l'app"
 //     }
 //     public init(article: Article, source: any ArticleContentSource)
 //     public let article: Article              // the feed article: title, hero, excerpt shown at once
 //     public private(set) var state: State     // .loading until the first answer
-//     public var showsOpenOnSite: Bool { get }  // "Ouvrir sur le site ↗": only after a read failure
+//     public var showsOpenOnSite: Bool { get }  // "Ouvrir sur le site ↗": only on .failed(.unreadable)
 //     public var fullTextDisplayed: Bool { get } // loaded with at least one paragraph (read counting)
 //     public func load() async                 // asks `source` for `article.link`; cancellation is not a failure
 //     public func retry() async                // loading again, then loaded or failed
@@ -30,8 +32,9 @@ import EFData
 //     case article(URL)                       // E11 by address (new route `articleURL`)
 //     case festival(slug: String), author(slug: String), artist(slug: String)
 //     case category(slug: String), tag(slug: String)
-//     case external(URL)                      // Safari sheet
-//     case ignored                            // nothing opens (non-https third party, javascript:…)
+//     case external(URL)                      // Safari sheet (http/https only: it crashes on other schemes)
+//     case system(URL)                        // openURL: Mail for mailto:, Phone for tel:
+//     case ignored                            // nothing opens (javascript:, file:, data:…)
 //   }
 
 private let feedArticle = Article(
@@ -156,9 +159,18 @@ private actor GatedSource: ArticleContentSource {
 
     // MARK: Failure: excerpt, message, « Réessayer », « Ouvrir sur le site ↗ »
 
-    @Test func anUnreadablePageKeepsTheExcerptAndOffersTheSite() async {
-        let model = ArticleReaderModel(
-            article: feedArticle, source: ScriptedSource(.failure(ArticleContentError.unreadable)))
+    // Unreadable: the page, the status, the host or any error that is not "no network".
+    @Test(arguments: [
+        ArticleContentError.unreadable as any Error,
+        ArticleContentError.httpStatus(404),
+        ArticleContentError.httpStatus(503),
+        ArticleContentError.redirectedOffSite(URL(string: "https://login.example.com/")!),
+        ArticleContentError.notSiteAddress(URL(string: "https://example.com/")!),
+        URLError(.badServerResponse),
+        CocoaError(.fileReadCorruptFile)
+    ])
+    func aPageThatCannotBeReadKeepsTheExcerptAndOffersTheSite(error: any Error) async {
+        let model = ArticleReaderModel(article: feedArticle, source: ScriptedSource(.failure(error)))
 
         await model.load()
 
@@ -168,8 +180,13 @@ private actor GatedSource: ArticleContentSource {
         #expect(!model.fullTextDisplayed)
     }
 
-    @Test func offlineWithoutACopyKeepsTheExcerptWithoutSendingToTheSite() async {
-        let model = ArticleReaderModel(article: feedArticle, source: ScriptedSource(.failure(offline)))
+    // Offline: the network codes of URLSession, and nothing else.
+    @Test(arguments: [
+        URLError.Code.notConnectedToInternet, .timedOut, .networkConnectionLost, .cannotFindHost,
+        .cannotConnectToHost, .dataNotAllowed
+    ])
+    func noNetworkWithoutACopyKeepsTheExcerptWithoutSendingToTheSite(code: URLError.Code) async {
+        let model = ArticleReaderModel(article: feedArticle, source: ScriptedSource(.failure(URLError(code))))
 
         await model.load()
 
@@ -195,6 +212,27 @@ private actor GatedSource: ArticleContentSource {
 
         await source.answer(.success(fullText()))
         await retrying.value
+    }
+
+    @Test func openOnSiteIsHiddenWhileARetryLoadsAndBackIfItFails() async throws {
+        let source = GatedSource()
+        let model = ArticleReaderModel(article: feedArticle, source: source)
+        let first = Task { await model.load() }
+        try #require(await source.waitForRequest(1))
+        await source.answer(.failure(ArticleContentError.httpStatus(500)))
+        await first.value
+        try #require(model.showsOpenOnSite)
+
+        let retrying = Task { await model.retry() }
+        try #require(await source.waitForRequest(2))
+
+        #expect(!model.showsOpenOnSite)
+
+        await source.answer(.failure(ArticleContentError.unreadable))
+        await retrying.value
+
+        #expect(model.state == .failed(.unreadable))
+        #expect(model.showsOpenOnSite)
     }
 
     @Test func aSuccessfulRetryClearsTheFailure() async {
@@ -272,8 +310,9 @@ private actor GatedSource: ArticleContentSource {
         ("https://esprit-festivalier.fr/superbus-deux-heures-10612/",
          ReaderDestination.article(URL(string: "https://esprit-festivalier.fr/superbus-deux-heures-10612/")!)),
         ("https://esprit-festivalier.fr/festival/terres-du-son/", .festival(slug: "terres-du-son")),
-        // SiteLink reads http:// and www. addresses of the site as the site.
-        ("http://www.esprit-festivalier.fr/festival/terres-du-son/", .festival(slug: "terres-du-son")),
+        // http:// and www. addresses of the site are the site.
+        ("http://www.esprit-festivalier.fr/festival/x/", .festival(slug: "x")),
+        ("http://www.esprit-festivalier.fr/author/mano-le-bris/", .author(slug: "mano-le-bris")),
         ("https://esprit-festivalier.fr/author/mano-le-bris/", .author(slug: "mano-le-bris")),
         ("https://esprit-festivalier.fr/artiste/orelsan/", .artist(slug: "orelsan")),
         ("https://esprit-festivalier.fr/category/live-report/", .category(slug: "live-report")),
@@ -281,8 +320,13 @@ private actor GatedSource: ArticleContentSource {
         ("https://esprit-festivalier.fr/recrutements/",
          .external(URL(string: "https://esprit-festivalier.fr/recrutements/")!)),
         ("https://www.youtube.com/watch?v=abc", .external(URL(string: "https://www.youtube.com/watch?v=abc")!)),
-        ("http://example.com/", .ignored),
-        ("javascript:alert(1)", .ignored)
+        // Mail and Phone, never the Safari sheet (it only takes http and https).
+        ("mailto:redaction@esprit-festivalier.fr",
+         .system(URL(string: "mailto:redaction@esprit-festivalier.fr")!)),
+        ("tel:+33600000000", .system(URL(string: "tel:+33600000000")!)),
+        ("javascript:alert(1)", .ignored),
+        ("file:///etc/passwd", .ignored),
+        ("data:text/plain,x", .ignored)
     ])
     func aLinkInTheTextOpensWhereItBelongs(address: String, expected: ReaderDestination) throws {
         let model = ArticleReaderModel(article: feedArticle, source: ScriptedSource(.success(fullText())))
