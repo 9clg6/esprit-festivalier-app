@@ -1,0 +1,48 @@
+# BMAD Method Workflow Status
+project_name: "esprit-festivalier-app"
+project_type: "mobile-app"
+project_level: 3
+communication_language: "French"
+output_language: "French"
+last_updated: "2026-11-25"
+
+workflow_status:
+  - name: product-brief
+    phase: 1
+    status: "docs/product-brief-esprit-festivalier-app-2026-11-25.md"
+    description: "Create comprehensive product brief"
+
+  - name: brainstorm-project
+    phase: 1
+    status: "docs/brainstorm-esprit-festivalier-app-2026-11-25.md"
+    description: "Structured brainstorming session"
+
+  - name: research
+    phase: 1
+    status: "recommended"
+    description: "Market and competitive research (concurrents, juridique jeux concours)"
+
+  - name: prd
+    phase: 2
+    status: "required"
+    description: "Product Requirements Document"
+
+  - name: tech-spec
+    phase: 2
+    status: "optional"
+    description: "Technical Specification"
+
+  - name: create-ux-design
+    phase: 2
+    status: "recommended"
+    description: "UX/UI design workflow (DA : docs/design/direction-artistique.md)"
+
+  - name: architecture
+    phase: 3
+    status: "required"
+    description: "System architecture design"
+
+  - name: solutioning-gate-check
+    phase: 3
+    status: "optional"
+    description: "Validate architecture against requirements"

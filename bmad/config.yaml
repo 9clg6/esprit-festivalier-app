@@ -1,0 +1,15 @@
+project_name: "esprit-festivalier-app"
+project_type: "mobile-app"
+project_level: 3  # 12-40 stories
+output_folder: "docs"
+communication_language: "French"
+document_output_language: "French"
+
+bmm:
+  workflow_status_file: "docs/bmm-workflow-status.yaml"
+  sprint_status_file: "docs/sprint-status.yaml"
+
+paths:
+  docs: "docs"
+  stories: "docs/stories"
+  tests: "tests"
