@@ -149,8 +149,8 @@ struct TimetableView: View {
 
     /// The festival day playing now, or the first one.
     private func defaultDay(_ timetable: Timetable, now: Date) -> TimetableDay {
-        // ponytail: 6 h and 30 h after midnight, off by one hour on a DST night (none during festivals).
-        timetable.days.first { $0.date + 6 * 3600 <= now && now < $0.date + 30 * 3600 } ?? timetable.days[0]
+        let today = Timetable.festivalDay(of: now, calendar: AppEnvironment.calendar)
+        return timetable.days.first { $0.date == today } ?? timetable.days[0]
     }
 
     /// "Ven 13".

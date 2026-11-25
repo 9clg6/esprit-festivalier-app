@@ -56,6 +56,7 @@ public struct PerformanceCell: View {
         .padding(.vertical, 4)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityText)
+        .accessibilityAddTraits(isPicked ? [.isButton, .isSelected] : .isButton)
         .accessibilityAction { toggle() }
         .accessibilityAction(named: isPicked ? "Retirer de ma timetable" : "Ajouter à ma timetable") { toggle() }
     }

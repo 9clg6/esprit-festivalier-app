@@ -157,10 +157,9 @@ struct ConcertReminderScheduler {
             content.title = festivalOf[reminder.performanceId].flatMap { festivalNames[$0] } ?? ""
             content.body = reminder.body
             content.sound = .default
-            let when = Calendar.current.dateComponents(
-                [.year, .month, .day, .hour, .minute, .second], from: reminder.fireDate
-            )
-            let trigger = UNCalendarNotificationTrigger(dateMatching: when, repeats: false)
+            // An interval, not calendar components: a time zone change cannot move the reminder.
+            let delay = max(1, reminder.fireDate.timeIntervalSinceNow)
+            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: delay, repeats: false)
             try? await center.add(UNNotificationRequest(identifier: reminder.id, content: content, trigger: trigger))
         }
     }

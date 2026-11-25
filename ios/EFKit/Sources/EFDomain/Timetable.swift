@@ -55,7 +55,8 @@ public struct Timetable: Sendable {
         performances.filter { $0.start <= now && now < $0.end }
     }
 
-    private static func festivalDay(of start: Date, calendar: Calendar) -> Date {
+    /// The midnight starting the festival day `start` belongs to (before 06:00: the previous day).
+    public static func festivalDay(of start: Date, calendar: Calendar) -> Date {
         let midnight = calendar.startOfDay(for: start)
         guard calendar.component(.hour, from: start) < dayStartHour else { return midnight }
         return calendar.date(byAdding: .day, value: -1, to: midnight) ?? midnight
