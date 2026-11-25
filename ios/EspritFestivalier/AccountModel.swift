@@ -36,6 +36,7 @@ final class AccountModel {
             }
         }
         #endif
+        removeExportFile()
         session = await auth.session
         syncStatus = try? await sync.sync()
     }
@@ -53,6 +54,7 @@ final class AccountModel {
     }
 
     func signOut() async throws {
+        removeExportFile()
         try await auth.signOut()
         session = nil
     }
@@ -60,6 +62,7 @@ final class AccountModel {
     /// Erases favorites, picks and offline copies on this device; the reminders go with the picks.
     /// On failure too, the screens show what is left on disk.
     func deleteAccount() async throws {
+        removeExportFile()
         do {
             try await auth.deleteAccount()
         } catch {
@@ -82,10 +85,16 @@ final class AccountModel {
             // ponytail: no per-type notification switch exists yet (STORY-024).
             reminderLead: PicksModel.lead, notifications: [:], exportedAt: Date()
         )
-        let file = FileManager.default.temporaryDirectory.appending(path: "esprit-festivalier-mes-donnees.json")
-        try export.json().write(to: file, options: .atomic)
-        return file
+        try export.json().write(to: Self.exportFile, options: .atomic)
+        return Self.exportFile
     }
+
+    /// ShareLink says nothing once the sheet closes: the copy goes at the next launch, sign-out or
+    /// deletion, and each export replaces it.
+    private static let exportFile = FileManager.default.temporaryDirectory
+        .appending(path: "esprit-festivalier-mes-donnees.json")
+
+    private func removeExportFile() { try? FileManager.default.removeItem(at: Self.exportFile) }
 }
 
 /// The export, built only when the user shares it.
