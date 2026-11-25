@@ -13,6 +13,8 @@ struct AppEnvironment: Sendable {
     let favorites: FavoritesModel
     /// Picked sets of the timetables and their reminders.
     let picks: PicksModel
+    /// Favorite sheets and images kept on the device (STORY-008).
+    let offline: OfflineCache
     /// Lineups and artists are demo data: the screens say so.
     let isDemo: Bool
 
@@ -23,6 +25,7 @@ struct AppEnvironment: Sendable {
         articles = RSSArticleSource(load: { try await feed.data() })
         let directory = URL.applicationSupportDirectory.appending(path: "EspritFestivalier")
         let offline = OfflineCache(directory: directory.appending(path: "Offline"), fetchImage: OfflineImage.fetch)
+        self.offline = offline
         let catalog: any FestivalSource
         switch kind {
         case .mock, .snapshot, .backoffice:
@@ -49,6 +52,18 @@ struct AppEnvironment: Sendable {
         return calendar
     }()
 
+    /// Mes festivals: the catalogue, or offline the stored favorites. Other screens keep their error
+    /// state, so they never pass the favorites off as the whole catalogue.
+    func myFestivals() async throws -> [Festival] {
+        do {
+            return try await festivals.festivals(updatedSince: nil)
+        } catch {
+            let stored = await offline.storedFestivals()
+            if stored.isEmpty { throw error }
+            return stored
+        }
+    }
+
     /// Festivals, lineups and the artists the lineups name: what E1, E7 and E8 are built from.
     func lineupData() async throws -> LineupData {
         async let festivals = festivals.festivals(updatedSince: nil)
@@ -64,19 +79,13 @@ struct AppEnvironment: Sendable {
     }
 }
 
-/// A festival source that falls back to the offline copies of the favorites when the source fails.
+/// A festival source whose detail falls back to the offline copy of a favorite.
 struct OfflineFestivalSource: FestivalSource {
     let source: any FestivalSource
     let cache: OfflineCache
 
     func festivals(updatedSince: Date?) async throws -> [Festival] {
-        do {
-            return try await source.festivals(updatedSince: updatedSince)
-        } catch {
-            let stored = await cache.storedFestivals()
-            if stored.isEmpty { throw error }
-            return stored
-        }
+        try await source.festivals(updatedSince: updatedSince)
     }
 
     func festival(id: Festival.ID) async throws -> FestivalDetail {

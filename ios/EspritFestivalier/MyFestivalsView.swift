@@ -49,7 +49,7 @@ struct MyFestivalsView: View {
 
     private func refresh() async {
         do {
-            load = .loaded(try await environment.festivals.festivals(updatedSince: nil))
+            load = .loaded(try await environment.myFestivals())
         } catch is CancellationError {
             // Leaving the tab keeps what is shown.
         } catch {
