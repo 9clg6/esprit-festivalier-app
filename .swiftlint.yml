@@ -2,3 +2,5 @@ included:
   - ios
 excluded:
   - "**/.build"
+type_name:
+  excluded: [ID]
