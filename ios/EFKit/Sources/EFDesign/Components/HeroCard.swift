@@ -6,16 +6,21 @@ public struct HeroCard: View {
     private let imageURL: URL?
     private let category: String
     private let title: String
+    private let isSponsored: Bool
 
-    public init(imageURL: URL?, category: String, title: String) {
+    public init(imageURL: URL?, category: String, title: String, isSponsored: Bool = false) {
         self.imageURL = imageURL
         self.category = category
         self.title = title
+        self.isSponsored = isSponsored
     }
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(category).efText(.sectionHeader)
+            HStack(spacing: 8) {
+                Text(category).efText(.sectionHeader)
+                if isSponsored { Badge("Sponsorisé") }
+            }
             Text(title).efText(.title2).lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 3)
         }
         .foregroundStyle(EFTextColor.onFill.color)
@@ -36,7 +41,7 @@ public struct HeroCard: View {
         .background { photo }
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(category), \(title)")
+        .accessibilityLabel("\(isSponsored ? "Sponsorisé, " : "")\(category), \(title)")
         .accessibilityAddTraits(.isButton)
     }
 

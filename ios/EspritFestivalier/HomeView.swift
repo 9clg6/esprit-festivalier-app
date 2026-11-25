@@ -60,7 +60,10 @@ struct HomeView: View {
             .padding(.bottom, -16)
         if let article = feed.featured {
             NavigationLink(value: Route.article(article)) {
-                HeroCard(imageURL: article.imageURL, category: article.category.rawValue, title: article.title)
+                HeroCard(
+                    imageURL: article.imageURL, category: article.category.rawValue, title: article.title,
+                    isSponsored: article.isSponsored
+                )
             }
             .buttonStyle(.plain)
         }
