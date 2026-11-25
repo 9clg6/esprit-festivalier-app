@@ -280,12 +280,9 @@ struct SafariItem: Identifiable {
 
 struct SafariView: UIViewControllerRepresentable {
     let url: URL
-    var readerMode = false
 
     func makeUIViewController(context: Context) -> SFSafariViewController {
-        let configuration = SFSafariViewController.Configuration()
-        configuration.entersReaderIfAvailable = readerMode
-        return SFSafariViewController(url: url, configuration: configuration)
+        SFSafariViewController(url: url)
     }
     func updateUIViewController(_ controller: SFSafariViewController, context: Context) {}
 }

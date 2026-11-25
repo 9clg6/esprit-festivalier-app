@@ -47,6 +47,7 @@ struct MyFestivalsView: View {
             .navigationTitle("Mes festivals")
             .routes(environment)
         }
+        .environment(\.pushRoute) { path.append($0) }
         .onChange(of: opened, initial: true) {
             guard let opened else { return }
             path = [.festival(opened)]

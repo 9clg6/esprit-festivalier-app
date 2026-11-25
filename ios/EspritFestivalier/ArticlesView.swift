@@ -5,11 +5,11 @@ import SwiftUI
 
 /// E10: the site's articles, filtered by section.
 struct ArticlesView: View {
-    private let environment: AppEnvironment
     @State private var model: ArticlesModel
-    @State private var path: [Article] = []
+    @State private var path: [Route] = []
     /// Set by a tapped article notification.
     @Binding private var opened: Article?
+    private let environment: AppEnvironment
 
     init(environment: AppEnvironment, opened: Binding<Article?>) {
         self.environment = environment
@@ -33,11 +33,13 @@ struct ArticlesView: View {
             .background(EFColorToken.bg.color)
             .navigationTitle("Articles")
             .navigationBarTitleDisplayMode(.large)
-            .navigationDestination(for: Article.self) { ArticleView(article: $0, environment: environment) }
+            // E11, and a festival opened from an article with the routes of E5.
+            .routes(environment)
         }
+        .environment(\.pushRoute) { path.append($0) }
         .onChange(of: opened, initial: true) {
             guard let opened else { return }
-            path = [opened]
+            path = [.article(opened)]
             self.opened = nil
         }
         .task {
@@ -46,7 +48,7 @@ struct ArticlesView: View {
             // `-openArticle <index>` opens an article at launch (simulator runs).
             if UserDefaults.standard.object(forKey: "openArticle") != nil,
                model.shown.indices.contains(UserDefaults.standard.integer(forKey: "openArticle")) {
-                path = [model.shown[UserDefaults.standard.integer(forKey: "openArticle")]]
+                path = [.article(model.shown[UserDefaults.standard.integer(forKey: "openArticle")])]
             }
             #endif
         }
@@ -83,7 +85,7 @@ struct ArticlesView: View {
                 ) { model.category = nil }
             } else {
                 ForEach(model.shown) { article in
-                    NavigationLink(value: article) {
+                    NavigationLink(value: Route.article(article)) {
                         ArticleCard(
                             imageURL: article.imageURL, category: article.category.rawValue, title: article.title,
                             author: article.author, date: article.publishedAt, isSponsored: article.isSponsored

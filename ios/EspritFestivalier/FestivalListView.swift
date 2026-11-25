@@ -75,6 +75,7 @@ struct FestivalListView: View {
                 .autocorrectionDisabled()
                 .routes(environment)
         }
+        .environment(\.pushRoute) { path.append($0) }
         .task { await model.load() }
         .onChange(of: requestedPeriod, initial: true) {
             guard let period = requestedPeriod else { return }

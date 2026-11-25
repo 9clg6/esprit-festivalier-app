@@ -21,10 +21,17 @@ extension View {
             case .lineups: LineupsView(environment: environment)
             case .festivalLineup(let id): FestivalLineupView(festivalId: id, environment: environment)
             case .artist(let id): ArtistView(artistId: id, environment: environment)
-            case .article(let article): ArticleView(article: article, environment: environment)
+            // A new identity per article: one ArticleView never shows another article's model.
+            case .article(let article): ArticleView(article: article, environment: environment).id(article.id)
             }
         }
     }
+}
+
+extension EnvironmentValues {
+    /// Pushes on the tab's stack: E11 opens articles and festivals through it, so a festival opened from an
+    /// article keeps its own `Route` links (timetable, artists, « Tout voir »). Set by every stack showing E11.
+    @Entry var pushRoute: @MainActor @Sendable (Route) -> Void = { _ in }
 }
 
 /// Loads a value once, then shows it: skeletons while loading, "Réessayer" on failure.

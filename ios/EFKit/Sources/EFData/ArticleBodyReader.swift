@@ -272,7 +272,14 @@ struct PageContext {
         return ArticleImage(
             url: components.url ?? url, width: element.attribute("width").flatMap { Int($0) },
             height: element.attribute("height").flatMap { Int($0) }, alt: nonEmpty(element.attribute("alt")),
-            caption: nonEmpty(caption))
+            caption: nonEmpty(caption).flatMap { Self.isFileName($0, of: url) ? nil : $0 })
+    }
+
+    /// An editor's leftover file name (« deryck 650.png ») is no caption, cover and body alike.
+    static func isFileName(_ caption: String, of url: URL) -> Bool {
+        let name = caption.trimmingCharacters(in: .whitespacesAndNewlines)
+        return name == url.lastPathComponent
+            || ["png", "jpg", "jpeg", "webp", "gif", "avif"].contains { name.lowercased().hasSuffix("." + $0) }
     }
 
     func embed(_ index: Int) -> Embed? {
