@@ -1,0 +1,86 @@
+[
+  {
+    "festivalId": "hellfest",
+    "announcedOn": "2026-11-25T00:00:00Z",
+    "artistIds": [
+      "bring-me-the-horizon",
+      "iron-maiden",
+      "limp-bizkit",
+      "the-offspring",
+      "alice-cooper",
+      "anthrax",
+      "deep-purple",
+      "megadeth",
+      "papa-roach",
+      "mastodon",
+      "napalm-death",
+      "behemoth"
+    ]
+  },
+  {
+    "festivalId": "vieilles-charrues",
+    "announcedOn": "2026-11-25T00:00:00Z",
+    "artistIds": [
+      "katy-perry",
+      "gims",
+      "nick-cave-the-bad-seeds",
+      "jean-louis-aubert",
+      "mosimann",
+      "matmatah",
+      "aya-nakamura",
+      "mika",
+      "orelsan",
+      "jain"
+    ]
+  },
+  {
+    "festivalId": "eurockeennes",
+    "announcedOn": "2026-11-25T00:00:00Z",
+    "artistIds": [
+      "pulp",
+      "the-offspring",
+      "aya-nakamura",
+      "orelsan",
+      "mosimann",
+      "ben-harper-the-innocent-criminals",
+      "the-lumineers",
+      "vald",
+      "feu-chatterton",
+      "sleaford-mods",
+      "airbourne",
+      "social-distortion"
+    ]
+  },
+  {
+    "festivalId": "rock-en-seine",
+    "announcedOn": "2026-11-25T00:00:00Z",
+    "artistIds": [
+      "tyler-the-creator",
+      "the-cure",
+      "nick-cave-the-bad-seeds",
+      "deftones",
+      "interpol",
+      "slowdive",
+      "the-black-keys",
+      "franz-ferdinand",
+      "turnstile",
+      "lorde",
+      "djo",
+      "biffy-clyro"
+    ]
+  },
+  {
+    "festivalId": "trans-musicales",
+    "announcedOn": "2026-11-25T00:00:00Z",
+    "artistIds": [
+      "rouperou",
+      "odoneila",
+      "a-l-aube",
+      "gregailh",
+      "kimia",
+      "angine-de-poitrine",
+      "tarta-relena",
+      "dolphyn"
+    ]
+  }
+]
