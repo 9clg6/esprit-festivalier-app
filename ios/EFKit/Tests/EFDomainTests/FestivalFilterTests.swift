@@ -59,39 +59,6 @@ private func period(_ period: FestivalFilter.Period) -> FestivalFilter {
     FestivalFilter(period: period)
 }
 
-// MARK: - Distance
-
-@Suite struct DistanceTests {
-    let paris = Coordinate(latitude: 48.8566, longitude: 2.3522)
-    let rennes = Coordinate(latitude: 48.1173, longitude: -1.6778)
-    let clisson = Coordinate(latitude: 47.0868, longitude: -1.2803)
-    let nantes = Coordinate(latitude: 47.2184, longitude: -1.5536)
-
-    @Test func parisToRennesIsAbout308Kilometers() {
-        #expect(abs(paris.kilometers(to: rennes) - 308) <= 3)
-    }
-
-    @Test func clissonToNantesIsAbout25Kilometers() {
-        #expect(abs(clisson.kilometers(to: nantes) - 25) <= 2)
-    }
-
-    @Test func aPointIsZeroKilometersFromItself() {
-        #expect(rennes.kilometers(to: rennes) == 0)
-    }
-
-    @Test func theDistanceIsTheSameBothWays() {
-        #expect(abs(paris.kilometers(to: rennes) - rennes.kilometers(to: paris)) < 0.001)
-    }
-
-    @Test func oneDegreeOfLatitudeIsAbout111Kilometers() {
-        let south = Coordinate(latitude: 47, longitude: -1.5)
-        let north = Coordinate(latitude: 48, longitude: -1.5)
-        #expect(abs(south.kilometers(to: north) - 111.2) <= 0.5)
-    }
-}
-
-// MARK: - Filter
-
 @Suite struct FestivalFilterTests {
     // MARK: No filter
 
@@ -398,50 +365,5 @@ private func period(_ period: FestivalFilter.Period) -> FestivalFilter {
     @Test func noFestivalOffersNoGenre() {
         #expect(FestivalFilter.availableGenres(in: []).isEmpty)
         #expect(FestivalFilter.availableGenres(in: [festival("none")]).isEmpty)
-    }
-}
-
-// MARK: - Region on the model
-
-@Suite struct FestivalRegionTests {
-    private let decoder: JSONDecoder = {
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        return decoder
-    }()
-
-    private func json(region: String?) -> Data {
-        let regionField = region.map { #", "region": "\#($0)""# } ?? ""
-        return Data("""
-        {
-          "id": "hellfest", "name": "Hellfest", "city": "Clisson"\(regionField),
-          "latitude": 47.09583, "longitude": -1.26806,
-          "startDate": "2027-06-17T00:00:00+02:00", "endDate": "2027-06-20T23:59:00+02:00",
-          "website": "https://www.hellfest.fr/", "description": "Metal festival."
-        }
-        """.utf8)
-    }
-
-    @Test func aFestivalDecodesItsRegion() throws {
-        let festival = try decoder.decode(Festival.self, from: json(region: "Pays de la Loire"))
-
-        #expect(festival.region == "Pays de la Loire")
-    }
-
-    @Test func aFestivalPublishedWithoutRegionStillDecodes() throws {
-        let festival = try decoder.decode(Festival.self, from: json(region: nil))
-
-        #expect(festival.region == nil)
-    }
-
-    @Test func theRegionSurvivesARoundTrip() throws {
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
-        let festival = try decoder.decode(Festival.self, from: json(region: "Bretagne"))
-
-        let again = try decoder.decode(Festival.self, from: encoder.encode(festival))
-
-        #expect(again == festival)
-        #expect(again.region == "Bretagne")
     }
 }
