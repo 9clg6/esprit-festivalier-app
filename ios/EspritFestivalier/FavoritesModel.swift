@@ -11,7 +11,12 @@ final class FavoritesModel {
     private(set) var ids: [Festival.ID] = []
     /// Short non-blocking message after a failed write; cleared after a few seconds.
     private(set) var saveError: String?
+    /// Counts the user's additions (heart, swipe, VoiceOver action): the light haptic's trigger.
+    private(set) var additions = 0
     private let store: FavoritesStore
+    /// The last write: each write waits for it, so writes reach the store in tap order.
+    private var pending: Task<Void, Never>?
+    private var hideError: Task<Void, Never>?
 
     init(store: FavoritesStore) { self.store = store }
 
@@ -30,16 +35,27 @@ final class FavoritesModel {
     /// Sets the state the user sees the heart move to, decided at tap time (never flipped on disk).
     func toggle(_ id: Festival.ID) {
         let target = !contains(id)
+        if target { additions += 1 }
         apply(id, target)
-        Task {
+        let previous = pending
+        pending = Task {
+            await previous?.value
             do {
                 try await store.setFavorite(id, target)
             } catch {
                 apply(id, await store.contains(id))
-                saveError = "Impossible d'enregistrer le favori"
-                try? await Task.sleep(for: .seconds(3))
-                saveError = nil
+                show(error: "Impossible d'enregistrer le favori")
             }
+        }
+    }
+
+    /// A newer message restarts the delay: an older timer never hides it.
+    private func show(error message: String) {
+        saveError = message
+        hideError?.cancel()
+        hideError = Task {
+            try? await Task.sleep(for: .seconds(3))
+            if !Task.isCancelled { saveError = nil }
         }
     }
 

@@ -9,7 +9,7 @@ import SwiftUI
 final class FestivalDetailModel {
     enum State {
         case loading
-        case loaded(FestivalDetail, lineup: [String])
+        case loaded(FestivalDetail, lineup: [Artist])
         case failed
     }
 
@@ -29,12 +29,12 @@ final class FestivalDetailModel {
             let detail = try await festivals.festival(id: id)
             // A lineup that cannot load is hidden, like an empty one.
             let artistIds = detail.performances.sorted { $0.start < $1.start }.map(\.artistId)
-            let names = Dictionary(
-                ((try? await artists.artists(ids: artistIds)) ?? []).map { ($0.id, $0.name) },
+            let known = Dictionary(
+                ((try? await artists.artists(ids: artistIds)) ?? []).map { ($0.id, $0) },
                 uniquingKeysWith: { first, _ in first }
             )
             var seen = Set<Artist.ID>()
-            let lineup = artistIds.filter { seen.insert($0).inserted }.compactMap { names[$0] }
+            let lineup = artistIds.filter { seen.insert($0).inserted }.compactMap { known[$0] }
             state = .loaded(detail, lineup: lineup)
         } catch is CancellationError {
             // Leaving the screen cancels the load.
@@ -51,9 +51,11 @@ struct FestivalDetailView: View {
 
     private let id: Festival.ID
 
-    init(id: Festival.ID, festivals: any FestivalSource, artists: any ArtistSource) {
+    init(id: Festival.ID, environment: AppEnvironment) {
         self.id = id
-        _model = State(initialValue: FestivalDetailModel(id: id, festivals: festivals, artists: artists))
+        _model = State(initialValue: FestivalDetailModel(
+            id: id, festivals: environment.festivals, artists: environment.artists
+        ))
     }
 
     var body: some View {
@@ -103,7 +105,7 @@ private struct FestivalDetailContent: View {
     @Environment(\.openURL) private var openURL
     @State private var safariURL: SafariItem?
     let detail: FestivalDetail
-    let lineup: [String]
+    let lineup: [Artist]
 
     private var festival: Festival { detail.festival }
 
@@ -118,13 +120,12 @@ private struct FestivalDetailContent: View {
                         section("À propos") { Text(summary).efText(.body).foregroundStyle(EFTextColor.ink.color) }
                     }
                     if !lineup.isEmpty {
-                        section("Programmation") {
-                            Text("Données de démonstration (dernière édition)")
-                                .efText(.caption)
-                                .foregroundStyle(EFTextColor.muted.color)
-                            // Tapping an artist does nothing yet (E8 comes later).
-                            ForEach(lineup, id: \.self) { name in
-                                Text(name).efText(.body).foregroundStyle(EFTextColor.ink.color)
+                        VStack(alignment: .leading, spacing: 8) {
+                            SectionHeader("Programmation", seeAllValue: Route.festivalLineup(festival.id))
+                            DemoCaption()
+                            ForEach(lineup) { artist in
+                                NavigationLink(value: Route.artist(artist.id)) { artistRow(artist) }
+                                    .buttonStyle(.plain)
                             }
                         }
                     }
@@ -224,6 +225,16 @@ private struct FestivalDetailContent: View {
         }
     }
 
+    private func artistRow(_ artist: Artist) -> some View {
+        HStack {
+            Text(artist.name).efText(.body).foregroundStyle(EFTextColor.ink.color)
+            Spacer(minLength: 8)
+            Image(systemName: "chevron.right").foregroundStyle(EFTextColor.muted.color).accessibilityHidden(true)
+        }
+        .frame(minHeight: 44)
+        .contentShape(Rectangle())
+    }
+
     private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             SectionHeader(title)
@@ -256,7 +267,7 @@ struct SafariView: UIViewControllerRepresentable {
 private struct FestivalDetailPreview: View {
     var body: some View {
         NavigationStack {
-            FestivalDetailView(id: "eurockeennes", festivals: MockFestivalSource(), artists: MockArtistSource())
+            FestivalDetailView(id: "eurockeennes", environment: AppEnvironment(kind: .mock))
         }
         .environment(FavoritesModel(store: FavoritesStore(directory: .temporaryDirectory.appending(path: "preview"))))
     }

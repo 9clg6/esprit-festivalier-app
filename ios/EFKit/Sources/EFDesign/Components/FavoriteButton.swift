@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Heart toggle: outline or filled, 44 pt. A light haptic and a short bounce (no bounce with Reduce
-/// Motion) only when a tap fills the heart: not on removal, first display or a reverted write.
+/// Heart toggle: outline or filled, 44 pt. A short bounce (none with Reduce Motion) only when a tap
+/// fills the heart: not on removal, first display or a reverted write. The app plays the haptic.
 public struct FavoriteButton: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private let isFavorite: Bool
@@ -26,7 +26,6 @@ public struct FavoriteButton: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .sensoryFeedback(.impact(weight: .light), trigger: fills)
         .accessibilityLabel(isFavorite ? "Retirer des favoris" : "Ajouter aux favoris")
     }
 }

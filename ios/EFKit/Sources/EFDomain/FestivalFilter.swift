@@ -14,9 +14,11 @@ public struct FestivalFilter: Sendable, Hashable {
 
     public enum Period: Sendable, Hashable {
         case any
-        /// Friday 00:00 to Sunday 23:59 (the current one from Friday, the coming one before).
+        /// Friday 00:00 to Monday 00:00 excluded (the current one from Friday, the coming one before).
         case thisWeekend
+        /// The calendar month; the 1st of next month 00:00 is excluded.
         case thisMonth
+        /// The interval's end is included.
         case dates(DateInterval)
     }
 
@@ -45,7 +47,7 @@ public struct FestivalFilter: Sendable, Hashable {
         return festivals.filter { festival in
             (query.isEmpty || Self.fold(festival.name).contains(query) || Self.fold(festival.city).contains(query))
                 && matches(place: festival)
-                && (window.map { festival.startDate <= $0.end && festival.endDate >= $0.start } ?? true)
+                && (window.map { Self.overlaps(festival, $0) } ?? true)
                 && (genres.isEmpty || !genres.isDisjoint(with: festival.genres))
         }
     }
@@ -66,11 +68,19 @@ public struct FestivalFilter: Sendable, Hashable {
         }
     }
 
-    private func periodWindow(now: Date, calendar: Calendar) -> DateInterval? {
+    private typealias Window = (interval: DateInterval, includesEnd: Bool)
+
+    private static func overlaps(_ festival: Festival, _ window: Window) -> Bool {
+        festival.endDate >= window.interval.start
+            && (window.includesEnd
+                ? festival.startDate <= window.interval.end : festival.startDate < window.interval.end)
+    }
+
+    private func periodWindow(now: Date, calendar: Calendar) -> Window? {
         switch period {
         case .any: return nil
-        case .thisMonth: return calendar.dateInterval(of: .month, for: now)
-        case .dates(let interval): return interval
+        case .thisMonth: return calendar.dateInterval(of: .month, for: now).map { ($0, false) }
+        case .dates(let interval): return (interval, true)
         case .thisWeekend:
             let today = calendar.startOfDay(for: now)
             let weekday = calendar.component(.weekday, from: now) // 1 = Sunday ... 7 = Saturday
@@ -78,7 +88,7 @@ public struct FestivalFilter: Sendable, Hashable {
             let friday = sinceFriday <= 2 ? -sinceFriday : 7 - sinceFriday
             guard let start = calendar.date(byAdding: .day, value: friday, to: today),
                   let end = calendar.date(byAdding: .day, value: 3, to: start) else { return nil }
-            return DateInterval(start: start, end: end)
+            return (DateInterval(start: start, end: end), false)
         }
     }
 

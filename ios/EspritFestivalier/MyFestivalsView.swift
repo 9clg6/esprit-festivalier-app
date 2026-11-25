@@ -12,9 +12,8 @@ struct MyFestivalsView: View {
 
     @Environment(FavoritesModel.self) private var favorites
     @State private var load = Load.loading
-    @State private var path: [Festival.ID] = []
-    private let source: any FestivalSource
-    private let artists: any ArtistSource
+    @State private var path: [Route] = []
+    private let environment: AppEnvironment
     private let explore: () -> Void
     private let calendar: Calendar = {
         var calendar = Calendar(identifier: .gregorian)
@@ -23,9 +22,8 @@ struct MyFestivalsView: View {
         return calendar
     }()
 
-    init(source: any FestivalSource, artists: any ArtistSource, explore: @escaping () -> Void) {
-        self.source = source
-        self.artists = artists
+    init(environment: AppEnvironment, explore: @escaping () -> Void) {
+        self.environment = environment
         self.explore = explore
     }
 
@@ -40,9 +38,7 @@ struct MyFestivalsView: View {
             }
             .background(EFColorToken.bg.color)
             .navigationTitle("Mes festivals")
-            .navigationDestination(for: Festival.ID.self) { id in
-                FestivalDetailView(id: id, festivals: source, artists: artists)
-            }
+            .routes(environment)
         }
         .task { await refresh() }
     }
@@ -59,7 +55,7 @@ struct MyFestivalsView: View {
 
     private func refresh() async {
         do {
-            load = .loaded(try await source.festivals(updatedSince: nil))
+            load = .loaded(try await environment.festivals.festivals(updatedSince: nil))
         } catch is CancellationError {
             // Leaving the tab keeps what is shown.
         } catch {
@@ -106,7 +102,7 @@ struct MyFestivalsView: View {
         if !festivals.isEmpty {
             SectionHeader(title).padding(.top, 20)
             ForEach(festivals) { festival in
-                Button { path.append(festival.id) } label: {
+                Button { path.append(.festival(festival.id)) } label: {
                     FestivalRow(
                         name: festival.name, startDate: festival.startDate, endDate: festival.endDate,
                         city: festival.city, imageURL: festival.imageURL, genres: Array(festival.genres.prefix(2)),
@@ -121,7 +117,7 @@ struct MyFestivalsView: View {
 
     private func nextCard(_ next: NextFestival) -> some View {
         let festival = next.festival
-        return Button { path.append(festival.id) } label: {
+        return Button { path.append(.festival(festival.id)) } label: {
             VStack(alignment: .leading, spacing: 8) {
                 Text(next.when.title.uppercased(with: calendar.locale))
                     .efText(.sectionHeader)

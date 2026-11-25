@@ -18,10 +18,7 @@ final class FestivalListModel {
 
     init(source: any FestivalSource) {
         self.source = source
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.locale = Locale(identifier: "fr_FR")
-        calendar.timeZone = TimeZone(identifier: "Europe/Paris") ?? .current
-        self.calendar = calendar
+        self.calendar = AppEnvironment.calendar
     }
 
     func load() async {
@@ -55,7 +52,7 @@ final class FestivalListModel {
     /// The date-interval end is the end of the last chosen day.
     func dates(from start: Date, to end: Date) -> FestivalFilter.Period {
         let first = calendar.startOfDay(for: start)
-        let last = calendar.date(bySettingHour: 23, minute: 59, second: 0, of: max(start, end)) ?? end
+        let last = calendar.date(bySettingHour: 23, minute: 59, second: 59, of: max(start, end)) ?? end
         return .dates(DateInterval(start: first, end: max(first, last)))
     }
 

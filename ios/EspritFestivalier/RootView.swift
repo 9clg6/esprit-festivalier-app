@@ -1,4 +1,5 @@
 import EFDesign
+import EFDomain
 import SwiftUI
 
 enum AppTab: CaseIterable {
@@ -33,6 +34,7 @@ struct RootView: View {
     @State private var tab = AppTab.allCases.first {
         "\($0)" == UserDefaults.standard.string(forKey: "initialTab")
     } ?? .home
+    @State private var festivalsPeriod: FestivalFilter.Period?
 
     var body: some View {
         Group {
@@ -46,9 +48,11 @@ struct RootView: View {
             }
         }
         .background(EFColorToken.bg.color.ignoresSafeArea())
-        .overlay(alignment: .top) { saveError }
+        .overlay(alignment: .top) { saveError.allowsHitTesting(false) }
         .animation(.default, value: environment.favorites.saveError)
         .environment(environment.favorites)
+        // One light haptic per favorite added, from the heart, a swipe or the VoiceOver action.
+        .sensoryFeedback(.impact(weight: .light), trigger: environment.favorites.additions)
         .task { await environment.favorites.load() }
     }
 
@@ -79,12 +83,19 @@ struct RootView: View {
 
     @ViewBuilder private func content(for tab: AppTab) -> some View {
         switch tab {
+        case .home:
+            HomeView(environment: environment) { period in
+                festivalsPeriod = period
+                self.tab = .festivals
+            } showArticles: {
+                self.tab = .articles
+            }
         case .festivals:
-            FestivalListView(source: environment.festivals, artists: environment.artists)
+            FestivalListView(environment: environment, requestedPeriod: $festivalsPeriod)
         case .articles:
             ArticlesView(source: environment.articles, feed: environment.articleFeed)
         case .mine:
-            MyFestivalsView(source: environment.festivals, artists: environment.artists) { self.tab = .festivals }
+            MyFestivalsView(environment: environment) { self.tab = .festivals }
         default:
             EmptyState(
                 systemImage: tab.symbol, title: "Bientôt disponible",

@@ -24,42 +24,47 @@ import EFDomain
 //     static func availableGenres(in: [Festival]) -> [String]
 //   Festival gains `region: String?` (init argument after `city`, default nil; absent in JSON = nil).
 
-private let paris: Calendar = {
-    var calendar = Calendar(identifier: .gregorian)
-    calendar.timeZone = TimeZone(identifier: "Europe/Paris")!
-    calendar.locale = Locale(identifier: "fr_FR")
-    return calendar
-}()
+/// Shared by the FestivalFilter suites (members, so they cannot clash with other files' private helpers).
+protocol FestivalFilterFixtures {}
 
-private func date(_ iso: String) -> Date {
-    try! Date(iso, strategy: .iso8601)
+extension FestivalFilterFixtures {
+    var paris: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "Europe/Paris")!
+        calendar.locale = Locale(identifier: "fr_FR")
+        return calendar
+    }
+
+    func date(_ iso: String) -> Date {
+        try! Date(iso, strategy: .iso8601)
+    }
+
+    /// Wednesday 25 November 2026, noon in Paris.
+    var wednesday: Date { date("2026-11-25T12:00:00+01:00") }
+
+    func festival(
+        _ id: String, name: String? = nil, city: String = "Rennes", region: String? = nil,
+        latitude: Double = 48.11, longitude: Double = -1.68,
+        from start: String = "2027-06-17T00:00:00+02:00", to end: String = "2027-06-20T23:59:00+02:00",
+        genres: [String] = []
+    ) -> Festival {
+        Festival(
+            id: id, name: name ?? id, city: city, region: region, latitude: latitude, longitude: longitude,
+            startDate: date(start), endDate: date(end),
+            website: URL(string: "https://example.org")!, description: "", genres: genres
+        )
+    }
+
+    func ids(_ filter: FestivalFilter, _ festivals: [Festival], now: Date? = nil) -> [String] {
+        filter.apply(to: festivals, now: now ?? wednesday, calendar: paris).map(\.id)
+    }
+
+    func period(_ period: FestivalFilter.Period) -> FestivalFilter {
+        FestivalFilter(period: period)
+    }
 }
 
-/// Wednesday 25 November 2026, noon in Paris.
-private let wednesday = date("2026-11-25T12:00:00+01:00")
-
-private func festival(
-    _ id: String, name: String? = nil, city: String = "Rennes", region: String? = nil,
-    latitude: Double = 48.11, longitude: Double = -1.68,
-    from start: String = "2027-06-17T00:00:00+02:00", to end: String = "2027-06-20T23:59:00+02:00",
-    genres: [String] = []
-) -> Festival {
-    Festival(
-        id: id, name: name ?? id, city: city, region: region, latitude: latitude, longitude: longitude,
-        startDate: date(start), endDate: date(end),
-        website: URL(string: "https://example.org")!, description: "", genres: genres
-    )
-}
-
-private func ids(_ filter: FestivalFilter, _ festivals: [Festival], now: Date = wednesday) -> [String] {
-    filter.apply(to: festivals, now: now, calendar: paris).map(\.id)
-}
-
-private func period(_ period: FestivalFilter.Period) -> FestivalFilter {
-    FestivalFilter(period: period)
-}
-
-@Suite struct FestivalFilterTests {
+@Suite struct FestivalFilterTests: FestivalFilterFixtures {
     // MARK: No filter
 
     @Test func theDefaultFilterKeepsEveryFestival() {
@@ -181,103 +186,6 @@ private func period(_ period: FestivalFilter.Period) -> FestivalFilter {
         #expect(ids(FestivalFilter(place: .around(me, radius: .km25)), all) == ["near"])
     }
 
-    // MARK: This weekend (Friday 00:00 → Sunday 23:59, Paris)
-
-    @Test func onAWeekdayThisWeekendIsTheComingOne() {
-        // Wednesday 25 November 2026 → Friday 27 to Sunday 29 November.
-        let all = [
-            festival("endsThursday", from: "2026-11-24T00:00:00+01:00", to: "2026-11-26T23:59:00+01:00"),
-            festival("fridayMorning", from: "2026-11-27T00:30:00+01:00", to: "2026-11-27T03:00:00+01:00"),
-            festival("sundayNight", from: "2026-11-29T23:00:00+01:00", to: "2026-11-30T02:00:00+01:00"),
-            festival("monday", from: "2026-11-30T00:30:00+01:00", to: "2026-11-30T23:00:00+01:00"),
-            festival("nextWeekend", from: "2026-12-04T00:00:00+01:00", to: "2026-12-06T23:59:00+01:00")
-        ]
-
-        #expect(ids(period(.thisWeekend), all) == ["fridayMorning", "sundayNight"])
-    }
-
-    @Test func aFestivalSpanningTheWholeWeekendMatches() {
-        let all = [festival("long", from: "2026-11-20T00:00:00+01:00", to: "2026-12-10T23:59:00+01:00")]
-
-        #expect(ids(period(.thisWeekend), all) == ["long"])
-    }
-
-    @Test func onMondayThisWeekendIsTheNextOne() {
-        let monday = date("2026-11-30T00:30:00+01:00")
-        let all = [
-            festival("past", from: "2026-11-28T00:00:00+01:00", to: "2026-11-29T23:00:00+01:00"),
-            festival("coming", from: "2026-12-05T00:00:00+01:00", to: "2026-12-05T23:00:00+01:00")
-        ]
-
-        #expect(ids(period(.thisWeekend), all, now: monday) == ["coming"])
-    }
-
-    @Test func lateOnThursdayInParisThisWeekendIsTheComingOne() {
-        // Thursday 26 November 23:30 in Paris.
-        let thursdayNight = date("2026-11-26T23:30:00+01:00")
-        let all = [
-            festival("coming", from: "2026-11-28T12:00:00+01:00", to: "2026-11-28T23:00:00+01:00"),
-            festival("following", from: "2026-12-05T12:00:00+01:00", to: "2026-12-05T23:00:00+01:00")
-        ]
-
-        #expect(ids(period(.thisWeekend), all, now: thursdayNight) == ["coming"])
-    }
-
-    @Test(arguments: [
-        "2026-11-27T00:00:00+01:00", // Friday, first minute
-        "2026-11-28T15:00:00+01:00", // Saturday
-        "2026-11-29T23:30:00+01:00" // Sunday, late
-    ])
-    func fromFridayToSundayThisWeekendIsTheCurrentOne(_ now: String) {
-        let all = [
-            festival("current", from: "2026-11-27T18:00:00+01:00", to: "2026-11-29T23:59:00+01:00"),
-            festival("following", from: "2026-12-04T18:00:00+01:00", to: "2026-12-06T20:00:00+01:00")
-        ]
-
-        #expect(ids(period(.thisWeekend), all, now: date(now)) == ["current"])
-    }
-
-    @Test func theWeekendOfTheClockChangeEndsOnSundayNightInParis() {
-        // Summer time starts on Sunday 28 March 2027; the weekend is Friday 26 → Sunday 28.
-        let thursday = date("2027-03-25T12:00:00+01:00")
-        let all = [
-            festival("sundayNight", from: "2027-03-28T23:00:00+02:00", to: "2027-03-28T23:50:00+02:00"),
-            festival("monday", from: "2027-03-29T00:30:00+02:00", to: "2027-03-29T02:00:00+02:00")
-        ]
-
-        #expect(ids(period(.thisWeekend), all, now: thursday) == ["sundayNight"])
-    }
-
-    // MARK: This month (Paris calendar month)
-
-    @Test func thisMonthKeepsTheFestivalsOverlappingTheCurrentMonth() {
-        let all = [
-            festival("startedInOctober", from: "2026-10-30T00:00:00+01:00", to: "2026-11-02T23:59:00+01:00"),
-            festival("endsOnTheLastDay", from: "2026-11-30T20:00:00+01:00", to: "2026-12-02T23:59:00+01:00"),
-            festival("october", from: "2026-10-20T00:00:00+02:00", to: "2026-10-22T23:59:00+02:00"),
-            // 1 December 00:30 in Paris is still 30 November in UTC.
-            festival("december", from: "2026-12-01T00:30:00+01:00", to: "2026-12-03T23:59:00+01:00"),
-            festival("nextNovember", from: "2027-11-10T00:00:00+01:00", to: "2027-11-12T23:59:00+01:00")
-        ]
-
-        #expect(ids(period(.thisMonth), all) == ["startedInOctober", "endsOnTheLastDay"])
-    }
-
-    // MARK: Chosen dates
-
-    @Test func chosenDatesKeepTheFestivalsOverlappingTheInterval() {
-        let interval = DateInterval(start: date("2027-07-01T00:00:00+02:00"), end: date("2027-07-10T23:59:00+02:00"))
-        let all = [
-            festival("before", from: "2027-06-17T00:00:00+02:00", to: "2027-06-20T23:59:00+02:00"),
-            festival("straddlesStart", from: "2027-06-29T00:00:00+02:00", to: "2027-07-02T23:59:00+02:00"),
-            festival("inside", from: "2027-07-04T00:00:00+02:00", to: "2027-07-05T23:59:00+02:00"),
-            festival("straddlesEnd", from: "2027-07-10T12:00:00+02:00", to: "2027-07-14T23:59:00+02:00"),
-            festival("after", from: "2027-07-15T00:00:00+02:00", to: "2027-07-18T23:59:00+02:00")
-        ]
-
-        #expect(ids(period(.dates(interval)), all) == ["straddlesStart", "inside", "straddlesEnd"])
-    }
-
     // MARK: Combination and order
 
     @Test func allCriteriaMustMatch() {
@@ -328,7 +236,7 @@ private func period(_ period: FestivalFilter.Period) -> FestivalFilter {
         FestivalFilter(place: .around(Coordinate(latitude: 47, longitude: -1.5), radius: .km50)),
         FestivalFilter(period: .thisWeekend),
         FestivalFilter(period: .thisMonth),
-        FestivalFilter(period: .dates(DateInterval(start: date("2027-07-01T00:00:00+02:00"), duration: 86_400))),
+        FestivalFilter(period: .dates(DateInterval(start: try! Date("2027-07-01T00:00:00+02:00", strategy: .iso8601), duration: 86_400))),
         FestivalFilter(genres: ["Rock / Metal"]),
         FestivalFilter(genres: ["Rock / Metal", "Électro", "Pop"])
     ])

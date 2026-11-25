@@ -12,18 +12,19 @@ struct FestivalListView: View {
     @Environment(FavoritesModel.self) private var favorites
     @State private var model: FestivalListModel
     @State private var aroundMe = AroundMe()
-    @State private var path: [Festival.ID] = Self.initialPath
+    @State private var path: [Route] = Self.initialPath
     @State private var showFilters = Self.debugFlag("openFilters")
     @State private var mode = Self.debugFlag("mapMode") ? Mode.map : .list
     @State private var selectedOnMap: Festival.ID?
     @State private var recenter = 0
-    private let source: any FestivalSource
-    private let artists: any ArtistSource
+    /// Set by the home "Tout voir": the list opens on that period.
+    @Binding private var requestedPeriod: FestivalFilter.Period?
+    private let environment: AppEnvironment
 
-    init(source: any FestivalSource, artists: any ArtistSource) {
-        self.source = source
-        self.artists = artists
-        let model = FestivalListModel(source: source)
+    init(environment: AppEnvironment, requestedPeriod: Binding<FestivalFilter.Period?>) {
+        self.environment = environment
+        _requestedPeriod = requestedPeriod
+        let model = FestivalListModel(source: environment.festivals)
         #if DEBUG
         model.filter = Self.debugFilter
         #endif
@@ -31,9 +32,9 @@ struct FestivalListView: View {
     }
 
     /// Debug builds only: `-openFestival <id>` opens a festival's detail at launch (simulator runs).
-    private static var initialPath: [Festival.ID] {
+    private static var initialPath: [Route] {
         #if DEBUG
-        UserDefaults.standard.string(forKey: "openFestival").map { [$0] } ?? []
+        UserDefaults.standard.string(forKey: "openFestival").map { [.festival($0)] } ?? []
         #else
         []
         #endif
@@ -72,11 +73,15 @@ struct FestivalListView: View {
                     prompt: "Rechercher un festival"
                 )
                 .autocorrectionDisabled()
-                .navigationDestination(for: Festival.ID.self) { id in
-                    FestivalDetailView(id: id, festivals: source, artists: artists)
-                }
+                .routes(environment)
         }
         .task { await model.load() }
+        .onChange(of: requestedPeriod, initial: true) {
+            guard let period = requestedPeriod else { return }
+            model.filter = FestivalFilter(period: period)
+            path = []
+            requestedPeriod = nil
+        }
         .sheet(isPresented: $showFilters) {
             FestivalFilterSheet(model: model, aroundMe: aroundMe)
         }
@@ -205,7 +210,7 @@ struct FestivalListView: View {
                 ForEach(model.sections) { section in
                     SectionHeader(section.title).padding(.top, 20)
                     ForEach(section.festivals) { festival in
-                        Button { path.append(festival.id) } label: { row(festival) }
+                        Button { path.append(.festival(festival.id)) } label: { row(festival) }
                             .buttonStyle(.plain)
                             .swipeActions(edge: .trailing) { swipeAction(festival) }
                     }
@@ -214,13 +219,7 @@ struct FestivalListView: View {
         }
     }
 
-    private func row(_ festival: Festival) -> some View {
-        FestivalRow(
-            name: festival.name, startDate: festival.startDate, endDate: festival.endDate, city: festival.city,
-            imageURL: festival.imageURL, genres: Array(festival.genres.prefix(2)),
-            favorite: (favorites.contains(festival.id), { favorites.toggle(festival.id) })
-        )
-    }
+    private func row(_ festival: Festival) -> some View { FestivalRow(festival, favorites: favorites) }
 
     private func swipeAction(_ festival: Festival) -> some View {
         let isFavorite = favorites.contains(festival.id)
@@ -274,7 +273,7 @@ struct FestivalListView: View {
                     .accessibilityLabel("Recentrer sur ma position")
                 }
                 if let festival = model.upcoming.first(where: { $0.id == selectedOnMap }) {
-                    NavigationLink(value: festival.id) { row(festival) }
+                    NavigationLink(value: Route.festival(festival.id)) { row(festival) }
                         .buttonStyle(.plain)
                         .shadow(color: .black.opacity(0.15), radius: 8, y: 2)
                 }
