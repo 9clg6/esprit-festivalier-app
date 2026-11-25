@@ -4,7 +4,7 @@ import Foundation
 /// One reaction of mine on an article. A removed one stays as a tombstone (`deleted`), like a
 /// favorite, so a later sync can tell "removed" from "never set".
 public struct ReactionEntry: Sendable, Codable, Hashable {
-    public let articleId: Article.ID
+    public let articleId: ArticleKey
     public let reaction: Reaction
     public let updatedAt: Date
     public let deleted: Bool
@@ -32,7 +32,7 @@ public actor LocalReactionService: ReactionService {
     /// Reads the file again, after something else changed it (the account deletion erases it).
     public func reload() { entries = file.read() }
 
-    public func summary(for article: Article.ID) -> ReactionSummary {
+    public func summary(for article: ArticleKey) -> ReactionSummary {
         let mine = Set(entries.filter { $0.articleId == article && !$0.deleted }.map(\.reaction))
         guard demoCounts else { return ReactionSummary(mine: mine, counts: nil, isDemo: false) }
         let counts = Dictionary(uniqueKeysWithValues: Reaction.allCases.enumerated().map { index, reaction in
@@ -42,7 +42,8 @@ public actor LocalReactionService: ReactionService {
     }
 
     /// Idempotent: the same value twice keeps the entry and its date.
-    public func set(_ reaction: Reaction, active: Bool, on article: Article.ID) throws -> ReactionSummary {
+    public func set(_ reaction: Reaction, active: Bool, on article: ArticleKey) throws -> ReactionSummary {
+        guard article.isNumbered else { return summary(for: article) }
         let current = entries.first { $0.articleId == article && $0.reaction == reaction }
         let isActive = current.map { !$0.deleted } ?? false
         guard active != isActive, active || current != nil else { return summary(for: article) }
@@ -55,13 +56,13 @@ public actor LocalReactionService: ReactionService {
 
     /// One actor call: nothing can change the entry between the read and the write.
     @discardableResult
-    public func toggle(_ reaction: Reaction, on article: Article.ID) throws -> ReactionSummary {
+    public func toggle(_ reaction: Reaction, on article: ArticleKey) throws -> ReactionSummary {
         try set(reaction, active: !summary(for: article).mine.contains(reaction), on: article)
     }
 
     /// The same article always gets the same made-up count (not `Hasher`: it changes every launch).
-    private static func demoCount(_ article: Article.ID, _ index: Int) -> Int {
-        let seed = article.unicodeScalars.reduce(UInt64(5381)) { $0 &* 33 &+ UInt64($1.value) }
+    private static func demoCount(_ article: ArticleKey, _ index: Int) -> Int {
+        let seed = article.rawValue.unicodeScalars.reduce(UInt64(5381)) { $0 &* 33 &+ UInt64($1.value) }
         return Int((seed >> UInt64(index * 7)) % 40)
     }
 }

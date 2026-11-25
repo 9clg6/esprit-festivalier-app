@@ -8,7 +8,7 @@ import Foundation
 public actor ReadCounter {
     /// A read of the day; `acknowledged` once sent, kept so the same day does not count again.
     struct Entry: Sendable, Codable, Hashable {
-        let articleId: Article.ID
+        let articleId: ArticleKey
         let day: String
         let acknowledged: Bool
     }
@@ -38,23 +38,24 @@ public actor ReadCounter {
     }
 
     /// The article screen: only the full text counts (FR-036), the excerpt does not use up the day's read.
-    public func articleShown(_ article: Article.ID, fullText: Bool, at date: Date) throws {
+    public func articleShown(_ article: ArticleKey, fullText: Bool, at date: Date) throws {
         guard fullText else { return }
         try record(article, at: date)
     }
 
-    public func record(_ article: Article.ID, at date: Date) throws {
+    public func record(_ article: ArticleKey, at date: Date) throws {
         let day = Self.parisDay(date)
         let kept = kept
-        guard day >= cutoff, !kept.contains(where: { $0.articleId == article && $0.day == day }) else { return }
+        guard article.isNumbered, day >= cutoff,
+              !kept.contains(where: { $0.articleId == article && $0.day == day }) else { return }
         try save(kept + [Entry(articleId: article, day: day, acknowledged: false)])
     }
 
     /// After a successful upload: only these counts leave the queue; their day's read stays used up.
     public func acknowledge(_ counts: [ArticleReadCount]) throws {
-        let sent = Set(counts.map { "\($0.articleId)|\($0.day)" })
+        let sent = Set(counts.map { "\($0.articleId.rawValue)|\($0.day)" })
         let updated = kept.map { entry in
-            sent.contains("\(entry.articleId)|\(entry.day)")
+            sent.contains("\(entry.articleId.rawValue)|\(entry.day)")
                 ? Entry(articleId: entry.articleId, day: entry.day, acknowledged: true) : entry
         }
         guard updated != entries else { return }

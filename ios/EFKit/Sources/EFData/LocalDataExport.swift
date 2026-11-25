@@ -49,7 +49,7 @@ public struct LocalDataExport: Sendable, Codable, Equatable {
     }
 
     private struct ReactionItem: Codable {
-        let articleId: Article.ID
+        let articleId: ArticleKey
         let reaction: Reaction
         let reactedAt: Date
     }

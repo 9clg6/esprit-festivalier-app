@@ -6,7 +6,15 @@ import SwiftUI
 struct ArticleView: View {
     let article: Article
     let environment: AppEnvironment
+    /// Reactions and reads are kept under it (ADR-007); nil (no number in the address): neither.
+    private let key: ArticleKey?
     @State private var safariURL: SafariItem?
+
+    init(article: Article, environment: AppEnvironment) {
+        self.article = article
+        self.environment = environment
+        key = ArticleKey(numbered: article.link)
+    }
 
     var body: some View {
         ScrollView {
@@ -37,7 +45,9 @@ struct ArticleView: View {
                         // 17 pt, line height about 1.5.
                         Text(paragraph).efText(.body).lineSpacing(8).foregroundStyle(EFTextColor.ink.color)
                     }
-                    ReactionBar(article: article.id, service: environment.reactions).padding(.top, 8)
+                    if let key {
+                        ReactionBar(article: key, service: environment.reactions).padding(.top, 8)
+                    }
                     PrimaryButton("Lire l'article complet") { safariURL = SafariItem(url: article.link) }
                         .padding(.top, 8)
                     ShareLink(item: article.link) {
@@ -63,7 +73,8 @@ struct ArticleView: View {
             // Only the full text counts: the feed carries excerpts until the native reader (STORY-055).
             // swiftlint:disable:next todo
             // TODO(STORY-030): skip when the audience-measurement setting is off; counted by default until it exists.
-            try? await environment.reads.articleShown(article.id, fullText: false, at: .now)
+            guard let key else { return }
+            try? await environment.reads.articleShown(key, fullText: false, at: .now)
         }
     }
 

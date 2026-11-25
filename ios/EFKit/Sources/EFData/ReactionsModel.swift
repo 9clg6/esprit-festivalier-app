@@ -6,7 +6,7 @@ import Observation
 /// a newer tap. A failed write says nothing (UX "Réactions : états"): the pill goes back to what is stored.
 @MainActor @Observable
 public final class ReactionsModel {
-    private let article: Article.ID
+    private let article: ArticleKey
     private let service: any ReactionService
     /// What the service last said.
     private var stored: ReactionSummary?
@@ -17,7 +17,7 @@ public final class ReactionsModel {
     /// The last service call: each one waits for it, so they run in order.
     private var queue: Task<Void, Never>?
 
-    public init(article: Article.ID, service: any ReactionService) {
+    public init(article: ArticleKey, service: any ReactionService) {
         self.article = article
         self.service = service
     }

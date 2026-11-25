@@ -11,7 +11,7 @@ struct ReactionBar: View {
     /// The light haptic's trigger: one per tap.
     @State private var taps = 0
 
-    init(article: Article.ID, service: any ReactionService) {
+    init(article: ArticleKey, service: any ReactionService) {
         _model = State(initialValue: ReactionsModel(article: article, service: service))
     }
 

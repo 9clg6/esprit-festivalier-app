@@ -12,6 +12,18 @@ public struct ArticleKey: RawRepresentable, Codable, Hashable, Sendable {
         self.init(rawValue: Self.number(inLastSegmentOf: path) ?? path)
     }
 
+    /// The key reactions and reads are kept and sent under (ADR-007): the number of an article of the
+    /// site, `/<slug>-<1…9 digits>/` (http, www, query or fragment ignored); nil for any other address.
+    public init?(numbered url: URL) {
+        guard case let .article(key) = SiteLink(url: url), key.isNumbered else { return nil }
+        self = key
+    }
+
+    /// 1 to 9 ASCII digits: the only keys the server takes ("Clés d'articles validées").
+    public var isNumbered: Bool {
+        (1...9).contains(rawValue.count) && rawValue.allSatisfy { $0.isASCII && $0.isNumber }
+    }
+
     /// "…-10675" or "…-10675/" → "10675"; nil when the last segment does not end with "-<digits>".
     static func number(inLastSegmentOf path: String) -> String? {
         guard let last = path.split(separator: "/").last else { return nil }
