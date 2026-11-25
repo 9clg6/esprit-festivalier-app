@@ -52,7 +52,7 @@ final class FestivalListModel {
     /// The date-interval end is the end of the last chosen day.
     func dates(from start: Date, to end: Date) -> FestivalFilter.Period {
         let first = calendar.startOfDay(for: start)
-        let last = calendar.date(bySettingHour: 23, minute: 59, second: 0, of: max(start, end)) ?? end
+        let last = calendar.date(bySettingHour: 23, minute: 59, second: 59, of: max(start, end)) ?? end
         return .dates(DateInterval(start: first, end: max(first, last)))
     }
 
