@@ -51,6 +51,8 @@ struct RootView: View {
         .overlay(alignment: .top) { saveError.allowsHitTesting(false) }
         .animation(.default, value: environment.favorites.saveError)
         .environment(environment.favorites)
+        // One light haptic per favorite added, from the heart, a swipe or the VoiceOver action.
+        .sensoryFeedback(.impact(weight: .light), trigger: environment.favorites.additions)
         .task { await environment.favorites.load() }
     }
 

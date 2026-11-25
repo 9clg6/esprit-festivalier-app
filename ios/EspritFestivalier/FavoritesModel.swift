@@ -11,6 +11,8 @@ final class FavoritesModel {
     private(set) var ids: [Festival.ID] = []
     /// Short non-blocking message after a failed write; cleared after a few seconds.
     private(set) var saveError: String?
+    /// Counts the user's additions (heart, swipe, VoiceOver action): the light haptic's trigger.
+    private(set) var additions = 0
     private let store: FavoritesStore
     /// The last write: each write waits for it, so writes reach the store in tap order.
     private var pending: Task<Void, Never>?
@@ -33,6 +35,7 @@ final class FavoritesModel {
     /// Sets the state the user sees the heart move to, decided at tap time (never flipped on disk).
     func toggle(_ id: Festival.ID) {
         let target = !contains(id)
+        if target { additions += 1 }
         apply(id, target)
         let previous = pending
         pending = Task {
