@@ -1,9 +1,9 @@
 import Foundation
 
 /// The size to ask the site for an image (`?w=`): the displayed width in pixels, rounded up to a size the
-/// site serves, capped at the largest. Another host's image is left as is.
+/// site serves, capped at the largest. Any other `w` returns the original (3–4 MB). Another host's image is left as is.
 public enum SiteImage {
-    public static let widths = [400, 800, 1200, 1600]
+    public static let widths = [240, 320, 480, 720, 960, 1600]
 
     public static func url(_ url: URL, pointWidth: Double, scale: Double) -> URL {
         let pixels = pointWidth * scale

@@ -645,7 +645,7 @@ Python reste utilisé pour le pipeline de données (option A comprise).
   - Après le texte : `div.tags` (`/tag/…`, `/artiste/…`), `aside.author-box` (avatar, nom, une ligne de présentation), `section.related` (« Articles connexes », cartes `article.card`).
   - Crédits dans `figcaption`, en texte libre : « Orelsan / Mano Le Bris @manoverso », « Vald @odieuxboby », « Christophe Maé - (c)Mr Brainwash », « Marguerite - ©MG ».
   - La feuille de style définit `.sponsored-tag` et `.sponsored-line` : marque probable des contenus sponsorisés (absente des 2 pages vues, **à confirmer**).
-  - Images redimensionnées par le site : `?w=240` à `?w=1600`.
+  - Images redimensionnées par le site : seulement `?w=240`, `320`, `480`, `720`, `960` et `1600` (toute autre largeur renvoie l'original, 3 à 4 Mo).
 - **Page auteur** `/author/<slug>/` : `div.author-head` (avatar, `h1`, « 1 article »), cartes `article.card` (même composant que les articles connexes), JSON-LD `ProfilePage`. **Ni bio ni réseaux** sur la page : la ligne de présentation n'existe que dans `aside.author-box` des articles. Pagination non vue (auteur à 1 article) : **à vérifier**.
 
 ### 1. Contenu des articles
@@ -731,7 +731,7 @@ public struct InlineRun: Sendable, Codable, Hashable {
 - **Corps :** de `div.article-body` à `div.read-end`. Élément inconnu → son texte dans un paragraphe : rien ne disparaît en silence.
 - **Intertitres :** `h2` à `h4` ; un paragraphe court (moins de 120 caractères) entièrement en gras devient un intertitre de niveau 3.
 - **Photos :** les photographes sont membres de l'association ; leurs photos paraissent dans l'app, toujours avec leur crédit (décision du 2026-11-25).
-- **Images :** adresse absolue sur le site, `?w=960` à l'affichage, `?w=1600` en plein écran ; largeur et hauteur gardées pour réserver la place (pas de saut à l'affichage).
+- **Images :** adresse absolue sur le site, à l'affichage la plus petite de ces largeurs ≥ largeur affichée × échelle de l'écran, `?w=1600` en plein écran ; largeur et hauteur gardées pour réserver la place (pas de saut à l'affichage).
 - **Contenus tiers** (`iframe` YouTube, Spotify, Instagram…) : jamais chargés dans l'article (traceurs tiers, NFR-005). Carte « Vidéo YouTube » avec titre et fournisseur ; toucher ouvre l'app concernée ou une feuille Safari.
 - **Sécurité :** l'app ne télécharge que des adresses `https://esprit-festivalier.fr/…` ; tout autre hôte reste un lien externe. Délai de 10 s (NFR-002).
 
