@@ -94,6 +94,17 @@ struct FestivalListView: View {
                 }
             }
             .background(EFColorToken.bg.color)
+        } else if !showsRows {
+            // Empty states stay out of the List: in a List row, the whole row would trigger its buttons.
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    controls
+                    content
+                }
+                .padding(.horizontal, 16)
+            }
+            .refreshable { await model.load() }
+            .background(EFColorToken.bg.color)
         } else {
             // A List, for the swipe action on rows.
             List {
@@ -147,6 +158,14 @@ struct FestivalListView: View {
         return GenreChip(count == 0 ? "Filtres" : "Filtres · \(count)", isSelected: count > 0) { showFilters = true }
             .accessibilityLabel(count == 0 ? "Filtres" : "Filtres, \(count) \(count == 1 ? "actif" : "actifs")")
             .accessibilityHint("Ouvre les filtres")
+    }
+
+    private var showsRows: Bool {
+        switch model.state {
+        case .loading: true
+        case .failed: false
+        case .loaded: !model.upcoming.isEmpty
+        }
     }
 
     private var isAround: Bool {
