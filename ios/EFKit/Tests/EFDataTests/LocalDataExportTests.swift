@@ -8,18 +8,20 @@ import EFData
 // Helper `temporaryDirectory` in FavoritesStoreTests.swift.
 // Assumed API (EFData, pure):
 //   struct LocalDataExport: Sendable, Codable, Equatable {
-//     init(account: AuthSession?, favorites: [FavoriteEntry], picks: [PickEntry],
+//     init(account: AuthSession?, favorites: [FavoriteEntry], picks: [PickEntry], reactions: [ReactionEntry],
 //          reminderLead: ReminderLead, notifications: [String: Bool], exportedAt: Date)
 //     func json() throws -> Data          // the document the user gets
 //     init(json: Data) throws             // reads it back
 //   }
 // Decisions specified here:
 // - top-level keys, always present: exportedAt, account (null when signed out), favorites, picks,
-//   reminderLeadMinutes, notifications;
+//   reactions (STORY-058), reminderLeadMinutes, notifications;
 // - account: userId, provider ("apple" | "email"), email (email accounts), createdAt;
 //   favorite: festivalId, addedAt; pick: performanceId, festivalId, pickedAt;
+//   reaction: articleId, reaction (its key, "love"), reactedAt;
+// - article reads (STORY-066) are not exported: anonymous aggregates, nothing personal;
 // - dates in ISO 8601 ("2026-11-25T09:30:00Z"); keys sorted, so the same data gives the same bytes;
-// - only live favorites and picks: no tombstone, no `deleted` key anywhere;
+// - only live favorites, picks and reactions: no tombstone, no `deleted` key anywhere;
 // - `notifications` is the per-type switches known on the device, as given (STORY-024 owns the types);
 // - the document decodes back to an equal value.
 
@@ -30,8 +32,8 @@ private let emailAccount = AuthSession(
     createdAt: try! Date("2026-11-20T12:00:00Z", strategy: .iso8601)
 )
 
-/// A favorite and a pick kept, one of each removed (tombstones), all dated `addedAt`.
-private func storedData() async throws -> (favorites: [FavoriteEntry], picks: [PickEntry]) {
+/// A favorite, a pick and a reaction kept, one of each removed (tombstones), all dated `addedAt`.
+private func storedData() async throws -> (favorites: [FavoriteEntry], picks: [PickEntry], reactions: [ReactionEntry]) {
     let directory = temporaryDirectory()
     let favorites = FavoritesStore(directory: directory, now: { addedAt })
     try await favorites.add("hellfest")
@@ -41,13 +43,17 @@ private func storedData() async throws -> (favorites: [FavoriteEntry], picks: [P
     try await picks.setPicked("hellfest-iron-maiden", true, festivalId: "hellfest")
     try await picks.setPicked("hellfest-removed-set", true, festivalId: "hellfest")
     try await picks.setPicked("hellfest-removed-set", false, festivalId: "hellfest")
-    return (await favorites.entries, await picks.entries)
+    let reactions = LocalReactionService(directory: directory, now: { addedAt })
+    _ = try await reactions.set(.love, active: true, on: "10675")
+    _ = try await reactions.set(.fire, active: true, on: "99999")
+    _ = try await reactions.set(.fire, active: false, on: "99999")
+    return (await favorites.entries, await picks.entries, await reactions.entries)
 }
 
 private func export(account: AuthSession? = emailAccount) async throws -> LocalDataExport {
     let data = try await storedData()
     return LocalDataExport(
-        account: account, favorites: data.favorites, picks: data.picks, reminderLead: .ten,
+        account: account, favorites: data.favorites, picks: data.picks, reactions: data.reactions, reminderLead: .ten,
         notifications: ["articles": true, "favoris": false], exportedAt: exportedAt
     )
 }
@@ -64,7 +70,7 @@ private func list(_ key: String, in export: LocalDataExport) throws -> [[String:
     @Test func theDocumentHasTheStableTopLevelKeys() async throws {
         let keys = Set(try object(try await export()).keys)
 
-        #expect(keys == ["exportedAt", "account", "favorites", "picks", "reminderLeadMinutes", "notifications"])
+        #expect(keys == ["exportedAt", "account", "favorites", "picks", "reactions", "reminderLeadMinutes", "notifications"])
     }
 
     @Test func theAccountIsExported() async throws {
@@ -108,11 +114,28 @@ private func list(_ key: String, in export: LocalDataExport) throws -> [[String:
         #expect(picks.first?["pickedAt"] as? String == "2026-11-25T09:30:00Z")
     }
 
+    @Test func liveReactionsAreExportedByKeyWithTheirDate() async throws {
+        let reactions = try list("reactions", in: try await export())
+
+        #expect(reactions.count == 1)
+        #expect(reactions.first?["articleId"] as? String == "10675")
+        #expect(reactions.first?["reaction"] as? String == "love")
+        #expect(reactions.first?["reactedAt"] as? String == "2026-11-25T09:30:00Z")
+        #expect(reactions.first.map { Set($0.keys) } == ["articleId", "reaction", "reactedAt"])
+    }
+
+    @Test func articleReadsAreNotExported() async throws {
+        let keys = Set(try object(try await export()).keys)
+
+        #expect(!keys.contains { $0.lowercased().contains("read") })
+    }
+
     @Test func noTombstoneIsExported() async throws {
         let text = try #require(String(bytes: try await export().json(), encoding: .utf8))
 
         #expect(!text.contains("removed-festival"))
         #expect(!text.contains("hellfest-removed-set"))
+        #expect(!text.contains("99999"))
         #expect(!text.contains("deleted"))
     }
 
@@ -126,12 +149,13 @@ private func list(_ key: String, in export: LocalDataExport) throws -> [[String:
 
     @Test func nothingStoredGivesEmptyLists() throws {
         let empty = LocalDataExport(
-            account: nil, favorites: [], picks: [], reminderLead: .default, notifications: [:], exportedAt: exportedAt
+            account: nil, favorites: [], picks: [], reactions: [], reminderLead: .default, notifications: [:], exportedAt: exportedAt
         )
         let document = try object(empty)
 
         #expect((document["favorites"] as? [Any])?.isEmpty == true)
         #expect((document["picks"] as? [Any])?.isEmpty == true)
+        #expect((document["reactions"] as? [Any])?.isEmpty == true)
         #expect(document["reminderLeadMinutes"] as? Int == 15)
     }
 
@@ -141,9 +165,9 @@ private func list(_ key: String, in export: LocalDataExport) throws -> [[String:
 
         #expect(try first.json() == second.json())
         let text = try #require(String(bytes: try first.json(), encoding: .utf8))
-        let order = ["\"account\"", "\"exportedAt\"", "\"favorites\"", "\"notifications\"", "\"picks\"", "\"reminderLeadMinutes\""]
+        let order = ["\"account\"", "\"exportedAt\"", "\"favorites\"", "\"notifications\"", "\"picks\"", "\"reactions\"", "\"reminderLeadMinutes\""]
             .compactMap { text.range(of: $0)?.lowerBound }
-        #expect(order.count == 6)
+        #expect(order.count == 7)
         #expect(order == order.sorted())
     }
 
