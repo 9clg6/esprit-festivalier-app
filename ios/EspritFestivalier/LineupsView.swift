@@ -140,37 +140,50 @@ struct ArtistView: View {
             let festivals = Lineups.upcomingFestivals(
                 of: artistId, lineups: data.lineups, festivals: data.festivals, now: Date()
             )
-            return (name: artist?.name ?? "", festivals: festivals)
-        } content: { artist, _ in
-            ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
-                    VStack(spacing: 12) {
-                        ArtistAvatar(name: artist.name, size: 120)
-                        Text(artist.name)
-                            .efText(.title1)
-                            .foregroundStyle(EFTextColor.ink.color)
-                            .multilineTextAlignment(.center)
-                            .accessibilityAddTraits(.isHeader)
-                    }
-                    .frame(maxWidth: .infinity)
-                    VStack(alignment: .leading, spacing: 12) {
-                        SectionHeader("En festival")
-                        if artist.festivals.isEmpty {
-                            Text("Aucun festival à venir pour l'instant.")
-                                .efText(.body).foregroundStyle(EFTextColor.ink2.color)
-                        }
-                        ForEach(artist.festivals) { festival in
-                            NavigationLink(value: Route.festival(festival.id)) {
-                                FestivalRow(festival, favorites: favorites)
-                            }
-                                .buttonStyle(.plain)
-                        }
-                    }
-                }
-                .padding(16)
+            return (artist: artist, festivals: festivals)
+        } content: { page, _ in
+            if let artist = page.artist {
+                content(artist, festivals: page.festivals)
+            } else {
+                EmptyState(
+                    systemImage: "person.crop.circle.badge.questionmark", title: "Artiste introuvable",
+                    message: "Cet artiste n'est plus dans nos données."
+                )
+                .frame(maxHeight: .infinity)
             }
         }
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func content(_ artist: Artist, festivals: [Festival]) -> some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                VStack(spacing: 12) {
+                    ArtistAvatar(name: artist.name, size: 120)
+                    Text(artist.name)
+                        .efText(.title1)
+                        .foregroundStyle(EFTextColor.ink.color)
+                        .multilineTextAlignment(.center)
+                        .accessibilityAddTraits(.isHeader)
+                }
+                .frame(maxWidth: .infinity)
+                VStack(alignment: .leading, spacing: 12) {
+                    SectionHeader("En festival")
+                    if festivals.isEmpty {
+                        Text("Aucun festival à venir pour l'instant.")
+                            .efText(.body).foregroundStyle(EFTextColor.ink2.color)
+                    }
+                    ForEach(festivals) { festival in
+                        NavigationLink(value: Route.festival(festival.id)) {
+                            FestivalRow(festival, favorites: favorites)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+            .padding(16)
+        }
+        .navigationTitle(artist.name)
     }
 }
 
