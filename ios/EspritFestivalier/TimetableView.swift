@@ -46,7 +46,6 @@ struct TimetableView: View {
     @State private var model: TimetableModel
     @State private var day: Date?
     @State private var onlyMine = false
-    @AppStorage(PicksModel.leadKey) private var lead = ReminderLead.default.rawValue
 
     init(id: Festival.ID, environment: AppEnvironment) {
         _model = State(initialValue: TimetableModel(
@@ -55,7 +54,6 @@ struct TimetableView: View {
     }
 
     var body: some View {
-        @Bindable var picks = picks
         Group {
             switch model.state {
             case .loading:
@@ -82,16 +80,6 @@ struct TimetableView: View {
                     .toggleStyle(.button)
                     .accessibilityHint("Seulement mes concerts")
             }
-        }
-        .sheet(isPresented: $picks.asksForReminders) {
-            PermissionSheet(
-                systemImage: "bell.badge.fill", title: "Ne rate aucun concert",
-                examples: [
-                    "Un rappel \(lead) min avant chaque concert coché", "Les rappels marchent même sans réseau",
-                    "Le délai se règle dans Profil"
-                ],
-                onActivate: picks.enableReminders, onLater: { picks.asksForReminders = false }
-            )
         }
         .task { await model.load() }
     }

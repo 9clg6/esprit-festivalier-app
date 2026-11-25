@@ -30,6 +30,7 @@ enum AppTab: CaseIterable {
 struct RootView: View {
     let environment: AppEnvironment
     @Environment(\.scenePhase) private var scenePhase
+    @AppStorage(PicksModel.leadKey) private var lead = ReminderLead.default.rawValue
     @AppStorage("hasSeenWelcome") private var hasSeenWelcome = false
     // ponytail: `-initialTab festivals` launch argument lets simulator runs start on any tab.
     @State private var tab = AppTab.allCases.first {
@@ -55,10 +56,26 @@ struct RootView: View {
         // One light haptic per favorite added, from the heart, a swipe or the VoiceOver action.
         .sensoryFeedback(.impact(weight: .light), trigger: environment.favorites.additions)
         .environment(environment.picks)
+        .sheet(isPresented: Binding(
+            get: { environment.picks.asksForReminders }, set: { environment.picks.asksForReminders = $0 }
+        )) { remindersSheet }
         .task { await environment.favorites.load() }
         .task { await environment.picks.load() }
         // Back to the app: the next reminders take the places of those already shown (64 at most).
         .onChange(of: scenePhase) { if scenePhase == .active { environment.picks.rescheduleReminders() } }
+    }
+
+    /// E14 for the reminders, once, on the first pick: one sheet for the whole app.
+    private var remindersSheet: some View {
+        PermissionSheet(
+            systemImage: "bell.badge.fill", title: "Ne rate aucun concert",
+            examples: [
+                "Un rappel \(lead) min avant chaque concert coché", "Les rappels marchent même sans réseau",
+                "Le délai se règle dans Profil"
+            ],
+            onActivate: environment.picks.enableReminders,
+            onLater: { environment.picks.asksForReminders = false }
+        )
     }
 
     @ViewBuilder private var saveError: some View {
