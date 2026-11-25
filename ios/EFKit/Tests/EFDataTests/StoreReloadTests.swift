@@ -148,12 +148,16 @@ private func erase(_ name: String, in directory: URL) throws {
     }
 }
 
+private let noon = try! Date("2026-11-25T11:00:00Z", strategy: .iso8601)
+
+/// The clock stays on the day of the reads, so they never age past the 30-day limit.
+private func makeCounter(in directory: URL) -> ReadCounter { ReadCounter(directory: directory, now: { noon }) }
+
 @Suite struct ReadCounterReloadTests {
-    private let noon = try! Date("2026-11-25T11:00:00Z", strategy: .iso8601)
 
     @Test func readsAreGoneAfterTheFileIsErased() async throws {
         let directory = temporaryDirectory()
-        let counter = ReadCounter(directory: directory)
+        let counter = makeCounter(in: directory)
         try await counter.record("10675", at: noon)
         try erase("reads.json", in: directory)
 
@@ -164,14 +168,14 @@ private func erase(_ name: String, in directory: URL) throws {
 
     @Test func anErasedReadDoesNotComeBackWithTheNextOne() async throws {
         let directory = temporaryDirectory()
-        let counter = ReadCounter(directory: directory)
+        let counter = makeCounter(in: directory)
         try await counter.record("10675", at: noon)
         try erase("reads.json", in: directory)
         await counter.reload()
 
         try await counter.record("10672", at: noon)
 
-        #expect(await ReadCounter(directory: directory).pending.map(\.articleId) == ["10672"])
+        #expect(await makeCounter(in: directory).pending.map(\.articleId) == ["10672"])
     }
 
     @Test func anUnreadableFileIsKeptAsideAndCountingContinues() async throws {
@@ -180,11 +184,11 @@ private func erase(_ name: String, in directory: URL) throws {
         let unreadable = Data("{ not json".utf8)
         try unreadable.write(to: directory.appending(path: "reads.json"))
 
-        let counter = ReadCounter(directory: directory)
+        let counter = makeCounter(in: directory)
         #expect(await counter.pending.isEmpty)
         try await counter.record("10675", at: noon)
 
         #expect(try Data(contentsOf: directory.appending(path: "reads.corrupt.json")) == unreadable)
-        #expect(await ReadCounter(directory: directory).pending.map(\.articleId) == ["10675"])
+        #expect(await makeCounter(in: directory).pending.map(\.articleId) == ["10675"])
     }
 }
