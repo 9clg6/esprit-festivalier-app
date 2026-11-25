@@ -59,7 +59,9 @@ public struct LocalDataExport: Sendable, Codable, Equatable {
                 FavoriteEntry(festivalId: $0.festivalId, updatedAt: $0.addedAt, deleted: false)
             },
             picks: try container.decode([Pick].self, forKey: .picks).map {
-                PickEntry(performanceId: $0.performanceId, festivalId: $0.festivalId, updatedAt: $0.pickedAt, deleted: false)
+                PickEntry(
+                    performanceId: $0.performanceId, festivalId: $0.festivalId, updatedAt: $0.pickedAt, deleted: false
+                )
             },
             reminderLead: lead,
             notifications: try container.decode([String: Bool].self, forKey: .notifications),
@@ -71,7 +73,9 @@ public struct LocalDataExport: Sendable, Codable, Equatable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         // `null` when signed out: the key is always there.
         try container.encode(account, forKey: .account)
-        try container.encode(favorites.map { Favorite(festivalId: $0.festivalId, addedAt: $0.updatedAt) }, forKey: .favorites)
+        try container.encode(
+            favorites.map { Favorite(festivalId: $0.festivalId, addedAt: $0.updatedAt) }, forKey: .favorites
+        )
         try container.encode(
             picks.map { Pick(performanceId: $0.performanceId, festivalId: $0.festivalId, pickedAt: $0.updatedAt) },
             forKey: .picks

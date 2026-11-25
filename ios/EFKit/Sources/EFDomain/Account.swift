@@ -34,6 +34,7 @@ public protocol AuthService: Sendable {
 
 public enum SyncStatus: Sendable, Equatable {
     case unavailable
+    // swiftlint:disable:next identifier_name
     case synced(at: Date)
 }
 

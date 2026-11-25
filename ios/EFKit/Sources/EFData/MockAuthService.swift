@@ -51,13 +51,14 @@ public actor MockAuthService: AuthService {
     public func deleteAccount() throws {
         try signOut()
         for directory in userDataDirectories {
-            let items = (try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)) ?? []
-            for item in items { try FileManager.default.removeItem(at: item) }
+            let items = try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
+            for item in items ?? [] { try FileManager.default.removeItem(at: item) }
         }
     }
 
     private func signIn(_ new: AuthSession) throws -> AuthSession {
-        try FileManager.default.createDirectory(at: sessionFile.deletingLastPathComponent(), withIntermediateDirectories: true)
+        let directory = sessionFile.deletingLastPathComponent()
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         try Self.encoder.encode(new).write(to: sessionFile, options: .atomic)
         session = new
         return new
