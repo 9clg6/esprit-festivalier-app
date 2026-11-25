@@ -12,10 +12,18 @@ public struct Festival: Sendable, Codable, Hashable, Identifiable {
     public let endDate: Date
     public let website: URL
     public let description: String
+    public let imageURL: URL?
+    public let imageCredit: String?
+    public let genres: [String]
+    /// The festival's page on esprit-festivalier.fr.
+    public let pageURL: URL?
+    public let ticketURL: URL?
 
     public init(
         id: ID, name: String, city: String, latitude: Double, longitude: Double,
-        startDate: Date, endDate: Date, website: URL, description: String
+        startDate: Date, endDate: Date, website: URL, description: String,
+        imageURL: URL? = nil, imageCredit: String? = nil, genres: [String] = [],
+        pageURL: URL? = nil, ticketURL: URL? = nil
     ) {
         self.id = id
         self.name = name
@@ -26,6 +34,36 @@ public struct Festival: Sendable, Codable, Hashable, Identifiable {
         self.endDate = endDate
         self.website = website
         self.description = description
+        self.imageURL = imageURL
+        self.imageCredit = imageCredit
+        self.genres = genres
+        self.pageURL = pageURL
+        self.ticketURL = ticketURL
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, name, city, latitude, longitude, startDate, endDate, website, description
+        case imageURL, imageCredit, genres, pageURL, ticketURL
+    }
+
+    /// Data published before the image, genre and link fields still decodes.
+    public init(from decoder: any Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            id: try values.decode(ID.self, forKey: .id), name: try values.decode(String.self, forKey: .name),
+            city: try values.decode(String.self, forKey: .city),
+            latitude: try values.decode(Double.self, forKey: .latitude),
+            longitude: try values.decode(Double.self, forKey: .longitude),
+            startDate: try values.decode(Date.self, forKey: .startDate),
+            endDate: try values.decode(Date.self, forKey: .endDate),
+            website: try values.decode(URL.self, forKey: .website),
+            description: try values.decode(String.self, forKey: .description),
+            imageURL: try values.decodeIfPresent(URL.self, forKey: .imageURL),
+            imageCredit: try values.decodeIfPresent(String.self, forKey: .imageCredit),
+            genres: try values.decodeIfPresent([String].self, forKey: .genres) ?? [],
+            pageURL: try values.decodeIfPresent(URL.self, forKey: .pageURL),
+            ticketURL: try values.decodeIfPresent(URL.self, forKey: .ticketURL)
+        )
     }
 }
 
@@ -77,15 +115,49 @@ public struct Performance: Sendable, Codable, Hashable, Identifiable {
     }
 }
 
+/// One "Infos pratiques" entry (shuttles, camping, forbidden items...).
+public struct PracticalInfo: Sendable, Codable, Hashable {
+    public let title: String
+    public let text: String
+
+    public init(title: String, text: String) {
+        self.title = title
+        self.text = text
+    }
+}
+
 public struct FestivalDetail: Sendable, Codable, Hashable {
     public let festival: Festival
     public let stages: [Stage]
     public let performances: [Performance]
+    /// The "À propos" text.
+    public let summary: String?
+    public let practicalInfo: [PracticalInfo]
 
-    public init(festival: Festival, stages: [Stage], performances: [Performance]) {
+    public init(
+        festival: Festival, stages: [Stage], performances: [Performance],
+        summary: String? = nil, practicalInfo: [PracticalInfo] = []
+    ) {
         self.festival = festival
         self.stages = stages
         self.performances = performances
+        self.summary = summary
+        self.practicalInfo = practicalInfo
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case festival, stages, performances, summary, practicalInfo
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            festival: try values.decode(Festival.self, forKey: .festival),
+            stages: try values.decode([Stage].self, forKey: .stages),
+            performances: try values.decode([Performance].self, forKey: .performances),
+            summary: try values.decodeIfPresent(String.self, forKey: .summary),
+            practicalInfo: try values.decodeIfPresent([PracticalInfo].self, forKey: .practicalInfo) ?? []
+        )
     }
 }
 
