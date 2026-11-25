@@ -63,7 +63,12 @@ enum ArticlePage {
 func readArticle(
     _ data: Data, at url: URL = ArticlePage.synthetic, template: SiteTemplate = .v1
 ) async throws -> ArticleContent {
-    try await SitePageArticleContentSource(template: template, load: { _ in data }).content(at: url)
+    try await SitePageArticleContentSource(template: template, load: { url in served(data, at: url) }).content(at: url)
+}
+
+/// The loader's answer: `data` served at `url` (the final address, after redirects) with `status`.
+func served(_ data: Data, at url: URL, status: Int = 200) -> (Data, URLResponse) {
+    (data, HTTPURLResponse(url: url, statusCode: status, httpVersion: "HTTP/1.1", headerFields: nil)!)
 }
 
 /// The blocks of an article whose body is `html`.

@@ -229,6 +229,51 @@ private let offline = URLError(.notConnectedToInternet)
         #expect(try await cache.content(at: articleURL(101)).title == "un-article-101")
     }
 
+    // Review of PR #25: copies are named after a hash of the key, so two keys never share a file.
+    @Test func pathsThatLookAlikeNeverShareACopy() async throws {
+        let source = ScriptedSource { article($0, title: $0.path()) }
+        let cache = CachedArticleContentSource(wrapping: source, directory: cacheDirectory())
+        _ = try await cache.content(at: URL(string: "https://esprit-festivalier.fr/a/b/")!)
+
+        let other = try await cache.content(at: URL(string: "https://esprit-festivalier.fr/a_b/")!)
+
+        #expect(other.title == "/a_b/")
+        #expect(await source.calls == 2)
+    }
+
+    @Test func theRootAddressHasARealCopyCountedByTheLimit() async throws {
+        let clock = ManualClock()
+        let root = URL(string: "https://esprit-festivalier.fr")!
+        let source = ScriptedSource { article($0, title: $0.absoluteString) }
+        let cache = CachedArticleContentSource(wrapping: source, directory: cacheDirectory(), limit: 1, now: { clock.now() })
+        _ = try await cache.content(at: root)
+        clock.advance(by: 1)
+        _ = try await cache.content(at: articleURL(1))
+
+        clock.advance(by: 2 * 3600)
+        await source.answer { _ in throw offline }
+
+        await #expect(throws: offline) { try await cache.content(at: root) }
+        #expect(try await cache.content(at: articleURL(1)).url == articleURL(1))
+    }
+
+    @Test func aCopyOfAnotherArticleIsIgnored() async throws {
+        let mine = cacheDirectory()
+        let theirs = cacheDirectory()
+        _ = try await CachedArticleContentSource(wrapping: ScriptedSource { article($0) }, directory: mine)
+            .content(at: articleURL(1))
+        _ = try await CachedArticleContentSource(wrapping: ScriptedSource { article($0) }, directory: theirs)
+            .content(at: articleURL(2))
+        let manager = FileManager.default
+        let myFile = try #require(try manager.contentsOfDirectory(at: mine, includingPropertiesForKeys: nil).first)
+        let theirFile = try #require(try manager.contentsOfDirectory(at: theirs, includingPropertiesForKeys: nil).first)
+        try Data(contentsOf: theirFile).write(to: myFile)
+
+        let cache = CachedArticleContentSource(wrapping: ScriptedSource { _ in throw offline }, directory: mine)
+
+        await #expect(throws: offline) { try await cache.content(at: articleURL(1)) }
+    }
+
     @Test func aCorruptedCopyIsTreatedAsNoCopy() async throws {
         let directory = cacheDirectory()
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -248,7 +293,7 @@ private let offline = URLError(.notConnectedToInternet)
     let clock = ManualClock()
     let page = try ArticlePage.orelsanPage()
     let read = try await CachedArticleContentSource(
-        wrapping: SitePageArticleContentSource(load: { _ in page }), directory: directory, now: { clock.now() }
+        wrapping: SitePageArticleContentSource(load: { url in served(page, at: url) }), directory: directory, now: { clock.now() }
     ).content(at: ArticlePage.orelsan)
 
     clock.advance(by: 2 * 3600)

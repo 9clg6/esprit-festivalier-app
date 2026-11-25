@@ -66,6 +66,27 @@ private func link(_ address: String) -> SiteLink { SiteLink(url: URL(string: add
         #expect(SiteLink(url: url) == .external(url))
     }
 
+    // Review of PR #25: the Safari sheet opens only http(s); a mail or phone address is its own kind.
+    // Assumed API: `case mail(…)` and `case phone(…)`, payload left to the implementation.
+    @Test func aMailAddressIsAMailLinkNotExternal() {
+        let found = link("mailto:redaction@esprit-festivalier.fr")
+
+        #expect({ if case .mail = found { true } else { false } }(), "\(found)")
+    }
+
+    @Test func aPhoneNumberIsAPhoneLinkNotExternal() {
+        let found = link("tel:+33102030405")
+
+        #expect({ if case .phone = found { true } else { false } }(), "\(found)")
+    }
+
+    @Test(arguments: ["https://esprit-festivalier.fr.evil.com/festival/hellfest/", "https://evil-esprit-festivalier.fr/x-12/"])
+    func aLookAlikeHostIsExternal(_ address: String) {
+        let url = URL(string: address)!
+
+        #expect(SiteLink(url: url) == .external(url))
+    }
+
     @Test func aTrackingQueryDoesNotChangeTheDestination() {
         #expect(link("https://esprit-festivalier.fr/festival/hellfest/?utm_source=newsletter") == .festival(slug: "hellfest"))
     }

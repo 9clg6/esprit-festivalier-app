@@ -135,7 +135,7 @@ import EFData
         let asked = Recorder<URL>()
         let source = SitePageArticleContentSource(load: { url in
             await asked.append(url)
-            return page
+            return served(page, at: url)
         })
 
         _ = try await source.content(at: ArticlePage.orelsan)
@@ -144,7 +144,7 @@ import EFData
     }
 
     @Test(arguments: [
-        "http://esprit-festivalier.fr/je-le-connais-de-nom-mais-j-ai-jamais-ecoute-a-nantes-orelsan-seduit-meme-les-novices-10675/",
+        // http:// of the site is now fetched at its https address (review of PR #25, SiteAddressTests).
         "https://example.com/un-article-10675/",
         "https://esprit-festivalier.fr.example.com/un-article-10675/"
     ])
@@ -153,7 +153,7 @@ import EFData
         let asked = Recorder<URL>()
         let source = SitePageArticleContentSource(load: { url in
             await asked.append(url)
-            return try ArticlePage.orelsanPage()
+            return served(try ArticlePage.orelsanPage(), at: url)
         })
 
         await #expect(throws: ArticleContentError.notSiteAddress(url)) { try await source.content(at: url) }
