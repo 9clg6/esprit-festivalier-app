@@ -49,12 +49,17 @@ public actor MockAuthService: AuthService {
         session = nil
     }
 
+    /// The data first, the session last: if erasing fails the user is still signed in and can retry.
+    /// The session's own folder is skipped when it sits inside a data folder.
     public func deleteAccount() throws {
-        try signOut()
+        let sessionFolder = sessionFile.deletingLastPathComponent().standardizedFileURL
         for directory in userDataDirectories {
             let items = try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
-            for item in items ?? [] { try FileManager.default.removeItem(at: item) }
+            for item in items ?? [] where item.standardizedFileURL != sessionFolder {
+                try FileManager.default.removeItem(at: item)
+            }
         }
+        try signOut()
     }
 
     private func signIn(_ new: AuthSession) throws -> AuthSession {

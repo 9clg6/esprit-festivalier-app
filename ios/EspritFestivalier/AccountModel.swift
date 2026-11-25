@@ -58,9 +58,19 @@ final class AccountModel {
     }
 
     /// Erases favorites, picks and offline copies on this device; the reminders go with the picks.
+    /// On failure too, the screens show what is left on disk.
     func deleteAccount() async throws {
-        try await auth.deleteAccount()
-        session = nil
+        do {
+            try await auth.deleteAccount()
+        } catch {
+            await reloadFromDisk()
+            throw error
+        }
+        await reloadFromDisk()
+    }
+
+    private func reloadFromDisk() async {
+        session = await auth.session
         await favorites.reloadAfterErase()
         await picks.reloadAfterErase()
     }
