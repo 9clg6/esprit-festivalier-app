@@ -65,6 +65,11 @@ public actor MockAuthService: AuthService {
     private func signIn(_ new: AuthSession) throws -> AuthSession {
         let directory = sessionFile.deletingLastPathComponent()
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        // A session must not come back on another device from a backup; only this folder is excluded.
+        var excluded = URLResourceValues()
+        excluded.isExcludedFromBackup = true
+        var folder = directory
+        try folder.setResourceValues(excluded)
         try Self.encoder.encode(new).write(to: sessionFile, options: .atomic)
         session = new
         return new
