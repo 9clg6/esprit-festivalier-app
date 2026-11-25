@@ -257,7 +257,7 @@ Les maquettes sont dessinées pour un iPhone de 390 pt de large. Marges latéral
 │ GRANDE SCÈNE                  │
 │ 19:00  Artiste A          ☆   │
 │ 20:30  Artiste B          ★   │
-│ ⚠ En même temps qu'Artiste D  │  conflit (ink sur fond sun)
+│ ⚠ En même temps qu'Artiste D  │  conflit (#0e1a26 sur fond sun)
 │ CHAPITEAU                     │
 │ 20:45  Artiste D          ★   │
 │ ⚠ En même temps qu'Artiste B  │
@@ -355,7 +355,7 @@ Un seul écran, pas de tunnel : logo, « Le média des festivals, par ceux qui l
 | `accent-dark` sur blanc | 5,5:1 | Liens, texte d'accent |
 | Blanc sur `accent-fill` | 5,5:1 | Bouton plein |
 | Blanc sur `deep` | 11,3:1 | Cartes sombres |
-| `ink` sur `sun` | 12,2:1 | Badges, alertes de conflit |
+| `#0e1a26` sur `sun` (clair et sombre) | 12,2:1 | Badges, alertes de conflit (texte fixe `onSun` : jamais `ink`, qui tombe à 1,3:1 en sombre) |
 | **`accent` sur blanc** | **3,1:1** | **Icônes, gros titres (≥ 24 pt) seulement ; jamais de texte courant** |
 | Blanc sur `accent` | 3,1:1 | **Interdit** pour du texte ; utiliser `accent-fill` |
 | `ink` sur `card` (sombre) | 15,2:1 | Texte |
@@ -388,7 +388,7 @@ Un seul écran, pas de tunnel : logo, « Le média des festivals, par ceux qui l
 | `HeroCard` | Grande photo, rubrique, titre | normal, pressé | Dégradé `night` pour le contraste du texte |
 | `ArticleCard` | Image 16:9, rubrique, titre, auteur, date | normal, sponsorisé | Rubrique en Raleway majuscules |
 | `GenreChip` | Libellé | normal, sélectionné (`accent-fill` + blanc) | Pilule |
-| `Badge` | Partenaire, Mis en avant, Sponsorisé, Premium | — | Fond `sun`, texte `ink`, Raleway 12 pt gras |
+| `Badge` | Partenaire, Mis en avant, Sponsorisé, Premium | — | Fond `sun`, texte `#0e1a26` fixe en clair et en sombre (`onSun`), Raleway 12 pt gras |
 | `SectionHeader` | Titre, « Tout voir » | — | Titre Raleway majuscules, lien `accent-dark` |
 | `PerformanceCell` | Heure, artiste, ☆/★, conflit, modifié, maintenant | coché, conflit, modifié, en cours | Liste par scène |
 | `OfflineBanner` | Texte et date du cache | — | Fond `sky` |
