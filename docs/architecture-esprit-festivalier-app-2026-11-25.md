@@ -5,7 +5,7 @@
 **Version :** 1.0
 **Type de projet :** mobile-app
 **Niveau de projet :** 3
-**Statut :** Brouillon, décision ADR-003 à valider
+**Statut :** Validé (ADR-003 : option A, 2026-11-25)
 
 ---
 
@@ -581,7 +581,7 @@ docs/
 - ✓ Rapide, presque gratuit, marche même si l'API tombe, facile à remplacer par le back-office.
 - ✗ Mise à jour au plus toutes les quelques heures (suffisant pour un annuaire) ; les contenus premium passent forcément par l'API.
 
-### ADR-003 : API en TypeScript (Hono + Better Auth) plutôt qu'en FastAPI — **à valider**
+### ADR-003 : API en TypeScript (Hono + Better Auth) plutôt qu'en FastAPI — **acceptée (option A, 2026-11-25)**
 
 Better Auth est une bibliothèque TypeScript ; il ne tourne pas dans FastAPI. Trois options :
 
@@ -623,9 +623,8 @@ Python reste utilisé pour le pipeline de données (option A comprise).
 
 ## Prochaines étapes
 
-1. Valider l'ADR-003 (TypeScript ou FastAPI).
-2. Design UX des écrans du MVP (`/create-ux-design`).
-3. Sprint planning (`/sprint-planning`) : epics 1 à 4. Le premier sprint commence par le socle (EPIC-001) et l'essai APNs.
+1. Design UX des écrans du MVP (`/create-ux-design`).
+2. Sprint planning (`/sprint-planning`) : epics 1 à 4. Le premier sprint commence par le socle (EPIC-001) et l'essai APNs.
 
 ---
 
