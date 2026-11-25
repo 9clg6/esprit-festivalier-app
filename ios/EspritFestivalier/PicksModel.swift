@@ -13,6 +13,8 @@ final class PicksModel {
     private let store: PicksStore
     private let reminders: ConcertReminderScheduler
     @ObservationIgnored private var scheduling: Task<Void, Never>?
+    /// False until the picks are read: an empty set before that would wipe the scheduled reminders.
+    @ObservationIgnored private var loaded = false
     /// The last write: each write waits for it, so writes reach the store in tap order.
     @ObservationIgnored private var pendingWrite: Task<Void, Never>?
     /// Bumped by each tap on an id: a failed write reverts the star only if it is still the last tap.
@@ -38,6 +40,7 @@ final class PicksModel {
         asksForReminders = UserDefaults.standard.bool(forKey: "showReminderPrompt")
         #endif
         ids = await store.pickedIDs
+        loaded = true
         rescheduleReminders()
     }
 
@@ -74,6 +77,7 @@ final class PicksModel {
 
     /// Plans the nearest reminders again: on launch, back to the app, picks or lead changed.
     func rescheduleReminders() {
+        guard loaded else { return }
         scheduling?.cancel()
         let picks = ids
         let lead = ReminderLead(rawValue: UserDefaults.standard.integer(forKey: Self.leadKey)) ?? .default
