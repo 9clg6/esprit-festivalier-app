@@ -16,6 +16,11 @@ final class FavoritesModel {
     private let store: FavoritesStore
     /// The last write: each write waits for it, so writes reach the store in tap order.
     private var pending: Task<Void, Never>?
+    /// Writes not finished yet, and whether one failed since the queue was last empty.
+    private var queued = 0
+    private var failedSinceDrain = false
+    /// Bumped by each tap on an id: a failed write reverts the heart only if it is still the last tap.
+    private var generation: [Festival.ID: Int] = [:]
     private var hideError: Task<Void, Never>?
 
     init(store: FavoritesStore) { self.store = store }
@@ -37,16 +42,34 @@ final class FavoritesModel {
         let target = !contains(id)
         if target { additions += 1 }
         apply(id, target)
+        let token = (generation[id] ?? 0) + 1
+        generation[id] = token
+        queued += 1
         let previous = pending
         pending = Task {
             await previous?.value
             do {
                 try await store.setFavorite(id, target)
             } catch {
-                apply(id, await store.contains(id))
+                failedSinceDrain = true
+                let onDisk = await store.contains(id)
+                if generation[id] == token { apply(id, onDisk) }
                 show(error: "Impossible d'enregistrer le favori")
             }
+            queued -= 1
+            await resyncIfDrainedAfterFailure()
         }
+    }
+
+    /// A revert reads the disk before the writes still queued, so once they are all done the hearts
+    /// are taken again from the store.
+    private func resyncIfDrainedAfterFailure() async {
+        guard queued == 0, failedSinceDrain else { return }
+        let onDisk = await store.favoriteIDs
+        // A tap during the read: its own write resyncs when it is done.
+        guard queued == 0 else { return }
+        failedSinceDrain = false
+        ids = onDisk
     }
 
     /// A newer message restarts the delay: an older timer never hides it.
