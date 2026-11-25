@@ -111,7 +111,7 @@ private enum HTMLText {
         let withoutTags = html
             .replacingOccurrences(of: "</p>|<br ?/?>", with: " ", options: .regularExpression)
             .replacingOccurrences(of: "<[^>]*>", with: "", options: .regularExpression)
-        return decode(withoutTags).split(whereSeparator: \.isWhitespace).joined(separator: " ")
+        return HTMLEntity.decode(withoutTags).split(whereSeparator: \.isWhitespace).joined(separator: " ")
     }
 
     static func paragraphs(_ html: String) -> [String] {
@@ -128,39 +128,5 @@ private enum HTMLText {
             kept = kept[..<space]
         }
         return kept.trimmingCharacters(in: .whitespaces) + "…"
-    }
-
-    private static let named = [
-        "amp": "&", "lt": "<", "gt": ">", "quot": "\"", "apos": "'", "nbsp": "\u{A0}", "rsquo": "’",
-        "lsquo": "‘", "rdquo": "”", "ldquo": "“", "hellip": "…", "ndash": "–", "mdash": "—",
-        "laquo": "«", "raquo": "»"
-    ]
-
-    private static func decode(_ text: String) -> String {
-        var result = ""
-        var rest = text[...]
-        while let amp = rest.firstIndex(of: "&") {
-            result += rest[..<amp]
-            rest = rest[amp...]
-            guard let semi = rest.firstIndex(of: ";"), rest.distance(from: rest.startIndex, to: semi) <= 10,
-                  let value = entity(String(rest[rest.index(after: rest.startIndex)..<semi]))
-            else {
-                result.append("&")
-                rest = rest.dropFirst()
-                continue
-            }
-            result += value
-            rest = rest[rest.index(after: semi)...]
-        }
-        return result + rest
-    }
-
-    private static func entity(_ name: String) -> String? {
-        if name.hasPrefix("#") {
-            let hex = name.dropFirst().first == "x" || name.dropFirst().first == "X"
-            let code = Int(name.dropFirst(hex ? 2 : 1), radix: hex ? 16 : 10)
-            return code.flatMap(Unicode.Scalar.init).map { String(Character($0)) }
-        }
-        return named[name]
     }
 }
