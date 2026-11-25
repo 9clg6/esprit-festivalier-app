@@ -44,7 +44,8 @@ final class PicksModel {
         rescheduleReminders()
     }
 
-    func toggle(_ id: Performance.ID) {
+    func toggle(_ performance: Performance) {
+        let id = performance.id
         let target = !contains(id)
         if target { ids.insert(id) } else { ids.remove(id) }
         if target { offerReminders() }
@@ -54,7 +55,7 @@ final class PicksModel {
         pendingWrite = Task {
             await previous?.value
             do {
-                try await store.setPicked(id, target)
+                try await store.setPicked(id, target, festivalId: performance.festivalId)
             } catch {
                 // A failed write puts the star back to what is saved.
                 let saved = await store.isPicked(id)
@@ -93,12 +94,11 @@ final class PicksModel {
         // One at a time: the newer plan waits for the older one, which stops at its next step.
         let previous = scheduling
         previous?.cancel()
-        let picks = ids
         let lead = ReminderLead(rawValue: UserDefaults.standard.integer(forKey: Self.leadKey)) ?? .default
         scheduling = Task {
             await previous?.value
             guard !Task.isCancelled else { return }
-            await reminders.reschedule(picks: picks, lead: lead)
+            await reminders.reschedule(picks: await store.pickedFestivals, lead: lead)
         }
     }
 
@@ -117,26 +117,22 @@ struct ConcertReminderScheduler {
     let festivals: any FestivalSource
     let artists: any ArtistSource
 
-    /// Replaces the scheduled reminders with the plan. If a timetable cannot be read (offline and not a
-    /// favorite), the reminders already scheduled are kept as they are.
-    @MainActor func reschedule(picks: Set<Performance.ID>, lead: ReminderLead) async {
-        let center = UNUserNotificationCenter.current()
-        // ponytail: reads every festival to find the picked sets (the plan drops the past ones); store
-        // the festival id with each pick when the catalogue grows past a few dozen festivals.
-        var picked: [Performance] = [], stageNames: [Stage.ID: String] = [:], festivalNames: [Festival.ID: String] = [:]
-        do {
-            let catalog = picks.isEmpty ? [] : try await festivals.festivals(updatedSince: nil)
-            for festival in catalog {
-                let detail = try await festivals.festival(id: festival.id)
-                let mine = detail.performances.filter { picks.contains($0.id) }
-                guard !mine.isEmpty else { continue }
-                picked += mine
-                festivalNames[festival.id] = festival.name
-                for stage in detail.stages { stageNames[stage.id] = stage.name }
-            }
-        } catch {
-            return
-        }
+    /// Replaces the scheduled reminders with the plan. A picked set whose timetable cannot be read
+    /// (offline, not a favorite) keeps the reminder already scheduled for it.
+    @MainActor func reschedule(picks: [Performance.ID: Festival.ID?], lead: ReminderLead) async {
+        let found = await timetables(for: picks)
+        let picked = found.details.flatMap { $0.performances.filter { picks.keys.contains($0.id) } }
+        let pickedIDs = Set(picked.map(\.id))
+        let unresolved = Set(picks.filter { id, festival in
+            // A pick without festival may be in any timetable that could not be read.
+            !pickedIDs.contains(id) && (festival.map(found.failed.contains) ?? found.incomplete)
+        }.keys)
+        let festivalNames = Dictionary(
+            found.details.map { ($0.festival.id, $0.festival.name) }, uniquingKeysWith: { first, _ in first }
+        )
+        let stageNames = Dictionary(
+            found.details.flatMap(\.stages).map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first }
+        )
         let artistNames = Dictionary(
             ((try? await artists.artists(ids: picked.map(\.artistId))) ?? []).map { ($0.id, $0.name) },
             uniquingKeysWith: { first, _ in first }
@@ -145,10 +141,11 @@ struct ConcertReminderScheduler {
             picks: picked, stageNames: stageNames, artistNames: artistNames, lead: lead, now: Date()
         )
         let festivalOf = Dictionary(picked.map { ($0.id, $0.festivalId) }, uniquingKeysWith: { first, _ in first })
+        let prefix = ConcertReminders.identifierPrefix
         // Only the identifiers cross the callback: older SDKs do not mark the requests Sendable.
         let scheduled = await withCheckedContinuation { done in
             center.getPendingNotificationRequests { done.resume(returning: $0.map(\.identifier)) }
-        }.filter { $0.hasPrefix(ConcertReminders.identifierPrefix) }
+        }.filter { $0.hasPrefix(prefix) && !unresolved.contains(String($0.dropFirst(prefix.count))) }
         guard !Task.isCancelled else { return }
         center.removePendingNotificationRequests(withIdentifiers: scheduled)
         for reminder in plan {
@@ -162,5 +159,37 @@ struct ConcertReminderScheduler {
             let trigger = UNTimeIntervalNotificationTrigger(timeInterval: delay, repeats: false)
             try? await center.add(UNNotificationRequest(identifier: reminder.id, content: content, trigger: trigger))
         }
+    }
+
+    private var center: UNUserNotificationCenter { .current() }
+
+    /// The timetables holding the picks, and the festivals that could not be read. Picks saved
+    /// without their festival are looked for in the whole catalogue.
+    private func timetables(
+        for picks: [Performance.ID: Festival.ID?]
+    ) async -> Timetables {
+        var wanted = Set(picks.values.compactMap { $0 })
+        var catalogFailed = false
+        if picks.values.contains(where: { $0 == nil }) {
+            if let catalog = try? await festivals.festivals(updatedSince: nil) {
+                wanted.formUnion(catalog.map(\.id))
+            } else {
+                catalogFailed = true
+            }
+        }
+        var details: [FestivalDetail] = []
+        var failed = Set<Festival.ID>()
+        for id in wanted {
+            if let detail = try? await festivals.festival(id: id) { details.append(detail) } else { failed.insert(id) }
+        }
+        return Timetables(details: details, failed: failed, incomplete: catalogFailed || !failed.isEmpty)
+    }
+
+    private struct Timetables {
+        let details: [FestivalDetail]
+        /// Festivals whose timetable could not be read.
+        let failed: Set<Festival.ID>
+        /// Some timetable could not be read, or the catalogue itself.
+        let incomplete: Bool
     }
 }

@@ -125,7 +125,7 @@ struct TimetableView: View {
                                 conflicts: (conflicts[performance.id] ?? []).map {
                                     names[$0.artistId] ?? "un autre concert"
                                 }
-                            ) { picks.toggle(performance.id) }
+                            ) { picks.toggle(performance) }
                         }
                     }
                 }
