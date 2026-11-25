@@ -5,11 +5,11 @@ import SwiftUI
 
 /// E10: the site's articles, filtered by section.
 struct ArticlesView: View {
-    private let environment: AppEnvironment
     @State private var model: ArticlesModel
     @State private var path: [Article] = []
     /// Set by a tapped article notification.
     @Binding private var opened: Article?
+    private let environment: AppEnvironment
 
     init(environment: AppEnvironment, opened: Binding<Article?>) {
         self.environment = environment
@@ -34,6 +34,8 @@ struct ArticlesView: View {
             .navigationTitle("Articles")
             .navigationBarTitleDisplayMode(.large)
             .navigationDestination(for: Article.self) { ArticleView(article: $0, environment: environment) }
+            // A festival opened from an article pushes the routes of E5.
+            .routes(environment)
         }
         .onChange(of: opened, initial: true) {
             guard let opened else { return }
