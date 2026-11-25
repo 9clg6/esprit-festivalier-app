@@ -24,7 +24,7 @@ workflow_status:
 
   - name: prd
     phase: 2
-    status: "required"
+    status: "docs/prd-esprit-festivalier-app-2026-11-25.md"
     description: "Product Requirements Document"
 
   - name: tech-spec

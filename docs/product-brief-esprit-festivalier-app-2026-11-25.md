@@ -2,7 +2,7 @@
 
 **Date :** 2026-11-25
 **Auteur :** clement
-**Version :** 1.0 (brouillon à valider par l'association)
+**Version :** 1.1 (validé le 2026-11-25)
 **Type de projet :** mobile-app (iOS d'abord en Swift, Android en Kotlin ensuite)
 **Niveau de projet :** 3 (12 à 40 stories)
 
@@ -177,7 +177,8 @@ Voir `docs/brainstorm-esprit-festivalier-app-2026-11-25.md` : planning perso ave
 
 ### Hypothèses
 
-- Le back-office du site peut exposer les données (festivals, programmations, artistes, articles) par une API ou un flux ; aucune double saisie.
+- Pas d'API du back-office pour l'instant : l'app démarre avec des données de démonstration et des API ouvertes, derrière une couche de données interchangeable. Le back-office sera branché plus tard, sans double saisie.
+- TestFlight se fait sur le compte Apple Developer personnel de Clément Guyon.
 - Les festivaliers ont un smartphone récent ; l'app vise une version d'iOS récente (à fixer à l'architecture).
 - Des festivals sont prêts à payer une mise en avant et à offrir des réductions aux premium.
 - Les photographes accrédités par l'association acceptent de publier dans l'app.
