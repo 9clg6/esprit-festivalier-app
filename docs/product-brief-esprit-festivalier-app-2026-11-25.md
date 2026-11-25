@@ -213,9 +213,9 @@ App Store avant mai 2027 pour la saison des festivals **(hypothèse)**.
 
 ## Risques
 
-- **Risque :** jeu concours payant (1 € pour tenter de gagner un pass) = loterie interdite en France (Code de la sécurité intérieure, art. L322-1 et suivants : offre au public, espoir de gain, hasard, mise d'argent).
+- **Risque :** jeu concours payant (1 € pour tenter de gagner un pass) = jeu d'argent et de hasard interdit en France (Code de la sécurité intérieure, art. L320-1 : offre au public, espoir de gain dû même en partie au hasard, sacrifice financier, même si un remboursement est prévu).
   - **Probabilité :** forte.
-  - **Atténuation :** concours gratuits ; ou vrai concours d'adresse ou de connaissances sans hasard ; ou exception des loteries d'associations (autorisation préalable). À faire valider par un juriste avant tout développement. Apple encadre aussi strictement les concours et jeux d'argent (règle 5.3 de l'App Store).
+  - **Atténuation :** concours gratuits ouverts à tous, avec des entrées bonus pour les abonnés premium (opération promotionnelle liée à un vrai produit, Code de la consommation art. L121-20) ; ou vrai concours d'adresse sans tirage au sort ; ou tombola associative autorisée par le maire (CSI art. L322-3). À faire valider par un juriste avant tout développement. Apple encadre aussi strictement les concours et jeux d'argent (règle 5.3 de l'App Store).
 - **Risque :** l'API Spotify n'accorde plus l'accès étendu qu'aux grosses organisations ; en mode développement, seuls quelques dizaines de comptes peuvent se connecter.
   - **Probabilité :** forte.
   - **Atténuation :** commencer par Apple Music (MusicKit) et le choix manuel des artistes ; demander l'accès Spotify plus tard.
