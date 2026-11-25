@@ -45,6 +45,13 @@ public actor OfflineCache {
 
     public func isAvailableOffline(_ id: Festival.ID) -> Bool { detail(id) != nil }
 
+    /// Every stored festival: the catalogue entries still shown when the source fails.
+    public func storedFestivals() -> [Festival] {
+        let files = (try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)) ?? []
+        return files.filter { $0.pathExtension == "json" }
+            .compactMap { try? Self.decoder.decode(FestivalDetail.self, from: Data(contentsOf: $0)).festival }
+    }
+
     /// The source's answer (refreshing the stored copy of a saved festival), or the stored copy when
     /// the source fails. A festival never saved is not stored by reading it.
     public func festival(id: Festival.ID, from source: any FestivalSource) async throws -> FestivalDetail {

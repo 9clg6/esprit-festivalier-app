@@ -64,13 +64,19 @@ struct AppEnvironment: Sendable {
     }
 }
 
-/// A festival source whose detail falls back to the offline copy of a favorite.
+/// A festival source that falls back to the offline copies of the favorites when the source fails.
 struct OfflineFestivalSource: FestivalSource {
     let source: any FestivalSource
     let cache: OfflineCache
 
     func festivals(updatedSince: Date?) async throws -> [Festival] {
-        try await source.festivals(updatedSince: updatedSince)
+        do {
+            return try await source.festivals(updatedSince: updatedSince)
+        } catch {
+            let stored = await cache.storedFestivals()
+            if stored.isEmpty { throw error }
+            return stored
+        }
     }
 
     func festival(id: Festival.ID) async throws -> FestivalDetail {
