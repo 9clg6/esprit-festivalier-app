@@ -15,12 +15,17 @@ final class AccountModel {
     private let sync: any SyncService
     private let favorites: FavoritesModel
     private let picks: PicksModel
+    private let notifications: NotificationsModel
 
-    init(auth: any AuthService, sync: any SyncService, favorites: FavoritesModel, picks: PicksModel) {
+    init(
+        auth: any AuthService, sync: any SyncService, favorites: FavoritesModel, picks: PicksModel,
+        notifications: NotificationsModel
+    ) {
         self.auth = auth
         self.sync = sync
         self.favorites = favorites
         self.picks = picks
+        self.notifications = notifications
     }
 
     func load() async {
@@ -59,7 +64,8 @@ final class AccountModel {
         session = nil
     }
 
-    /// Erases favorites, picks and offline copies on this device; the reminders go with the picks.
+    /// Erases favorites, picks, offline copies and notification switches on this device; the
+    /// reminders go with them.
     /// On failure too, the screens show what is left on disk.
     func deleteAccount() async throws {
         removeExportFile()
@@ -69,6 +75,7 @@ final class AccountModel {
             await reloadFromDisk()
             throw error
         }
+        notifications.resetPermissionOffer()
         await reloadFromDisk()
     }
 
@@ -76,14 +83,14 @@ final class AccountModel {
         session = await auth.session
         await favorites.reloadAfterErase()
         await picks.reloadAfterErase()
+        notifications.reloadAfterErase()
     }
 
     /// The export, written to a temporary file for the share sheet.
     func exportFile() async throws -> URL {
         let export = LocalDataExport(
             account: session, favorites: await favorites.entries(), picks: await picks.entries(),
-            // ponytail: no per-type notification switch exists yet (STORY-024).
-            reminderLead: PicksModel.lead, notifications: [:], exportedAt: Date()
+            reminderLead: PicksModel.lead, notifications: notifications.exportFlags, exportedAt: Date()
         )
         try export.json().write(to: Self.exportFile, options: .atomic)
         return Self.exportFile

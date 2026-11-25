@@ -13,6 +13,13 @@ public struct ConcertReminder: Sendable, Hashable {
     public let performanceId: Performance.ID
     public let fireDate: Date
     public let body: String
+
+    public init(id: String, performanceId: Performance.ID, fireDate: Date, body: String) {
+        self.id = id
+        self.performanceId = performanceId
+        self.fireDate = fireDate
+        self.body = body
+    }
 }
 
 /// Local reminders for the picked sets. iOS keeps at most 64 pending local notifications, so the

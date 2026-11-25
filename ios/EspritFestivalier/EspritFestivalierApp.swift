@@ -8,6 +8,7 @@ struct EspritFestivalierApp: App {
 
     init() {
         EFFonts.register()
+        environment.notifications.install()
         // Large titles in Chivo, like the design system's titles.
         if let large = UIFont(name: "Chivo-Black", size: 34), let inline = UIFont(name: "Chivo-Bold", size: 17) {
             let accent = UIColor(EFColorToken.accent.color)

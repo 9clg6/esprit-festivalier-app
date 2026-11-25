@@ -19,6 +19,7 @@ final class FavoritesModel {
     private let store: FavoritesStore
     private let offline: OfflineCache
     private let festivals: any FestivalSource
+    private let notifications: NotificationsModel
     /// The last write: each write waits for it, so writes reach the store in tap order.
     private var pending: Task<Void, Never>?
     /// Writes not finished yet, and whether one failed since the queue was last empty.
@@ -28,10 +29,13 @@ final class FavoritesModel {
     private var generation: [Festival.ID: Int] = [:]
     private var hideError: Task<Void, Never>?
 
-    init(store: FavoritesStore, offline: OfflineCache, festivals: any FestivalSource) {
+    init(
+        store: FavoritesStore, offline: OfflineCache, festivals: any FestivalSource, notifications: NotificationsModel
+    ) {
         self.store = store
         self.offline = offline
         self.festivals = festivals
+        self.notifications = notifications
     }
 
     func contains(_ id: Festival.ID) -> Bool { ids.contains(id) }
@@ -44,6 +48,7 @@ final class FavoritesModel {
         }
         #endif
         ids = await store.favoriteIDs
+        notifications.loaded(.favorites)
         // Copies left by an interrupted removal go; favorites without a copy get one.
         for stored in await offline.storedFestivals() where !ids.contains(stored.id) {
             try? await offline.remove(stored.id)
@@ -69,7 +74,10 @@ final class FavoritesModel {
     /// Sets the state the user sees the heart move to, decided at tap time (never flipped on disk).
     func toggle(_ id: Festival.ID) {
         let target = !contains(id)
-        if target { additions += 1 }
+        if target {
+            additions += 1
+            notifications.offerPermission()
+        }
         apply(id, target)
         let token = (generation[id] ?? 0) + 1
         generation[id] = token
@@ -88,6 +96,7 @@ final class FavoritesModel {
                 show(error: "Impossible d'enregistrer le favori")
             }
             queued -= 1
+            notifications.reschedule()
             await resyncIfDrainedAfterFailure()
         }
     }
