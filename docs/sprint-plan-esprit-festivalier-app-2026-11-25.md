@@ -3,19 +3,20 @@
 **Date :** 2026-11-25
 **Scrum master :** clement
 **Niveau de projet :** 3
-**Stories MVP :** 34 (143 points) · **Phase 2 et 3 :** 18 stories (91 points), non planifiées
-**Sprints planifiés :** 9 (du 2026-11-30 au 2027-04-04)
+**Stories MVP :** 42 (174 points) · **Phase 2 et 3 :** 19 stories (96 points), non planifiées · **Proposées :** 4 stories (9 points)
+**Sprints planifiés :** 10 (du 2026-11-30 au 2027-04-18)
+**Mise à jour :** 2026-11-25, application complète (STORY-053 à STORY-065, ADR-007)
 
 ---
 
 ## Résumé
 
-Le MVP (epics 1 à 4) se construit en 8 sprints de deux semaines. La bêta TestFlight pour les membres s'ouvre le 22 mars 2027 ; la soumission App Store se fait au sprint 9, avant le 1er mai. TestFlight est branché dès le sprint 2 : chaque sprint envoie une version testable.
+Le MVP (epics 1 à 4) se construit en 9 sprints de deux semaines. La bêta TestFlight pour les membres s'ouvre le 22 mars 2027 ; la soumission App Store se fait au sprint 10, avant le 1er mai. TestFlight est branché dès le sprint 2 : chaque sprint envoie une version testable.
 
 **Chiffres clés :**
 - Capacité : **24 points par sprint** (hypothèse : 1 développeur bénévole aidé par des agents ; 1 point ≈ 1 à 2 h). On vise environ 20 points, et 14 pendant les fêtes.
-- MVP : 143 points.
-- Fin prévue : bêta le 22 mars 2027, App Store début avril 2027.
+- MVP : 174 points (143 + 31 pour l'application complète).
+- Fin prévue : bêta le 22 mars 2027, App Store mi-avril 2027.
 - La capacité sera recalée après le sprint 1 avec la vitesse réelle.
 
 ---
@@ -317,7 +318,7 @@ Le MVP (epics 1 à 4) se construit en 8 sprints de deux semaines. La bêta TestF
 
 **Critères :**
 - [ ] `RSSArticleSource` lit `/feed/` ; rubriques du site.
-- [ ] Liste (E10) avec badge « Sponsorisé » ; lecture (E11) avec crédits photo, partage, « Lire sur le site ».
+- [ ] Liste (E10) avec badge « Sponsorisé » ; lecture (E11) de l'extrait du flux, avec partage. Le texte complet arrive avec STORY-055 : plus de « Lire sur le site ».
 
 **Dépendances :** STORY-003
 
@@ -349,6 +350,104 @@ Le MVP (epics 1 à 4) se construit en 8 sprints de deux semaines. La bêta TestF
 - [ ] Encart « Tu vis les festivals de l'intérieur ? » vers la page Recrutements ; section « À propos » du Profil.
 
 **Dépendances :** STORY-022
+
+### EPIC-004 (suite) : application complète (ADR-007)
+
+« Mock first » : chaque source a sa version `mock` dès la première story ; seules STORY-054, 057 et 059 lisent le vrai site, et les réactions restent sur l'appareil jusqu'au serveur (STORY-061).
+
+#### STORY-053 : Lecteur HTML tolérant et modèle en blocs
+
+**Epic :** EPIC-004 · **Priorité :** Must (FR-027) · **Points :** 5
+
+**En tant que** développeur, **je veux** transformer le HTML d'un article en blocs typés, **afin de** l'afficher en natif.
+
+**Critères :**
+- [ ] `ArticleContent`, `ArticleBlock`, `InlineRun` dans `EFDomain` ; `ArticleContentSource` et `MockArticleContentSource`.
+- [ ] `HTMLReader` dans `EFData` : balises, texte, entités (décodeur commun avec `RSSArticleSource`), éléments vides, fermetures implicites, `script`/`style`/`svg` sautés.
+- [ ] Tests sur des cas limites (balise non fermée, entité inconnue, fermeture orpheline) ; aucun plantage sur un HTML tronqué.
+
+**Dépendances :** STORY-026
+
+#### STORY-054 : Source « page du site » et cache
+
+**Epic :** EPIC-004 · **Priorité :** Must (FR-027, FR-011) · **Points :** 5
+
+**Critères :**
+- [ ] `SiteTemplate.v1` : tous les repères en un seul endroit, avec `parserVersion`.
+- [ ] Métadonnées depuis le JSON-LD ; corps de `div.article-body` à `div.read-end` ; légendes, festival, bloc auteur, connexes, sponsorisé.
+- [ ] Fixtures dorées : 5 extraits réels, comparés à un JSON attendu.
+- [ ] `CachedArticleContentSource` : copie disque d'abord, rechargement après 1 h, 100 articles au plus.
+- [ ] Seules les adresses `https://esprit-festivalier.fr/` sont téléchargées.
+
+**Dépendances :** STORY-053
+
+#### STORY-055 : Lecteur natif (E11)
+
+**Epic :** EPIC-004 · **Priorité :** Must (FR-027) · **Points :** 5
+
+**Critères :**
+- [ ] Rendu de chaque bloc selon l'UX (E11) ; images pleine largeur avec crédit ; plein écran zoomable au toucher.
+- [ ] Contenus tiers en carte, chargés seulement au toucher.
+- [ ] Échec : extrait, message, « Réessayer » ; « Ouvrir sur le site ↗ » seulement après un échec de lecture.
+- [ ] Plus de « Lire l'article complet » ; aperçus clair, sombre et AX3 sur la source `mock`.
+
+**Dépendances :** STORY-054
+
+#### STORY-056 : Liens internes
+
+**Epic :** EPIC-004 · **Priorité :** Must (FR-028) · **Points :** 3
+
+**Critères :**
+- [ ] `SiteLink` classe les adresses du site ; tests sur toutes les adresses des fixtures.
+- [ ] `OpenURLAction` du lecteur : article, festival connu, auteur, artiste connu, rubrique → écran de l'app ; lien tiers → feuille Safari.
+- [ ] Nouvelle route par adresse d'article (liens internes, plus tard notifications et liens universels).
+
+**Dépendances :** STORY-055
+
+#### STORY-057 : Auteurs (E16)
+
+**Epic :** EPIC-004 · **Priorité :** Must (FR-029) · **Points :** 5
+
+**Critères :**
+- [ ] `AuthorSource`, `SitePageAuthorSource` (lecteur de cartes partagé), `MockAuthorSource`.
+- [ ] E16 : avatar ou initiales, nom, présentation venue de l'article, nombre d'articles, liste paginée.
+- [ ] Liens depuis la signature, le bloc auteur et les crédits photo qui nomment un auteur connu (`KnownAuthors`, tests sur les légendes réelles).
+- [ ] Vérifier la pagination sur un auteur qui a plusieurs pages d'articles.
+
+**Dépendances :** STORY-056
+
+#### STORY-058 : Réactions sur l'appareil (mock first)
+
+**Epic :** EPIC-004 · **Priorité :** Must (FR-030) · **Points :** 3
+
+**Critères :**
+- [ ] `ReactionService` et `LocalReactionService` (Application Support).
+- [ ] `ReactionBar` en fin d'article : 5 réactions, états de l'UX, sans compte.
+- [ ] Pas de compteur en bêta ; compteurs de démo et `DemoCaption` avec la source `mock`.
+- [ ] Réactions comprises dans l'export local des données.
+
+**Dépendances :** STORY-055
+
+#### STORY-059 : Pages liste et articles d'un festival (proposée, FR-032)
+
+**Epic :** EPIC-004 · **Priorité :** Must si acceptée · **Points :** 3
+
+**Critères :**
+- [ ] D'abord : vérifier la structure des pages `/festival/<slug>/`, `/artiste/<slug>/` et `/tag/<slug>/`.
+- [ ] Lecteur de cartes réutilisé ; un écran « liste d'articles » générique.
+- [ ] Section « Articles » sur la fiche festival ; « Lire sur Esprit Festivalier ↗ » supprimé.
+
+**Dépendances :** STORY-057
+
+#### STORY-060 : Garde-fou du gabarit
+
+**Epic :** EPIC-004 · **Priorité :** Must · **Points :** 2
+
+**Critères :**
+- [ ] Job GitHub Actions chaque nuit : lit les 3 derniers articles du flux avec le lecteur (`swift test` sur une cible dédiée, sans simulateur).
+- [ ] E-mail d'alerte si le titre, le corps ou l'auteur manque.
+
+**Dépendances :** STORY-054
 
 ### Transverse
 
@@ -464,7 +563,7 @@ Le MVP (epics 1 à 4) se construit en 8 sprints de deux semaines. La bêta TestF
 
 **Risque :** deux stories à 8 points ; si l'une glisse, STORY-023 passe au sprint 7.
 
-### Sprint 7 (22 févr. → 7 mars) : 18 / 24 points
+### Sprint 7 (22 févr. → 7 mars) : 23 / 24 points
 
 **Objectif :** notifications utiles, accueil complet, mesure d'audience.
 
@@ -474,22 +573,38 @@ Le MVP (epics 1 à 4) se construit en 8 sprints de deux semaines. La bêta TestF
 - STORY-028 Accueil (3)
 - STORY-029 Encart rédaction (1)
 - STORY-030 Mesure d'audience (3)
+- STORY-053 Lecteur HTML et modèle en blocs (5) — ajout v1.1, le sprint passe à 23 / 24 points
 
-### Sprint 8 (8 → 21 mars) : 6 / 24 points + marge
+### Sprint 8 (8 → 21 mars) : 19 / 24 points
 
-**Objectif :** bêta prête pour les membres : accessibilité, confidentialité, corrections.
+**Objectif :** bêta prête pour les membres, avec les articles complets dans l'app.
 
 - STORY-031 Accessibilité (3)
 - STORY-032 Confidentialité (3)
-- Marge : reprise des stories glissées et corrections.
+- STORY-054 Source « page du site » et cache (5)
+- STORY-055 Lecteur natif E11 (5)
+- STORY-056 Liens internes (3)
 
 **Jalon :** bêta TestFlight ouverte aux membres le 22 mars 2027.
 
-### Sprint 9 (22 mars → 4 avril) : 3 points + retours de bêta
+**Risque :** la marge de reprise passe de 18 à 5 points.
+
+### Sprint 9 (22 mars → 4 avril) : 13 / 24 points + retours de bêta
+
+**Objectif :** auteurs, réactions, articles des festivals ; le gabarit du site est surveillé.
+
+- STORY-057 Auteurs (5)
+- STORY-058 Réactions sur l'appareil (3)
+- STORY-059 Pages liste et articles d'un festival (3, si FR-032 est acceptée)
+- STORY-060 Garde-fou du gabarit (2)
+
+### Sprint 10 (5 → 18 avril) : 3 points + retours de bêta
 
 **Objectif :** soumettre à l'App Store avant la saison.
 
 - STORY-034 Soumission App Store (3)
+
+**Risque :** la soumission recule de deux semaines ; il reste moins de deux semaines avant le 1er mai (O2). Le code est déjà en avance sur ce plan (timetable, rappels, favoris hors ligne et compte de démo livrés) : le recalage après le sprint 1 peut rendre ces deux semaines.
 
 ---
 
@@ -515,6 +630,18 @@ Le MVP (epics 1 à 4) se construit en 8 sprints de deux semaines. La bêta TestF
 | STORY-050 Comptes photographes et galeries | EPIC-007 | 8 | FR-023 |
 | STORY-051 Photos par QR code | EPIC-007 | 8 | FR-024 |
 | STORY-052 Passeport et badges | EPIC-007 | 5 | FR-025 |
+| STORY-061 Réactions sur le serveur : routes du Worker, table D1, limitation de débit, synchronisation | EPIC-004 | 5 | FR-030 |
+
+**Après le serveur :** STORY-061 suppose STORY-021 et STORY-023 en vrai (aujourd'hui, compte et synchronisation sont des mocks).
+
+### Proposées (ADR-007, à valider par Clément, non planifiées)
+
+| Story | Points | FR |
+|---|---|---|
+| STORY-062 Archives par rubrique, page par page | 3 | FR-031 |
+| STORY-063 À lire plus tard, hors ligne | 3 | FR-033 |
+| STORY-064 Liens universels (dépend du fichier `apple-app-site-association` sur le site) | 2 | FR-034 |
+| STORY-065 À propos natif | 1 | FR-035 |
 
 **Prérequis de la phase 2 :** avis juridique sur les concours, prix du premium.
 
@@ -529,7 +656,7 @@ Le MVP (epics 1 à 4) se construit en 8 sprints de deux semaines. La bêta TestF
 | EPIC-001 Socle et sources | 001-010 | 44 | 1-5 |
 | EPIC-002 Découverte | 011-017 | 30 | 2-5 |
 | EPIC-003 Compte et jour J | 018-025 | 42 | 4-7 |
-| EPIC-004 Articles | 026-029 | 12 | 5-7 |
+| EPIC-004 Articles | 026-029, 053-060 | 43 | 5-9 |
 | Transverse | 030-034 | 15 | 2, 7-9 |
 | EPIC-005 Premium et artistes | 035-042 | 40 | Phase 2 |
 | EPIC-006 Partenaires | 043-048 | 27 | Phase 2 |
@@ -552,6 +679,12 @@ Le MVP (epics 1 à 4) se construit en 8 sprints de deux semaines. La bêta TestF
 | FR-011 Articles | 026 | 5 |
 | FR-012 Notifs articles | 027 | 7 |
 | FR-013 Rédaction | 029 | 7 |
+| FR-027 Article complet | 053, 054, 055 | 7, 8 |
+| FR-028 Liens internes | 056 | 8 |
+| FR-029 Auteurs | 057 | 9 |
+| FR-030 Réactions | 058, 061 | 9, après le serveur |
+| FR-032 Pages liste (proposée) | 059 | 9 |
+| FR-031, FR-033 à FR-035 (proposées) | 062-065 | Non planifiées |
 | FR-014 à FR-025 | 035-052 | Phases 2-3 |
 | FR-026 Mesure | 030, 048 | 7, phase 2 |
 
@@ -569,6 +702,7 @@ Toutes les NFR « Must » sont couvertes par EPIC-001, STORY-031 et STORY-032.
 - Données ouvertes incomplètes (pas de dates ni de programmations) → 5 festivals de démo écrits à la main.
 - Deux stories à 8 points au sprint 6 → STORY-023 peut glisser au sprint 7.
 - Validation Apple (connexion, suppression du compte, confidentialité) → STORY-032 et STORY-034 suivent les règles d'Apple.
+- Gabarit du site modifié sans prévenir → repères dans `SiteTemplate`, garde-fou nocturne (STORY-060), repli sur l'extrait.
 
 **Faibles**
 - Limites de MusicBrainz → appels dans le pipeline seulement.

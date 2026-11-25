@@ -188,7 +188,7 @@ sprints:
     start_date: "2027-02-22"
     end_date: "2027-03-07"
     capacity_points: 24
-    committed_points: 18
+    committed_points: 23
     completed_points: 0
     status: "not_started"
     goal: "Notifications, accueil, mesure d'audience"
@@ -223,14 +223,19 @@ sprints:
         points: 3
         status: "not_started"
         assigned_to: null
+      - story_id: "STORY-053"
+        title: "Lecteur HTML tolérant et modèle en blocs"
+        points: 5
+        status: "not_started"
+        assigned_to: null
   - sprint_number: 8
     start_date: "2027-03-08"
     end_date: "2027-03-21"
     capacity_points: 24
-    committed_points: 6
+    committed_points: 19
     completed_points: 0
     status: "not_started"
-    goal: "Bêta prête pour les membres"
+    goal: "Bêta prête pour les membres, avec les articles complets dans l'app"
     stories:
       - story_id: "STORY-031"
         title: "Accessibilité et finitions"
@@ -242,9 +247,53 @@ sprints:
         points: 3
         status: "not_started"
         assigned_to: null
+      - story_id: "STORY-054"
+        title: "Source page du site et cache"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-055"
+        title: "Lecteur natif E11"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-056"
+        title: "Liens internes"
+        points: 3
+        status: "not_started"
+        assigned_to: null
   - sprint_number: 9
     start_date: "2027-03-22"
     end_date: "2027-04-04"
+    capacity_points: 24
+    committed_points: 13
+    completed_points: 0
+    status: "not_started"
+    goal: "Auteurs, réactions, articles des festivals, garde-fou du gabarit"
+    stories:
+      - story_id: "STORY-057"
+        title: "Auteurs (E16)"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-058"
+        title: "Réactions sur l'appareil (mock first)"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-059"
+        title: "Pages liste et articles d'un festival (proposée)"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-060"
+        title: "Garde-fou du gabarit"
+        points: 2
+        status: "not_started"
+        assigned_to: null
+  - sprint_number: 10
+    start_date: "2027-04-05"
+    end_date: "2027-04-18"
     capacity_points: 24
     committed_points: 3
     completed_points: 0
@@ -267,6 +316,7 @@ velocity:
   sprint_7: null
   sprint_8: null
   sprint_9: null
+  sprint_10: null
   rolling_average: null
 
 team:

@@ -2,7 +2,7 @@
 
 **Date :** 2026-11-25
 **Designer :** clement
-**Version :** 1.0
+**Version :** 1.1 (application complète : E11 complet, E16, réactions ; 2026-11-25)
 
 ## Projet
 
@@ -13,7 +13,7 @@
 
 ## Périmètre
 
-- **Écrans MVP :** 15 (plus 4 états communs).
+- **Écrans MVP :** 16 (plus 4 états communs).
 - **Parcours :** 6.
 - **Composants :** 16.
 - Écrans de phase 2 (premium, concours, fiche partenaire) esquissés à la fin.
@@ -83,8 +83,12 @@ Liens universels : `/festival/{slug}` → fiche ; `/article/{id}` → article. U
 
 ### P4 : Lire un article
 
-1. Articles → rubrique « Live reports » → article.
-2. En bas de l'article : festivals cités → Fiche. « Partager » → lien du site.
+1. Articles → rubrique « Live reports » → article, en entier dans l'app.
+2. Un lien du texte (article, festival, auteur, artiste, rubrique) ouvre l'écran de l'app ; un lien vers un autre site ouvre une feuille Safari.
+3. Fin de l'article → réaction → bloc auteur → page auteur (E16) → autre article.
+4. Rubrique en tête d'article → festival cité → Fiche. « Partager » → lien du site.
+
+**Erreurs :** lecture impossible ou hors ligne sans copie → extrait du flux + « Réessayer » ; jamais d'ouverture de Safari sans action de l'utilisateur.
 
 ### P5 : Activer les notifications
 
@@ -245,6 +249,7 @@ Les maquettes sont dessinées pour un iPhone de 390 pt de large. Marges latéral
 ```
 
 - Les sections sans données sont masquées.
+- La section « Articles » liste les articles du festival (FR-032) ; plus de lien « Lire sur Esprit Festivalier ».
 - « Billets » ouvre la billetterie dans une feuille Safari ; libellé VoiceOver « Billets, site externe ».
 - Favori : le cœur se remplit avec une petite animation de rebond (désactivée si « Réduire les animations ») et une vibration légère.
 
@@ -306,9 +311,130 @@ Photo, nom, genres, « Suivre » (phase 2), liste « En festival » (FestivalRow
 
 Grand titre, pastilles des rubriques défilantes (Tout, Live reports, Programmations, Interviews, Actus, Guides, Décryptages, Chroniques). Liste d'ArticleCard : image 16:9, rubrique, titre, auteur et date, badge « Sponsorisé » si besoin.
 
-### E11 : Article
+### E11 : Article (lecteur complet, v1.1)
 
-Lecture : image, rubrique, titre (Chivo), auteur et date, texte en Open Sans 17 pt, interligne 1,5, largeur de lecture limitée. Crédit sous chaque photo. En bas : festivals cités, « Lire sur le site », « Partager ».
+Le texte complet est dans l'app (FR-027, ADR-007). Plus de « Lire sur le site ».
+
+```
+┌───────────────────────────────┐
+│ ‹                          ⤴  │  barre : retour, partager
+│ [photo de couverture,         │  pleine largeur, proportions
+│  bord à bord]                 │  d'origine
+│ Orelsan / Mano Le Bris        │  légende et crédit (Légende, muted)
+│ LIVE REPORT · TERRES DU SON ↗︎ │  rubrique ; festival en lien → E5
+│ [SPONSORISÉ]                  │  Badge, si sponsorisé
+│ Titre de l'article            │  Titre 1 (Chivo Bold 28)
+│ Chapô sur quelques lignes…    │  Corps, ink
+│ (ML) Par Mano Le Bris         │  avatar 32 pt ; nom en lien → E16
+│      25 nov. 2026 · 3 min     │  Corps secondaire, muted
+├───────────────────────────────┤
+│ Paragraphe, avec du gras, de  │  Corps (Open Sans 17), interligne 1,5
+│ l'italique et un lien.        │  liens accent-dark soulignés
+│ Intertitre                    │  Titre 3 (Chivo Bold 20)
+│ [image bord à bord]           │
+│ Vald @odieuxboby              │  légende
+│ ┃ « Citation »                │  barre accent 3 pt, Corps italique
+│ ┌ LIRE AUSSI ───────────────┐ │  carte fond sky
+│ │ Superbus : deux heures… › │ │
+│ └───────────────────────────┘ │
+│ ┌ ▶ VIDÉO YOUTUBE ──────────┐ │  contenu tiers : rien ne charge
+│ │ Mentir au psy  youtube ↗  │ │  avant le toucher
+│ └───────────────────────────┘ │
+│ TA RÉACTION                   │  en-tête de section
+│ (♥ J'adore 12)(🔥 Ça chauffe 3)│  ReactionBar, pilules sur
+│ (👏 Bravo)(✨ Waouh)(💡 Instructif)│  plusieurs lignes
+│ [Concert] [Orelsan] [Zénith]  │  mots-clés et artistes → écrans de l'app
+│ ┌───────────────────────────┐ │  AuthorBlock (carte)
+│ │ (ML) Mano Le Bris         │ │
+│ │ Reporter bénévole …       │ │
+│ │ [ Voir ses articles ]     │ │  SecondaryButton → E16
+│ └───────────────────────────┘ │
+│ ARTICLES CONNEXES             │
+│ [ArticleCard] ×3              │
+└───────────────────────────────┘
+```
+
+Les icônes de la maquette sont des repères : le rendu proposé est en SF Symbols (`heart`, `flame`, `hands.clap`, `sparkles`, `lightbulb`), voir la question ouverte sur les emojis.
+
+**Blocs et typographie (tokens existants, pas de nouveau style) :**
+
+| Bloc | Rendu |
+|---|---|
+| Rubrique, festival | Rubrique, en-tête de section (Raleway Bold 13, majuscules), `accent-dark` ; festival en lien |
+| Titre | Titre 1, `ink`, trait d'en-tête VoiceOver |
+| Chapô | Corps, `ink` (le texte courant est aussi en `ink`, la signature en dessous fait la séparation) |
+| Signature | Avatar 32 pt (photo ou initiales sur `sky`), « Par » + nom en lien `accent-dark`, date et durée de lecture en Corps secondaire `muted` |
+| Paragraphe | Corps 17 pt, interligne 1,5, 16 pt entre paragraphes ; gras et italique ; liens `accent-dark` soulignés (la couleur n'est jamais le seul signe) |
+| Intertitre | Niveau 2 : Titre 2 ; niveaux 3 et 4 : Titre 3 ; 32 pt au-dessus, 8 pt en dessous |
+| Image | Bord à bord sur iPhone (sans les marges de 16 pt, sans arrondi) ; largeur de lecture et arrondi de 12 pt au-delà de 680 pt ; place réservée avec les proportions d'origine ; fond `thumb` pendant le chargement |
+| Légende et crédit | Légende (Open Sans 12), `muted`, 8 pt sous l'image, dans les marges ; un auteur reconnu dans le crédit devient un lien `accent-dark` → E16 |
+| Citation | Corps italique, barre verticale `accent` de 3 pt (décorative), source en Légende |
+| Liste | Puces ou numéros, retrait de 16 pt, 8 pt entre éléments |
+| Lire aussi | Carte fond `sky`, « LIRE AUSSI » en en-tête de section, titre en Libellé fort, chevron |
+| Contenu tiers | Carte fond `card` avec contour `line`, icône du type (vidéo, son, publication), titre, fournisseur, ↗ ; toucher ouvre l'app ou une feuille Safari |
+| Séparateur | Filet `line` de 1 pt, 40 % de la largeur, centré |
+
+- Largeur de lecture limitée à 680 pt (iPad, paysage), comme aujourd'hui.
+- Toucher une image : plein écran sur fond `night`, zoom au pincement, légende en bas, glisser vers le bas pour fermer (fondu si « Réduire les animations »).
+- Sélection du texte possible dans un paragraphe.
+
+**États :**
+
+| État | Rendu |
+|---|---|
+| Chargement | Couverture, titre et extrait du flux tout de suite ; squelettes pour le texte |
+| Copie hors ligne | Article de la copie + bandeau hors ligne |
+| Hors ligne sans copie | Extrait du flux, « Article complet indisponible hors ligne », « Réessayer » |
+| Lecture impossible | Extrait, « Impossible d'afficher cet article dans l'app », « Réessayer », lien secondaire « Ouvrir sur le site ↗ » |
+
+### E16 : Auteur
+
+E15 existe déjà (premier lancement) : la page auteur prend le numéro E16.
+
+```
+┌───────────────────────────────┐
+│ ‹ Auteur                   ⤴  │  partager : lien de la page sur le site
+│             (ML)              │  avatar 80 pt (photo ou initiales)
+│         Mano Le Bris          │  Titre 1
+│ Reporter bénévole pour        │  Corps, ink2 (si connue)
+│ Esprit Festivalier            │
+│ 12 articles                   │  Corps secondaire, muted
+│ [Instagram ↗]                 │  liens, s'il y en a un jour
+├───────────────────────────────┤
+│ [ArticleCard]                 │
+│ [ArticleCard]                 │
+│ [SkeletonBlock]               │  page suivante en bas de liste
+└───────────────────────────────┘
+```
+
+- **Entrées :** signature, bloc auteur, crédit photo reconnu, lien `/author/…` dans un texte.
+- L'en-tête (nom, avatar, présentation) vient de l'article d'où l'on vient : il s'affiche sans attendre ; seule la liste charge.
+- **États :** liste en squelettes ; erreur → en-tête gardé + « Réessayer » ; aucun article → « Pas encore d'article » ; hors ligne → copie + bandeau.
+- « Suivre » (si la proposition est acceptée) : bouton pilule sous le nom, plus tard.
+
+### Réactions : états
+
+| État | Rendu |
+|---|---|
+| Neutre | Pilule fond `sky`, icône `accent-dark`, libellé `ink2` |
+| Active | Fond `accent-fill`, icône et libellé `onFill` ; vibration légère ; rebond de l'icône de 0,3 s (coupé si « Réduire les animations ») |
+| Sans compteurs (bêta, avant le serveur) | Libellé seul ; jamais de « 0 » |
+| Démo (source `mock`) | Compteurs + `DemoCaption` « Données de démonstration » sous la barre |
+| Avec compteurs | Nombre après le libellé ; 0 masqué ; « 1,2 k » au-delà de 999 ; apparition en fondu, sans décaler les pilules |
+| Hors ligne, erreur serveur | Aucun message : l'état reste sur l'appareil et part à la synchronisation suivante |
+
+Placement : à la fin du texte, avant les mots-clés et le bloc auteur ; on réagit après avoir lu. Pas de barre flottante.
+
+### Accessibilité du lecteur et des réactions
+
+- **Ordre de lecture :** rubrique, titre, signature, chapô, texte, réactions, mots-clés, auteur, articles connexes.
+- **Intertitres :** trait d'en-tête, pour naviguer au rotor « En-têtes ».
+- **Liens :** dans le `Text`, accessibles au rotor « Liens » ; lien tiers annoncé « site externe ».
+- **Images :** description = texte alternatif, sinon légende ; le crédit est lu après ; image sans l'un ni l'autre ignorée.
+- **Contenu tiers :** « Vidéo YouTube, Mentir au psy, ouvre une app externe ».
+- **Réactions :** chaque pilule est un bouton : libellé « J'adore », valeur « 12 réactions », trait « Sélectionné » si active ; groupe « Réactions » ; cibles de 44 × 44 pt.
+- **Dynamic Type :** texte et légendes suivent la taille ; images toujours en pleine largeur ; aux tailles d'accessibilité, les réactions passent en liste verticale.
+- **Contraste :** réaction active, blanc sur `accent-fill` 5,5:1 ; neutre, `ink2` sur `sky` 9,9:1 (clair) et 10,3:1 (sombre), icône `accent-dark` sur `sky` 4,9:1 et 7,5:1.
 
 ### E12 : Profil
 
@@ -396,6 +522,11 @@ Un seul écran, pas de tunnel : logo, « Le média des festivals, par ceux qui l
 | `SkeletonBlock` | Forme | animé, figé | Fond `thumb` |
 | `PermissionSheet` | Icône, titre, exemples, Activer, Plus tard | — | E14 |
 | `FestivalMapPin` | Point, cœur, contour partenaire, groupe | normal, sélectionné | `MKAnnotationView` |
+| `ArticleBlockView` | Un bloc d'article (voir E11) | selon le bloc | Paragraphe = un seul `Text` avec `AttributedString` |
+| `ArticleImageView` | Image, légende, crédit | chargement, chargée, échec (fond `thumb`) | Bord à bord ; plein écran au toucher |
+| `EmbedCard` | Type, titre, fournisseur, ↗ | normal, pressé | Rien de tiers ne charge avant le toucher |
+| `ReactionBar` | 5 pilules de réaction | voir « Réactions : états » | Retour à la ligne (`FlowLayout`) ; liste aux tailles d'accessibilité |
+| `AuthorBlock` | Avatar, nom, présentation, « Voir ses articles » | normal, pressé | Carte ; ouvre E16 |
 
 ---
 
@@ -440,14 +571,14 @@ Couleurs : celles de `docs/design/direction-artistique.md`, dans un catalogue d'
 1. `EFDesign` : couleurs, polices (Chivo, Raleway, Open Sans embarquées), espacements, composants de base, avec aperçus clair, sombre et grand texte.
 2. E2 et E5 (liste et fiche) sur la source `mock`, puis E3 et E4.
 3. E9 et E6 (Mes festivals, timetable), puis E14 et P5.
-4. E1, E10, E11, E7, E8, puis E12, E13, E15.
+4. E1, E10, E11, E7, E8, puis E12, E13, E15 ; E11 complet, E16 et `ReactionBar` (STORY-055 à 058).
 5. États communs et finitions (animations, vibrations).
 
 ### Notes
 
 - Chaque écran a un aperçu SwiftUI alimenté par la source `mock`, en clair et en sombre, et en taille de texte AX3.
 - Carte : `MKMapView` dans un `UIViewRepresentable` pour le regroupement des points.
-- Billetterie et liens externes : `SFSafariViewController`.
+- Billetterie et liens vers d'autres sites : `SFSafariViewController`. Liens du site : routés dans l'app (`OpenURLAction`).
 - Vibrations : `sensoryFeedback(.impact(weight: .light), trigger:)`.
 
 ### Ressources à fournir
@@ -478,6 +609,11 @@ Couleurs : celles de `docs/design/direction-artistique.md`, dans un catalogue d'
 | FR-011 Articles | E10, E11 |
 | FR-012 Notifications d'articles | E12 |
 | FR-013 Rédaction | E12 (à propos) |
+| FR-027 Article complet | E11 |
+| FR-028 Liens internes | E11, P4 |
+| FR-029 Auteurs | E11 (signature, bloc auteur, crédits), E16 |
+| FR-030 Réactions | E11 (`ReactionBar`) |
+| FR-032 Pages liste (proposée) | E5 (section Articles) |
 | FR-014 à FR-022 | Esquisses de phase 2 |
 | NFR-003 Hors ligne | E5 (« Disponible hors ligne »), bandeau hors ligne |
 | NFR-006 Accessibilité | Section Accessibilité |
