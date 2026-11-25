@@ -9,6 +9,7 @@ struct FestivalListView: View {
         case list = "Liste", map = "Carte"
     }
 
+    @Environment(FavoritesModel.self) private var favorites
     @State private var model: FestivalListModel
     @State private var aroundMe = AroundMe()
     @State private var path: [Festival.ID] = Self.initialPath
@@ -93,14 +94,30 @@ struct FestivalListView: View {
                 }
             }
             .background(EFColorToken.bg.color)
-        } else {
+        } else if !showsRows {
+            // Empty states stay out of the List: in a List row, the whole row would trigger its buttons.
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 12) {
                     controls
                     content
                 }
                 .padding(.horizontal, 16)
             }
+            .refreshable { await model.load() }
+            .background(EFColorToken.bg.color)
+        } else {
+            // A List, for the swipe action on rows.
+            List {
+                Group {
+                    controls
+                    content
+                }
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+            }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
             .refreshable { await model.load() }
             .background(EFColorToken.bg.color)
         }
@@ -143,6 +160,14 @@ struct FestivalListView: View {
             .accessibilityHint("Ouvre les filtres")
     }
 
+    private var showsRows: Bool {
+        switch model.state {
+        case .loading: true
+        case .failed: false
+        case .loaded: !model.upcoming.isEmpty
+        }
+    }
+
     private var isAround: Bool {
         if case .around = model.filter.place { true } else { false }
     }
@@ -180,7 +205,9 @@ struct FestivalListView: View {
                 ForEach(model.sections) { section in
                     SectionHeader(section.title).padding(.top, 20)
                     ForEach(section.festivals) { festival in
-                        NavigationLink(value: festival.id) { row(festival) }.buttonStyle(.plain)
+                        Button { path.append(festival.id) } label: { row(festival) }
+                            .buttonStyle(.plain)
+                            .swipeActions(edge: .trailing) { swipeAction(festival) }
                     }
                 }
             }
@@ -190,8 +217,20 @@ struct FestivalListView: View {
     private func row(_ festival: Festival) -> some View {
         FestivalRow(
             name: festival.name, startDate: festival.startDate, endDate: festival.endDate, city: festival.city,
-            imageURL: festival.imageURL, genres: Array(festival.genres.prefix(2))
+            imageURL: festival.imageURL, genres: Array(festival.genres.prefix(2)),
+            favorite: (favorites.contains(festival.id), { favorites.toggle(festival.id) })
         )
+    }
+
+    private func swipeAction(_ festival: Festival) -> some View {
+        let isFavorite = favorites.contains(festival.id)
+        return Button { favorites.toggle(festival.id) } label: {
+            Label(
+                isFavorite ? "Retirer des favoris" : "Ajouter aux favoris",
+                systemImage: isFavorite ? "heart.slash" : "heart"
+            )
+        }
+        .tint(EFColorToken.accentFill.color)
     }
 
     /// P1: "Élargir à 100 km" when around me is on, otherwise "Effacer les filtres".
@@ -221,7 +260,7 @@ struct FestivalListView: View {
     private var mapArea: some View {
         ZStack(alignment: .bottom) {
             FestivalMapView(
-                festivals: model.upcoming, selection: $selectedOnMap,
+                festivals: model.upcoming, favoriteIDs: Set(favorites.ids), selection: $selectedOnMap,
                 userCoordinate: aroundMe.isAuthorized ? aroundMe.coordinate : nil, recenter: recenter
             )
             VStack(alignment: .trailing, spacing: 12) {

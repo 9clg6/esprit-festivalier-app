@@ -46,9 +46,13 @@ final class FestivalDetailModel {
 
 /// E5: festival detail, loaded through the `FestivalSource`.
 struct FestivalDetailView: View {
+    @Environment(FavoritesModel.self) private var favorites
     @State private var model: FestivalDetailModel
 
+    private let id: Festival.ID
+
     init(id: Festival.ID, festivals: any FestivalSource, artists: any ArtistSource) {
+        self.id = id
         _model = State(initialValue: FestivalDetailModel(id: id, festivals: festivals, artists: artists))
     }
 
@@ -68,6 +72,11 @@ struct FestivalDetailView: View {
             }
         }
         .background(EFColorToken.bg.color)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                FavoriteButton(isFavorite: favorites.contains(id)) { favorites.toggle(id) }
+            }
+        }
         .task { await model.load() }
     }
 }
@@ -249,5 +258,6 @@ private struct FestivalDetailPreview: View {
         NavigationStack {
             FestivalDetailView(id: "eurockeennes", festivals: MockFestivalSource(), artists: MockArtistSource())
         }
+        .environment(FavoritesModel(store: FavoritesStore(directory: .temporaryDirectory.appending(path: "preview"))))
     }
 }

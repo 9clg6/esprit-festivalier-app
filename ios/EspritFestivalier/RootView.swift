@@ -46,6 +46,24 @@ struct RootView: View {
             }
         }
         .background(EFColorToken.bg.color.ignoresSafeArea())
+        .overlay(alignment: .top) { saveError }
+        .animation(.default, value: environment.favorites.saveError)
+        .environment(environment.favorites)
+        .task { await environment.favorites.load() }
+    }
+
+    @ViewBuilder private var saveError: some View {
+        if let message = environment.favorites.saveError {
+            Text(message)
+                .efText(.strongLabel)
+                .foregroundStyle(EFTextColor.onFill.color)
+                .padding(.horizontal, 16)
+                .frame(minHeight: 44)
+                .background(EFColorToken.deep.color, in: Capsule())
+                .padding(.top, 8)
+                .transition(.move(edge: .top).combined(with: .opacity))
+                .onAppear { AccessibilityNotification.Announcement(message).post() }
+        }
     }
 
     private var tabs: some View {
@@ -60,11 +78,14 @@ struct RootView: View {
     }
 
     @ViewBuilder private func content(for tab: AppTab) -> some View {
-        if tab == .festivals {
+        switch tab {
+        case .festivals:
             FestivalListView(source: environment.festivals, artists: environment.artists)
-        } else if tab == .articles {
+        case .articles:
             ArticlesView(source: environment.articles, feed: environment.articleFeed)
-        } else {
+        case .mine:
+            MyFestivalsView(source: environment.festivals, artists: environment.artists) { self.tab = .festivals }
+        default:
             EmptyState(
                 systemImage: tab.symbol, title: "Bientôt disponible",
                 message: "Cet onglet arrive dans une prochaine version."
