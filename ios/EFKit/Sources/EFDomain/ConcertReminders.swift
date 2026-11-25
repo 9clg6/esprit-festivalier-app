@@ -35,7 +35,9 @@ public enum ConcertReminders {
                 ConcertReminder(
                     id: identifierPrefix + performance.id, performanceId: performance.id,
                     fireDate: performance.start - offset,
-                    body: body(artist: artistNames[performance.artistId], stage: stageNames[performance.stageId], lead: lead)
+                    body: body(
+                        artist: artistNames[performance.artistId], stage: stageNames[performance.stageId], lead: lead
+                    )
                 )
             }
     }
