@@ -12,7 +12,8 @@ public struct FestivalRow: View {
     private let genres: [String]
     private let favorite: (isOn: Bool, toggle: () -> Void)?
 
-    /// `favorite`: when given, a heart sits at the trailing edge, a separate VoiceOver element.
+    /// `favorite`: when given, a heart sits at the trailing edge. VoiceOver still reads one element,
+    /// ending with ", en favori" when on, and the heart is its "Ajouter / Retirer des favoris" action.
     public init(
         name: String, startDate: Date, endDate: Date, city: String,
         imageURL: URL? = nil, genres: [String] = [], favorite: (isOn: Bool, toggle: () -> Void)? = nil
@@ -30,11 +31,25 @@ public struct FestivalRow: View {
         HStack(alignment: .top, spacing: 0) {
             content
             if let favorite {
-                FavoriteButton(isFavorite: favorite.isOn, action: favorite.toggle).padding(.trailing, 4)
+                FavoriteButton(isFavorite: favorite.isOn, action: favorite.toggle)
+                    .padding(.trailing, 4)
+                    .accessibilityHidden(true)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(EFColorToken.card.color, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityText)
+        .accessibilityActions {
+            if let favorite {
+                Button(favorite.isOn ? "Retirer des favoris" : "Ajouter aux favoris", action: favorite.toggle)
+            }
+        }
+    }
+
+    private var accessibilityText: String {
+        let parts = [name, FestivalDates.text(from: startDate, to: endDate), city] + genres
+        return parts.joined(separator: ", ") + (favorite?.isOn == true ? ", en favori" : "")
     }
 
     @ViewBuilder private var content: some View {
@@ -68,10 +83,6 @@ public struct FestivalRow: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(
-            ([name, FestivalDates.text(from: startDate, to: endDate), city] + genres).joined(separator: ", ")
-        )
     }
 
     private var thumbnail: some View {
