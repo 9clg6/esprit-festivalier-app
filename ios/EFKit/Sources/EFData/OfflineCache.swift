@@ -17,6 +17,11 @@ public actor OfflineCache {
     public func save(_ detail: FestivalDetail) async throws {
         let id = detail.festival.id
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        // A copy of public data: it can be downloaded again, so it stays out of iCloud backups.
+        var excluded = URLResourceValues()
+        excluded.isExcludedFromBackup = true
+        var folder = directory
+        try folder.setResourceValues(excluded)
         try Self.encoder.encode(detail).write(to: sheetFile(id), options: .atomic)
         guard let url = detail.festival.imageURL else {
             try? FileManager.default.removeItem(at: imageFile(id))
