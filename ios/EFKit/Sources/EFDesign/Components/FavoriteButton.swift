@@ -15,7 +15,7 @@ public struct FavoriteButton: View {
         Button(action: action) {
             Image(systemName: isFavorite ? "heart.fill" : "heart")
                 .font(.title3)
-                .foregroundStyle(EFColorToken.accentFill.color)
+                .foregroundStyle(EFColorToken.accentDark.color)
                 .symbolEffect(.bounce, value: reduceMotion ? false : isFavorite)
                 .frame(width: 44, height: 44)
                 .contentShape(Rectangle())
