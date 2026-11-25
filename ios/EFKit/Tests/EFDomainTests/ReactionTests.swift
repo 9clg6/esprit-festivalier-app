@@ -16,12 +16,12 @@ import EFDomain
 //     let isDemo: Bool                                        // demo counts ("Données de démonstration")
 //   }
 //   protocol ReactionService: Sendable {
-//     func summary(for article: Article.ID) async throws -> ReactionSummary
-//     func set(_ reaction: Reaction, active: Bool, on article: Article.ID) async throws -> ReactionSummary
+//     func summary(for article: ArticleKey) async throws -> ReactionSummary
+//     func set(_ reaction: Reaction, active: Bool, on article: ArticleKey) async throws -> ReactionSummary
 //   }
 //   + `toggle(_:on:) async throws -> ReactionSummary` usable on `any ReactionService`
 //     (requirement or extension): tapping a pill toggles it.
-// The doc writes `ArticleKey`; the code has `Article.ID` (String), used here.
+// Keyed by `ArticleKey` (the number of `/<slug>-<number>/`, ADR-007), not by the article's URL.
 
 @Suite struct ReactionTests {
     @Test func thereAreFiveReactionsInTheBarOrder() {
@@ -70,11 +70,11 @@ import EFDomain
 private actor OneArticleReactions: ReactionService {
     private var mine: Set<Reaction> = []
 
-    func summary(for article: Article.ID) async throws -> ReactionSummary {
+    func summary(for article: ArticleKey) async throws -> ReactionSummary {
         ReactionSummary(mine: mine, counts: nil, isDemo: false)
     }
 
-    func set(_ reaction: Reaction, active: Bool, on article: Article.ID) async throws -> ReactionSummary {
+    func set(_ reaction: Reaction, active: Bool, on article: ArticleKey) async throws -> ReactionSummary {
         if active { mine.insert(reaction) } else { mine.remove(reaction) }
         return try await summary(for: article)
     }
@@ -83,7 +83,9 @@ private actor OneArticleReactions: ReactionService {
 @Test func aReactionServiceCanBeUsedThroughItsProtocolAndToggles() async throws {
     let service: any ReactionService = OneArticleReactions()
 
-    #expect(try await service.summary(for: "10675").mine.isEmpty)
-    #expect(try await service.toggle(.fire, on: "10675").mine == [.fire])
-    #expect(try await service.toggle(.fire, on: "10675").mine.isEmpty)
+    let article = ArticleKey(rawValue: "10675")
+
+    #expect(try await service.summary(for: article).mine.isEmpty)
+    #expect(try await service.toggle(.fire, on: article).mine == [.fire])
+    #expect(try await service.toggle(.fire, on: article).mine.isEmpty)
 }

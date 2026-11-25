@@ -12,13 +12,13 @@ import EFData
 // Helper `temporaryDirectory` in FavoritesStoreTests.swift.
 // Assumed API:
 //   EFDomain: struct ArticleReadCount: Sendable, Codable, Hashable {
-//     init(articleId: Article.ID, day: String, count: Int)
-//     let articleId: Article.ID; let day: String   // "yyyy-MM-dd", Europe/Paris
+//     init(articleId: ArticleKey, day: String, count: Int)
+//     let articleId: ArticleKey; let day: String   // "yyyy-MM-dd", Europe/Paris
 //     let count: Int }
 //   EFData: actor ReadCounter {
 //     init(directory: URL, now: @escaping @Sendable () -> Date = { Date() })
-//     func record(_ article: Article.ID, at date: Date) throws
-//     func articleShown(_ article: Article.ID, fullText: Bool, at date: Date) throws  // counts only the full text
+//     func record(_ article: ArticleKey, at date: Date) throws
+//     func articleShown(_ article: ArticleKey, fullText: Bool, at date: Date) throws  // counts only the full text
 //     var pending: [ArticleReadCount]                       // reading it changes nothing
 //     func acknowledge(_ counts: [ArticleReadCount]) throws // after a successful upload; replaces `drain()`
 //   }
@@ -36,12 +36,18 @@ import EFData
 // - the encoded aggregate has exactly the keys `articleId`, `day`, `count`: no user, device or
 //   install identifier, no time of day;
 // - the queue, the per-day memory and the acknowledgements are kept across instances.
+// Review of PR #24 (Opus): counted under the article key of ADR-007, the number of `/<slug>-<number>/`
+// (`ArticleKey(numbered:)`), never the URL: two addresses of one article share the day's read, the payload's
+// `articleId` is "10675", and a key the server would refuse (not 1 to 9 digits) is never queued
+// (ReadCounterArticleKeyTests.swift).
 // Consent (NFR-005, "respect du choix de mesure d'audience") is the caller's: no setting exists yet.
 
 private func date(_ iso: String) -> Date { try! Date(iso, strategy: .iso8601) }
 
-private func countedRead(_ article: Article.ID, _ day: String) -> ArticleReadCount {
-    ArticleReadCount(articleId: article, day: day, count: 1)
+private func key(_ rawValue: String) -> ArticleKey { ArticleKey(rawValue: rawValue) }
+
+private func countedRead(_ article: String, _ day: String) -> ArticleReadCount {
+    ArticleReadCount(articleId: key(article), day: day, count: 1)
 }
 
 /// A clock the test moves by hand.
@@ -76,29 +82,29 @@ private func makeCounter(at iso: String = "2026-11-26T12:00:00Z") -> ReadCounter
     @Test func aReadIsQueuedForItsArticleAndParisDay() async throws {
         let counter = makeCounter()
 
-        try await counter.record("10675", at: date("2026-11-25T09:30:00Z"))
+        try await counter.record(key("10675"), at: date("2026-11-25T09:30:00Z"))
 
         #expect(await counter.pending == [countedRead("10675", "2026-11-25")])
     }
 
     @Test func theDayIsTheParisDayNotTheUTCDay() async throws {
         let winter = makeCounter(at: "2026-11-26T12:00:00Z")
-        try await winter.record("winter-before", at: date("2026-11-25T22:59:00Z"))  // 23:59 in Paris
-        try await winter.record("winter-after", at: date("2026-11-25T23:00:00Z"))   // 00:00 on the 26th
+        try await winter.record(key("10601"), at: date("2026-11-25T22:59:00Z"))  // 23:59 in Paris
+        try await winter.record(key("10602"), at: date("2026-11-25T23:00:00Z"))   // 00:00 on the 26th
         let summer = makeCounter(at: "2026-07-15T12:00:00Z")
-        try await summer.record("summer", at: date("2026-07-14T22:30:00Z"))         // 00:30 on the 15th
+        try await summer.record(key("10603"), at: date("2026-07-14T22:30:00Z"))         // 00:30 on the 15th
 
         #expect(Set(await winter.pending) == [
-            countedRead("winter-before", "2026-11-25"), countedRead("winter-after", "2026-11-26")
+            countedRead("10601", "2026-11-25"), countedRead("10602", "2026-11-26")
         ])
-        #expect(await summer.pending == [countedRead("summer", "2026-07-15")])
+        #expect(await summer.pending == [countedRead("10603", "2026-07-15")])
     }
 
     @Test func theSameArticleReadTwiceTheSameDayCountsOnce() async throws {
         let counter = makeCounter()
 
-        try await counter.record("10675", at: date("2026-11-25T08:00:00Z"))
-        try await counter.record("10675", at: date("2026-11-25T20:00:00Z"))
+        try await counter.record(key("10675"), at: date("2026-11-25T08:00:00Z"))
+        try await counter.record(key("10675"), at: date("2026-11-25T20:00:00Z"))
 
         #expect(await counter.pending == [countedRead("10675", "2026-11-25")])
     }
@@ -106,8 +112,8 @@ private func makeCounter(at iso: String = "2026-11-26T12:00:00Z") -> ReadCounter
     @Test func theSameArticleTheNextDayCountsAgain() async throws {
         let counter = makeCounter()
 
-        try await counter.record("10675", at: date("2026-11-25T08:00:00Z"))
-        try await counter.record("10675", at: date("2026-11-26T08:00:00Z"))
+        try await counter.record(key("10675"), at: date("2026-11-25T08:00:00Z"))
+        try await counter.record(key("10675"), at: date("2026-11-26T08:00:00Z"))
 
         #expect(Set(await counter.pending) == [countedRead("10675", "2026-11-25"), countedRead("10675", "2026-11-26")])
     }
@@ -115,8 +121,8 @@ private func makeCounter(at iso: String = "2026-11-26T12:00:00Z") -> ReadCounter
     @Test func differentArticlesTheSameDayAreCountedApart() async throws {
         let counter = makeCounter()
 
-        try await counter.record("10675", at: date("2026-11-25T08:00:00Z"))
-        try await counter.record("10672", at: date("2026-11-25T08:05:00Z"))
+        try await counter.record(key("10675"), at: date("2026-11-25T08:00:00Z"))
+        try await counter.record(key("10672"), at: date("2026-11-25T08:05:00Z"))
 
         #expect(Set(await counter.pending) == [countedRead("10675", "2026-11-25"), countedRead("10672", "2026-11-25")])
     }
@@ -124,7 +130,7 @@ private func makeCounter(at iso: String = "2026-11-26T12:00:00Z") -> ReadCounter
     @Test func theQueueIsKeptAcrossInstances() async throws {
         let directory = temporaryDirectory()
         let clock = ManualClock("2026-11-25T12:00:00Z")
-        try await makeCounter(in: directory, clock: clock).record("10675", at: date("2026-11-25T08:00:00Z"))
+        try await makeCounter(in: directory, clock: clock).record(key("10675"), at: date("2026-11-25T08:00:00Z"))
 
         let reopened = makeCounter(in: directory, clock: clock)
 
@@ -134,17 +140,17 @@ private func makeCounter(at iso: String = "2026-11-26T12:00:00Z") -> ReadCounter
     @Test func theSameDayDedupIsKeptAcrossInstances() async throws {
         let directory = temporaryDirectory()
         let clock = ManualClock("2026-11-25T12:00:00Z")
-        try await makeCounter(in: directory, clock: clock).record("10675", at: date("2026-11-25T08:00:00Z"))
+        try await makeCounter(in: directory, clock: clock).record(key("10675"), at: date("2026-11-25T08:00:00Z"))
 
         let reopened = makeCounter(in: directory, clock: clock)
-        try await reopened.record("10675", at: date("2026-11-25T18:00:00Z"))
+        try await reopened.record(key("10675"), at: date("2026-11-25T18:00:00Z"))
 
         #expect(await reopened.pending == [countedRead("10675", "2026-11-25")])
     }
 
     @Test func theQueuedPayloadHasNoIdentifierAndNoTime() async throws {
         let counter = makeCounter()
-        try await counter.record("10675", at: date("2026-11-25T09:30:00Z"))
+        try await counter.record(key("10675"), at: date("2026-11-25T09:30:00Z"))
 
         let json = try JSONEncoder().encode(await counter.pending)
         let objects = try #require(JSONSerialization.jsonObject(with: json) as? [[String: Any]])
@@ -164,7 +170,7 @@ private func makeCounter(at iso: String = "2026-11-26T12:00:00Z") -> ReadCounter
     @Test func showingTheExcerptCountsNothing() async throws {
         let counter = makeCounter()
 
-        try await counter.articleShown("10675", fullText: false, at: date("2026-11-25T09:30:00Z"))
+        try await counter.articleShown(key("10675"), fullText: false, at: date("2026-11-25T09:30:00Z"))
 
         #expect(await counter.pending.isEmpty)
     }
@@ -172,7 +178,7 @@ private func makeCounter(at iso: String = "2026-11-26T12:00:00Z") -> ReadCounter
     @Test func showingTheFullTextCountsARead() async throws {
         let counter = makeCounter()
 
-        try await counter.articleShown("10675", fullText: true, at: date("2026-11-25T09:30:00Z"))
+        try await counter.articleShown(key("10675"), fullText: true, at: date("2026-11-25T09:30:00Z"))
 
         #expect(await counter.pending == [countedRead("10675", "2026-11-25")])
     }
@@ -180,9 +186,9 @@ private func makeCounter(at iso: String = "2026-11-26T12:00:00Z") -> ReadCounter
     @Test func theExcerptFirstDoesNotUseUpTheDaysRead() async throws {
         let counter = makeCounter()
 
-        try await counter.articleShown("10675", fullText: false, at: date("2026-11-25T08:00:00Z"))
-        try await counter.articleShown("10675", fullText: true, at: date("2026-11-25T09:00:00Z"))
-        try await counter.articleShown("10675", fullText: true, at: date("2026-11-25T10:00:00Z"))
+        try await counter.articleShown(key("10675"), fullText: false, at: date("2026-11-25T08:00:00Z"))
+        try await counter.articleShown(key("10675"), fullText: true, at: date("2026-11-25T09:00:00Z"))
+        try await counter.articleShown(key("10675"), fullText: true, at: date("2026-11-25T10:00:00Z"))
 
         #expect(await counter.pending == [countedRead("10675", "2026-11-25")])
     }
@@ -195,7 +201,7 @@ private func makeCounter(at iso: String = "2026-11-26T12:00:00Z") -> ReadCounter
         let directory = temporaryDirectory()
         let clock = ManualClock("2026-11-25T12:00:00Z")
         let counter = makeCounter(in: directory, clock: clock)
-        try await counter.record("10675", at: date("2026-11-25T08:00:00Z"))
+        try await counter.record(key("10675"), at: date("2026-11-25T08:00:00Z"))
 
         _ = await counter.pending
         _ = await counter.pending
@@ -206,8 +212,8 @@ private func makeCounter(at iso: String = "2026-11-26T12:00:00Z") -> ReadCounter
 
     @Test func acknowledgedCountsLeaveTheQueue() async throws {
         let counter = makeCounter()
-        try await counter.record("10675", at: date("2026-11-25T08:00:00Z"))
-        try await counter.record("10672", at: date("2026-11-25T08:05:00Z"))
+        try await counter.record(key("10675"), at: date("2026-11-25T08:00:00Z"))
+        try await counter.record(key("10672"), at: date("2026-11-25T08:05:00Z"))
 
         try await counter.acknowledge(await counter.pending)
 
@@ -216,8 +222,8 @@ private func makeCounter(at iso: String = "2026-11-26T12:00:00Z") -> ReadCounter
 
     @Test func onlyTheAcknowledgedCountsLeave() async throws {
         let counter = makeCounter()
-        try await counter.record("10675", at: date("2026-11-25T08:00:00Z"))
-        try await counter.record("10672", at: date("2026-11-25T08:05:00Z"))
+        try await counter.record(key("10675"), at: date("2026-11-25T08:00:00Z"))
+        try await counter.record(key("10672"), at: date("2026-11-25T08:05:00Z"))
 
         try await counter.acknowledge([countedRead("10675", "2026-11-25")])
 
@@ -226,10 +232,10 @@ private func makeCounter(at iso: String = "2026-11-26T12:00:00Z") -> ReadCounter
 
     @Test func aReadRecordedDuringTheUploadIsNotLost() async throws {
         let counter = makeCounter()
-        try await counter.record("10675", at: date("2026-11-25T08:00:00Z"))
+        try await counter.record(key("10675"), at: date("2026-11-25T08:00:00Z"))
         let sent = await counter.pending
 
-        try await counter.record("10672", at: date("2026-11-25T08:05:00Z"))
+        try await counter.record(key("10672"), at: date("2026-11-25T08:05:00Z"))
         try await counter.acknowledge(sent)
 
         #expect(await counter.pending == [countedRead("10672", "2026-11-25")])
@@ -239,7 +245,7 @@ private func makeCounter(at iso: String = "2026-11-26T12:00:00Z") -> ReadCounter
         let directory = temporaryDirectory()
         let clock = ManualClock("2026-11-25T12:00:00Z")
         let counter = makeCounter(in: directory, clock: clock)
-        try await counter.record("10675", at: date("2026-11-25T08:00:00Z"))
+        try await counter.record(key("10675"), at: date("2026-11-25T08:00:00Z"))
         _ = await counter.pending  // the upload starts, then the app is killed
 
         let reopened = makeCounter(in: directory, clock: clock)
@@ -249,15 +255,15 @@ private func makeCounter(at iso: String = "2026-11-26T12:00:00Z") -> ReadCounter
 
     @Test func acknowledgingTwiceIsHarmless() async throws {
         let counter = makeCounter()
-        try await counter.record("10675", at: date("2026-11-25T08:00:00Z"))
-        try await counter.record("10672", at: date("2026-11-25T08:05:00Z"))
+        try await counter.record(key("10675"), at: date("2026-11-25T08:00:00Z"))
+        try await counter.record(key("10672"), at: date("2026-11-25T08:05:00Z"))
         let sent = [countedRead("10675", "2026-11-25")]
 
         try await counter.acknowledge(sent)
         try await counter.acknowledge(sent)
 
         #expect(await counter.pending == [countedRead("10672", "2026-11-25")])
-        try await counter.record("10675", at: date("2026-11-25T21:00:00Z"))
+        try await counter.record(key("10675"), at: date("2026-11-25T21:00:00Z"))
         #expect(await counter.pending == [countedRead("10672", "2026-11-25")], "the day's read stays used up")
     }
 
@@ -265,17 +271,17 @@ private func makeCounter(at iso: String = "2026-11-26T12:00:00Z") -> ReadCounter
         let counter = makeCounter()
 
         try await counter.acknowledge([countedRead("10675", "2026-11-25")])
-        try await counter.record("10675", at: date("2026-11-25T08:00:00Z"))
+        try await counter.record(key("10675"), at: date("2026-11-25T08:00:00Z"))
 
         #expect(await counter.pending == [countedRead("10675", "2026-11-25")])
     }
 
     @Test func aReadTheSameDayAfterAnAcknowledgeIsNotCountedAgain() async throws {
         let counter = makeCounter()
-        try await counter.record("10675", at: date("2026-11-25T08:00:00Z"))
+        try await counter.record(key("10675"), at: date("2026-11-25T08:00:00Z"))
         try await counter.acknowledge(await counter.pending)
 
-        try await counter.record("10675", at: date("2026-11-25T21:00:00Z"))
+        try await counter.record(key("10675"), at: date("2026-11-25T21:00:00Z"))
 
         #expect(await counter.pending.isEmpty)
     }
@@ -284,12 +290,12 @@ private func makeCounter(at iso: String = "2026-11-26T12:00:00Z") -> ReadCounter
         let directory = temporaryDirectory()
         let clock = ManualClock("2026-11-25T12:00:00Z")
         let counter = makeCounter(in: directory, clock: clock)
-        try await counter.record("10675", at: date("2026-11-25T08:00:00Z"))
+        try await counter.record(key("10675"), at: date("2026-11-25T08:00:00Z"))
         try await counter.acknowledge(await counter.pending)
 
         let reopened = makeCounter(in: directory, clock: clock)
         #expect(await reopened.pending.isEmpty)
-        try await reopened.record("10675", at: date("2026-11-25T18:00:00Z"))
+        try await reopened.record(key("10675"), at: date("2026-11-25T18:00:00Z"))
 
         #expect(await reopened.pending.isEmpty)
     }
@@ -300,7 +306,7 @@ private func makeCounter(at iso: String = "2026-11-26T12:00:00Z") -> ReadCounter
     @Test func aReadOf30DaysAgoIsStillPending() async throws {
         let clock = ManualClock("2026-10-26T10:00:00Z")
         let counter = makeCounter(in: temporaryDirectory(), clock: clock)
-        try await counter.record("10675", at: date("2026-10-26T10:00:00Z"))
+        try await counter.record(key("10675"), at: date("2026-10-26T10:00:00Z"))
 
         clock.set("2026-11-25T11:00:00Z")
 
@@ -310,7 +316,7 @@ private func makeCounter(at iso: String = "2026-11-26T12:00:00Z") -> ReadCounter
     @Test func aReadOf31DaysAgoIsDropped() async throws {
         let clock = ManualClock("2026-10-25T10:00:00Z")
         let counter = makeCounter(in: temporaryDirectory(), clock: clock)
-        try await counter.record("10675", at: date("2026-10-25T10:00:00Z"))
+        try await counter.record(key("10675"), at: date("2026-10-25T10:00:00Z"))
 
         clock.set("2026-11-25T11:00:00Z")
 
@@ -320,7 +326,7 @@ private func makeCounter(at iso: String = "2026-11-26T12:00:00Z") -> ReadCounter
     @Test func anExpiredReadIsNotPendingAfterARestartEither() async throws {
         let directory = temporaryDirectory()
         let clock = ManualClock("2026-10-01T10:00:00Z")
-        try await makeCounter(in: directory, clock: clock).record("10675", at: date("2026-10-01T10:00:00Z"))
+        try await makeCounter(in: directory, clock: clock).record(key("10675"), at: date("2026-10-01T10:00:00Z"))
 
         clock.set("2026-11-25T11:00:00Z")
 
@@ -331,13 +337,13 @@ private func makeCounter(at iso: String = "2026-11-26T12:00:00Z") -> ReadCounter
         let directory = temporaryDirectory()
         let clock = ManualClock("2026-10-01T10:00:00Z")
         let counter = makeCounter(in: directory, clock: clock)
-        try await counter.record("acknowledged", at: date("2026-10-01T10:00:00Z"))
+        try await counter.record(key("10604"), at: date("2026-10-01T10:00:00Z"))
         try await counter.acknowledge(await counter.pending)
         clock.set("2026-10-02T10:00:00Z")
-        try await counter.record("never-sent", at: date("2026-10-02T10:00:00Z"))
+        try await counter.record(key("10605"), at: date("2026-10-02T10:00:00Z"))
 
         clock.set("2026-11-25T11:00:00Z")
-        try await counter.record("10675", at: date("2026-11-25T11:00:00Z"))
+        try await counter.record(key("10675"), at: date("2026-11-25T11:00:00Z"))
 
         let stored = try String(contentsOf: directory.appending(path: "reads.json"), encoding: .utf8)
         #expect(!stored.contains("2026-10-01"), "the memory of an acknowledged old day is dropped")
@@ -350,7 +356,7 @@ private func makeCounter(at iso: String = "2026-11-26T12:00:00Z") -> ReadCounter
         let directory = temporaryDirectory()
         let counter = makeCounter(in: directory, clock: ManualClock("2026-11-25T12:00:00Z"))
 
-        try await counter.record("10675", at: date("2026-11-25T08:00:00Z"))
+        try await counter.record(key("10675"), at: date("2026-11-25T08:00:00Z"))
 
         #expect(try isExcludedFromBackup(directory.appending(path: "reads.json")))
     }
@@ -358,9 +364,9 @@ private func makeCounter(at iso: String = "2026-11-26T12:00:00Z") -> ReadCounter
     @Test func theFileStaysExcludedFromTheBackupAfterLaterWrites() async throws {
         let directory = temporaryDirectory()
         let counter = makeCounter(in: directory, clock: ManualClock("2026-11-25T12:00:00Z"))
-        try await counter.record("10675", at: date("2026-11-25T08:00:00Z"))
+        try await counter.record(key("10675"), at: date("2026-11-25T08:00:00Z"))
 
-        try await counter.record("10672", at: date("2026-11-25T09:00:00Z"))
+        try await counter.record(key("10672"), at: date("2026-11-25T09:00:00Z"))
         #expect(try isExcludedFromBackup(directory.appending(path: "reads.json")), "after a second read")
 
         try await counter.acknowledge(await counter.pending)

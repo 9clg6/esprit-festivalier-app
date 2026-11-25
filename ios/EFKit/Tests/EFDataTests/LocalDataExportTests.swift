@@ -18,7 +18,7 @@ import EFData
 //   reactions (STORY-058), reminderLeadMinutes, notifications;
 // - account: userId, provider ("apple" | "email"), email (email accounts), createdAt;
 //   favorite: festivalId, addedAt; pick: performanceId, festivalId, pickedAt;
-//   reaction: articleId, reaction (its key, "love"), reactedAt;
+//   reaction: articleId (the ADR-007 article key, "10675", never the URL), reaction (its key, "love"), reactedAt;
 // - article reads (STORY-066) are not exported: anonymous aggregates, nothing personal;
 // - dates in ISO 8601 ("2026-11-25T09:30:00Z"); keys sorted, so the same data gives the same bytes;
 // - only live favorites, picks and reactions: no tombstone, no `deleted` key anywhere;
@@ -50,9 +50,11 @@ private func storedData() async throws -> StoredData {
     try await picks.setPicked("hellfest-removed-set", true, festivalId: "hellfest")
     try await picks.setPicked("hellfest-removed-set", false, festivalId: "hellfest")
     let reactions = LocalReactionService(directory: directory, now: { addedAt })
-    _ = try await reactions.set(.love, active: true, on: "10675")
-    _ = try await reactions.set(.fire, active: true, on: "99999")
-    _ = try await reactions.set(.fire, active: false, on: "99999")
+    // Reacted from the article's address: exported under its ADR-007 key ("10675"), never the URL.
+    let article = try #require(ArticleKey(numbered: URL(string: "https://esprit-festivalier.fr/orelsan-10675/?utm_source=rss")!))
+    _ = try await reactions.set(.love, active: true, on: article)
+    _ = try await reactions.set(.fire, active: true, on: ArticleKey(rawValue: "99999"))
+    _ = try await reactions.set(.fire, active: false, on: ArticleKey(rawValue: "99999"))
     return StoredData(favorites: await favorites.entries, picks: await picks.entries, reactions: await reactions.entries)
 }
 

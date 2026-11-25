@@ -5,7 +5,8 @@ import EFDomain
 // STORY-053 (FR-027, ADR-007 "Modèle en blocs"): an article read from the site becomes typed blocks
 // that the native reader (E11) shows and the offline cache stores as JSON.
 // Assumed API (EFDomain), from the architecture doc:
-//   struct ArticleKey: RawRepresentable<String>, Codable, Hashable { init(rawValue:); init(url: URL) }
+//   struct ArticleKey: RawRepresentable<String>, Codable, Hashable { init(rawValue:); init(url: URL);
+//                                                                     init?(numbered: URL) }
 //   struct InlineRun { text; bold = false; italic = false; link: URL? }   init(text:bold:italic:link:)
 //   enum ArticleBlock { paragraph([InlineRun]); heading(level: Int, [InlineRun]); image(ArticleImage);
 //                       quote([InlineRun], source: String?); list(ordered: Bool, items: [[InlineRun]]);
@@ -130,5 +131,41 @@ private func sampleContent() -> ArticleContent {
 
     @Test func anAddressWithoutANumberIsKeyedByItsPath() {
         #expect(ArticleKey(url: URL(string: "https://esprit-festivalier.fr/a-propos/")!).rawValue == "/a-propos/")
+    }
+}
+
+// Review of PR #24 (Opus): reactions and reads (FR-030, FR-036) are kept and later sent under the article
+// key of ADR-007, the number at the end of `/<slug>-<number>/`; the server only takes 1 to 9 digits
+// ("Clés d'articles validées (numéro de 1 à 9 chiffres)"). The path fallback of `init(url:)` stays for the
+// reader's cache (STORY-053); reactions and reads use the failable one and skip an article without a number.
+// Assumed API (EFDomain): `ArticleKey.init?(numbered url: URL)`: the key of `/<slug>-<1…9 digits>/`, else nil.
+@Suite struct NumberedArticleKeyTests {
+    private func numbered(_ address: String) -> ArticleKey? { ArticleKey(numbered: URL(string: address)!) }
+
+    @Test(arguments: [
+        "https://esprit-festivalier.fr/orelsan-seduit-meme-les-novices-10675/",
+        "https://esprit-festivalier.fr/a-nantes-orelsan-seduit-10675/",
+        "https://esprit-festivalier.fr/orelsan-seduit-meme-les-novices-10675",
+        "https://esprit-festivalier.fr/orelsan-seduit-meme-les-novices-10675/?utm_source=rss&utm_medium=app",
+        "http://esprit-festivalier.fr/orelsan-seduit-meme-les-novices-10675/",
+        "https://www.esprit-festivalier.fr/orelsan-seduit-meme-les-novices-10675/#reactions"
+    ])
+    func everyAddressOfTheArticleGivesItsNumber(_ address: String) {
+        #expect(numbered(address)?.rawValue == "10675")
+    }
+
+    @Test func nineDigitsAreAKey() {
+        #expect(numbered("https://esprit-festivalier.fr/un-article-123456789/")?.rawValue == "123456789")
+    }
+
+    @Test(arguments: [
+        "https://esprit-festivalier.fr/a-propos/",
+        "https://esprit-festivalier.fr/",
+        "https://esprit-festivalier.fr/2026/",
+        "https://esprit-festivalier.fr/festival/hellfest-2026/",
+        "https://esprit-festivalier.fr/un-article-1234567890/"
+    ])
+    func anAddressThatIsNotANumberedArticleHasNoKey(_ address: String) {
+        #expect(numbered(address) == nil)
     }
 }

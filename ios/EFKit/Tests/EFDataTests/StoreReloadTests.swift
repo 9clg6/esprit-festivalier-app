@@ -108,7 +108,7 @@ private func erase(_ name: String, in directory: URL) throws {
 }
 
 @Suite struct LocalReactionServiceReloadTests {
-    private let article: Article.ID = "10675"
+    private let article = ArticleKey(rawValue: "10675")
 
     private func makeService(in directory: URL) -> LocalReactionService {
         let clock = SteppingClock()
@@ -148,6 +148,8 @@ private func erase(_ name: String, in directory: URL) throws {
     }
 }
 
+private func key(_ rawValue: String) -> ArticleKey { ArticleKey(rawValue: rawValue) }
+
 private let noon = try! Date("2026-11-25T11:00:00Z", strategy: .iso8601)
 
 /// The clock stays on the day of the reads, so they never age past the 30-day limit.
@@ -158,7 +160,7 @@ private func makeCounter(in directory: URL) -> ReadCounter { ReadCounter(directo
     @Test func readsAreGoneAfterTheFileIsErased() async throws {
         let directory = temporaryDirectory()
         let counter = makeCounter(in: directory)
-        try await counter.record("10675", at: noon)
+        try await counter.record(key("10675"), at: noon)
         try erase("reads.json", in: directory)
 
         await counter.reload()
@@ -169,13 +171,13 @@ private func makeCounter(in directory: URL) -> ReadCounter { ReadCounter(directo
     @Test func anErasedReadDoesNotComeBackWithTheNextOne() async throws {
         let directory = temporaryDirectory()
         let counter = makeCounter(in: directory)
-        try await counter.record("10675", at: noon)
+        try await counter.record(key("10675"), at: noon)
         try erase("reads.json", in: directory)
         await counter.reload()
 
-        try await counter.record("10672", at: noon)
+        try await counter.record(key("10672"), at: noon)
 
-        #expect(await makeCounter(in: directory).pending.map(\.articleId) == ["10672"])
+        #expect(await makeCounter(in: directory).pending.map(\.articleId.rawValue) == ["10672"])
     }
 
     @Test func anUnreadableFileIsKeptAsideAndCountingContinues() async throws {
@@ -186,9 +188,9 @@ private func makeCounter(in directory: URL) -> ReadCounter { ReadCounter(directo
 
         let counter = makeCounter(in: directory)
         #expect(await counter.pending.isEmpty)
-        try await counter.record("10675", at: noon)
+        try await counter.record(key("10675"), at: noon)
 
         #expect(try Data(contentsOf: directory.appending(path: "reads.corrupt.json")) == unreadable)
-        #expect(await makeCounter(in: directory).pending.map(\.articleId) == ["10675"])
+        #expect(await makeCounter(in: directory).pending.map(\.articleId.rawValue) == ["10675"])
     }
 }

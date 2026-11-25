@@ -13,14 +13,14 @@ import EFData
 // keeps values and pure rules) where it can be tested against a scripted `ReactionService`.
 // Assumed API (EFData):
 //   @MainActor @Observable public final class ReactionsModel {
-//     public init(article: Article.ID, service: any ReactionService)
+//     public init(article: ArticleKey, service: any ReactionService)   // ADR-007 key, not the URL
 //     public private(set) var summary: ReactionSummary?   // nil until loaded; what the bar shows
 //     public func load() async
 //     /// Applies the target at once; the returned task ends when this tap's write is done.
 //     @discardableResult public func toggle(_ reaction: Reaction) -> Task<Void, Never>
 //   }
 
-private let article: Article.ID = "10675"
+private let article = ArticleKey(rawValue: "10675")
 
 /// A reaction service whose writes the test lets through, holds or fails, counted in arrival order.
 private actor ScriptedReactionService: ReactionService {
@@ -44,11 +44,11 @@ private actor ScriptedReactionService: ReactionService {
         self.failing = failing
     }
 
-    func summary(for article: Article.ID) -> ReactionSummary {
+    func summary(for article: ArticleKey) -> ReactionSummary {
         ReactionSummary(mine: stored, counts: nil, isDemo: false)
     }
 
-    func set(_ reaction: Reaction, active: Bool, on article: Article.ID) async throws -> ReactionSummary {
+    func set(_ reaction: Reaction, active: Bool, on article: ArticleKey) async throws -> ReactionSummary {
         let index = writes.count
         writes.append(Write(reaction: reaction, active: active))
         if held.contains(index), !released.contains(index) {
@@ -209,5 +209,23 @@ private func mine(_ model: ReactionsModel) -> Set<Reaction> { model.summary?.min
         #expect(await service.writes == [on(.love), off(.love), on(.love)])
         #expect(await service.stored == [.love])
         #expect(mine(model) == [.love])
+    }
+
+    // Review of PR #24 (Opus): the bar of the same article opened from another address (new slug,
+    // tracking query, http) shows the reactions made from the first one (ADR-007 key).
+    @Test func theSameArticleOpenedFromAnotherAddressShowsMyReaction() async throws {
+        let service = LocalReactionService(directory: temporaryDirectory())
+        let first = try #require(
+            ArticleKey(numbered: URL(string: "https://esprit-festivalier.fr/ancien-titre-10675/")!)
+        )
+        let again = try #require(
+            ArticleKey(numbered: URL(string: "http://esprit-festivalier.fr/nouveau-titre-10675/?utm_source=rss")!)
+        )
+        await ReactionsModel(article: first, service: service).toggle(.fire).value
+
+        let reopened = ReactionsModel(article: again, service: service)
+        await reopened.load()
+
+        #expect(mine(reopened) == [.fire])
     }
 }

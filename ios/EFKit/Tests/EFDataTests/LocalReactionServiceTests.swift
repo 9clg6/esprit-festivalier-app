@@ -8,7 +8,7 @@ import EFData
 // Same file store as FavoritesStore (helpers `temporaryDirectory`, `SteppingClock` in FavoritesStoreTests.swift).
 // Assumed API (EFData):
 //   struct ReactionEntry: Sendable, Codable, Hashable {
-//     let articleId: Article.ID; let reaction: Reaction; let updatedAt: Date; let deleted: Bool }
+//     let articleId: ArticleKey; let reaction: Reaction; let updatedAt: Date; let deleted: Bool }
 //   actor LocalReactionService: ReactionService {
 //     init(directory: URL, demoCounts: Bool = false, now: @escaping @Sendable () -> Date = { Date() })
 //     var entries: [ReactionEntry]   // for the export, tombstones included
@@ -23,9 +23,17 @@ import EFData
 // - no fake counts: by default `counts == nil` and `isDemo == false`, even after reacting
 //   (UX: "libellé seul ; jamais de « 0 »"); `demoCounts: true` (source `mock`) gives counts for
 //   every reaction, flagged `isDemo`, stable for an article, and my active reaction adds 1.
+// Review of PR #24 (Opus): keyed by `ArticleKey` (ADR-007), the number of `/<slug>-<number>/`, not by the
+// article's URL: a changed slug, a tracking query, http or www keep the reactions; the server will only
+// take 1 to 9 digits, so a key that is not one is never stored (the bar is not shown for such an article).
 
-private let article: Article.ID = "10675"
-private let otherArticle: Article.ID = "10672"
+private let article = ArticleKey(rawValue: "10675")
+private let otherArticle = ArticleKey(rawValue: "10672")
+private let articleAddress = "https://esprit-festivalier.fr/orelsan-seduit-meme-les-novices-10675/"
+
+private func key(_ address: String) throws -> ArticleKey {
+    try #require(ArticleKey(numbered: URL(string: address)!), "no key for \(address)")
+}
 
 private func makeService(
     in directory: URL, demoCounts: Bool = false, clock: SteppingClock = SteppingClock()
@@ -33,7 +41,7 @@ private func makeService(
     LocalReactionService(directory: directory, demoCounts: demoCounts, now: { clock.now() })
 }
 
-private func entry(_ reaction: Reaction, on article: Article.ID, in service: LocalReactionService) async throws
+private func entry(_ reaction: Reaction, on article: ArticleKey, in service: LocalReactionService) async throws
     -> ReactionEntry {
     try #require(
         await service.entries.first { $0.articleId == article && $0.reaction == reaction },
@@ -209,5 +217,47 @@ private func entry(_ reaction: Reaction, on article: Article.ID, in service: Loc
         #expect(reacted.counts?[.fire] == (before[.fire] ?? 0) + 1)
         #expect(reacted.counts?[.love] == before[.love])
         #expect(removed.counts == before)
+    }
+}
+
+@Suite struct LocalReactionServiceArticleKeyTests {
+    @Test(arguments: [
+        "https://esprit-festivalier.fr/a-nantes-orelsan-seduit-10675/",
+        "https://esprit-festivalier.fr/orelsan-seduit-meme-les-novices-10675/?utm_source=rss",
+        "http://esprit-festivalier.fr/orelsan-seduit-meme-les-novices-10675/",
+        "https://www.esprit-festivalier.fr/orelsan-seduit-meme-les-novices-10675"
+    ])
+    func anotherAddressOfTheSameArticleKeepsMyReactions(_ otherAddress: String) async throws {
+        let service = makeService(in: temporaryDirectory())
+        try await service.toggle(.love, on: try key(articleAddress))
+
+        #expect(try await service.summary(for: try key(otherAddress)).mine == [.love])
+    }
+
+    @Test func theReactionIsStoredUnderTheNumberNotTheAddress() async throws {
+        let directory = temporaryDirectory()
+        let service = makeService(in: directory)
+
+        try await service.toggle(.love, on: try key(articleAddress))
+
+        #expect(await service.entries.map(\.articleId) == [article])
+        let text = try String(contentsOf: directory.appending(path: "reactions.json"), encoding: .utf8)
+        #expect(text.contains("\"10675\""))
+        #expect(!text.contains("orelsan"))
+        #expect(!text.contains("esprit-festivalier.fr"))
+    }
+
+    @Test(arguments: ["/a-propos/", "1234567890", ""])
+    func aKeyTheServerWouldRefuseIsNeverStored(_ rawKey: String) async throws {
+        let directory = temporaryDirectory()
+        let service = makeService(in: directory)
+        let refused = ArticleKey(rawValue: rawKey)
+
+        let summary = try await service.toggle(.love, on: refused)
+
+        #expect(summary.mine.isEmpty)
+        #expect(try await service.summary(for: refused).mine.isEmpty)
+        #expect(await service.entries.isEmpty)
+        #expect(!FileManager.default.fileExists(atPath: directory.appending(path: "reactions.json").path))
     }
 }
