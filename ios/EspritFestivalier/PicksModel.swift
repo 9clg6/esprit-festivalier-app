@@ -69,9 +69,21 @@ final class PicksModel {
     /// "Activer" on the sheet: the iOS prompt, then the reminders.
     func enableReminders() {
         asksForReminders = false
-        Task {
-            _ = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])
-            rescheduleReminders()
+        Task { await requestNotifications() }
+    }
+
+    /// The iOS prompt (shown once by iOS), then the reminders.
+    func requestNotifications() async {
+        _ = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])
+        rescheduleReminders()
+    }
+
+    static func notificationStatus() async -> UNAuthorizationStatus {
+        // Only the status crosses the callback: older SDKs do not mark the settings Sendable.
+        await withCheckedContinuation { done in
+            UNUserNotificationCenter.current().getNotificationSettings {
+                done.resume(returning: $0.authorizationStatus)
+            }
         }
     }
 
@@ -95,13 +107,7 @@ final class PicksModel {
         guard !UserDefaults.standard.bool(forKey: Self.askedKey) else { return }
         UserDefaults.standard.set(true, forKey: Self.askedKey)
         Task {
-            // Only the status crosses the callback: older SDKs do not mark the settings Sendable.
-            let status = await withCheckedContinuation { done in
-                UNUserNotificationCenter.current().getNotificationSettings {
-                    done.resume(returning: $0.authorizationStatus)
-                }
-            }
-            if status == .notDetermined { asksForReminders = true }
+            if await Self.notificationStatus() == .notDetermined { asksForReminders = true }
         }
     }
 }
