@@ -23,6 +23,8 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: fr.espritfestivalier.app
+        EF_DATA_SOURCE: mock
+        INFOPLIST_KEY_EF_DATA_SOURCE: $(EF_DATA_SOURCE)
         TARGETED_DEVICE_FAMILY: "1"
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Esprit Festivalier
