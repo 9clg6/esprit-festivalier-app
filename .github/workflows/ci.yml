@@ -7,9 +7,13 @@ on:
 
 jobs:
   ios:
-    runs-on: macos-15
+    runs-on: macos-15-intel
     steps:
       - uses: actions/checkout@v4
+      - name: Toolchain versions
+        run: |
+          xcodebuild -version
+          swift --version
       - run: brew install xcodegen swiftlint
       - run: swiftlint --strict
       - name: Build EFKit
