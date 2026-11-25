@@ -56,11 +56,13 @@ struct RootView: View {
         // One light haptic per favorite added, from the heart, a swipe or the VoiceOver action.
         .sensoryFeedback(.impact(weight: .light), trigger: environment.favorites.additions)
         .environment(environment.picks)
+        .environment(environment.account)
         .sheet(isPresented: Binding(
             get: { environment.picks.asksForReminders }, set: { environment.picks.asksForReminders = $0 }
         )) { remindersSheet }
         .task { await environment.favorites.load() }
         .task { await environment.picks.load() }
+        .task { await environment.account.load() }
         // Back to the app: the next reminders take the places of those already shown (64 at most).
         .onChange(of: scenePhase) { if scenePhase == .active { environment.picks.rescheduleReminders() } }
     }
