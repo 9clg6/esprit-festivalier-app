@@ -67,7 +67,8 @@ final class FavoritesModel {
             await previous?.value
             do {
                 try await store.setFavorite(id, target)
-                await keepOffline(id, target)
+                // Off the write queue: the download must not delay the next heart.
+                Task { await keepOffline(id, target) }
             } catch {
                 failedSinceDrain = true
                 let onDisk = await store.contains(id)
