@@ -46,3 +46,11 @@ workflow_status:
     phase: 3
     status: "optional"
     description: "Validate architecture against requirements"
+
+  # Phase 4: Implementation
+  - name: sprint-planning
+    phase: 4
+    status: "docs/sprint-plan-esprit-festivalier-app-2026-11-25.md"
+    description: "Sprint planning (sprint status: docs/sprint-status.yaml)"
+
+current_phase: "implementation"
