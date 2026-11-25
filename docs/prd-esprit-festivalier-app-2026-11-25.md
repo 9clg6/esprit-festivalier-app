@@ -2,7 +2,7 @@
 
 **Date :** 2026-11-25
 **Auteur :** clement
-**Version :** 1.0
+**Version :** 1.1 (application complète, 2026-11-25)
 **Type de projet :** mobile-app (iOS Swift d'abord, Android Kotlin ensuite)
 **Niveau de projet :** 3
 **Statut :** Brouillon
@@ -22,6 +22,8 @@ Ce document fixe les exigences fonctionnelles et non fonctionnelles de l'app et 
 - **Données :** pas d'API du back-office pour l'instant. L'app tourne sur des **données de démonstration** (mocks) et des **API ouvertes**. L'architecture doit permettre de changer de source sans toucher aux écrans (NFR-008).
 - **Diffusion :** TestFlight sur le compte Apple Developer personnel de Clément Guyon, pas sur un compte de l'association.
 - **Jeux concours :** gratuits pour tous, entrées en plus pour les premium. À confirmer par un juriste, plus tard.
+- **Application complète (Clément, 2026-11-25) :** l'app n'est pas un prolongement du site. Articles lus en entier, réactions, pages des auteurs ; aucune fonction ne renvoie simplement vers esprit-festivalier.fr. Restent à l'extérieur : billetterie, itinéraire, partage, réglages, contenus tiers. Voir FR-027 à FR-036 et l'ADR-007 de l'architecture.
+- **Réponses de Clément (2026-11-25) :** FR-031 et FR-032 dans le MVP ; FR-033 à FR-035 plus tard ; réactions en emoji (❤️ J'adore, 🔥 Ça chauffe, 👏 Bravo, 🤩 Waouh, 💡 Instructif) ; les photos des photographes (membres de l'association) paraissent dans l'app avec leur crédit ; lectures d'articles comptées de façon anonyme (FR-036) ; rien n'est demandé à l'équipe du site pour l'instant ; pas de commentaires.
 
 ---
 
@@ -190,13 +192,16 @@ Priorités (MoSCoW) : **Must** = MVP (phase 1), **Should** = phase 2, **Could** 
 
 **Priorité :** Must
 
-**Description :** l'app liste les articles du site par rubrique (live reports, interviews, actus, guides, décryptages, chroniques) et les affiche en lecture confortable.
+**Description :** l'app liste les articles du site par rubrique (live reports, interviews, actus, guides, décryptages, chroniques) et les affiche **en entier, dans l'app** (FR-027).
 
 **Critères d'acceptation :**
 - [ ] Les rubriques correspondent à celles du site.
 - [ ] Un article garde son crédit photo et son auteur.
 - [ ] Un contenu sponsorisé est marqué comme tel.
 - [ ] « Partager » donne le lien de l'article sur le site.
+- [ ] Aucun bouton « Lire sur le site » ni « Lire l'article complet » : le texte complet est dans l'app.
+
+**Changement (v1.1) :** la lecture se faisait sur l'extrait du flux, puis dans Safari. Elle passe dans l'app (FR-027) ; le crédit photo et la marque « sponsorisé », absents du flux, viennent de la page de l'article.
 
 ### FR-012 : Notifications d'articles
 
@@ -407,6 +412,142 @@ Priorités (MoSCoW) : **Must** = MVP (phase 1), **Should** = phase 2, **Could** 
 
 ---
 
+### Application complète (v1.1)
+
+**Statut :** FR-027 à FR-032 et FR-036 : MVP (décisions du 2026-11-25). FR-033 à FR-035 : plus tard.
+
+### FR-027 : Article complet dans l'app
+
+**Priorité :** Must
+
+**Description :** l'article s'affiche en entier dans l'app, en natif : chapô, intertitres, paragraphes avec gras, italique et liens, images avec légende et crédit, citations, listes, « Lire aussi », contenus tiers en carte.
+
+**Critères d'acceptation :**
+- [ ] Le texte, les images et les légendes sont ceux de la page du site.
+- [ ] Les images occupent toute la largeur ; le crédit est sous chaque photo.
+- [ ] Un article déjà ouvert se relit hors ligne (images comprises tant que le cache les garde).
+- [ ] Une vidéo ou un contenu tiers ne se charge qu'au toucher (NFR-005).
+- [ ] Échec : l'extrait du flux, un message clair et « Réessayer » ; l'app n'ouvre jamais Safari d'elle-même.
+- [ ] Source interchangeable (NFR-008) : page du site aujourd'hui, flux du site plus tard.
+
+**Dépendances :** FR-011
+
+### FR-028 : Liens internes dans l'app
+
+**Priorité :** Must
+
+**Description :** un lien vers le site dans un article (article, festival, auteur, artiste, rubrique, mot-clé) ouvre l'écran de l'app correspondant.
+
+**Critères d'acceptation :**
+- [ ] Article → lecture (FR-027) ; festival connu → fiche ; auteur → page auteur (FR-029) ; artiste connu → page artiste ; rubrique → Articles filtrés.
+- [ ] Festival ou artiste hors catalogue, mot-clé → liste des articles de cette page (FR-032).
+- [ ] Un lien vers un autre site s'ouvre dans une feuille Safari, signalé « site externe » pour VoiceOver.
+
+**Dépendances :** FR-027
+
+### FR-029 : Pages des auteurs
+
+**Priorité :** Must
+
+**Description :** la page d'un auteur montre son nom, son avatar (photo ou initiales), sa présentation si elle existe, ses liens s'il en a, le nombre d'articles et la liste de ses articles.
+
+**Critères d'acceptation :**
+- [ ] On l'ouvre depuis la signature, le bloc auteur en fin d'article et les cartes d'articles.
+- [ ] Un crédit photo qui nomme un auteur connu ouvre sa page ; sinon il reste du texte.
+- [ ] La liste charge la suite en bas de page.
+- [ ] « Partager » donne le lien de la page auteur sur le site.
+
+**Dépendances :** FR-027
+
+### FR-030 : Réactions aux articles
+
+**Priorité :** Must (sur l'appareil) ; compteurs partagés quand le serveur existe
+
+**Description :** sous l'article, 5 réactions fixes en emoji : ❤️ J'adore, 🔥 Ça chauffe, 👏 Bravo, 🤩 Waouh, 💡 Instructif. Une réaction active par utilisateur et par type ; toucher à nouveau la retire.
+
+**Critères d'acceptation :**
+- [ ] Réagir marche sans compte ; l'état est gardé sur l'appareil.
+- [ ] Avant le serveur : pas de compteur en bêta ; compteurs de démo signalés « Données de démonstration » avec la source `mock`.
+- [ ] Avec le serveur : compteurs partagés, un vote par votant, limitation de débit.
+- [ ] Les réactions d'un compte sont comprises dans l'export et la suppression (NFR-005).
+- [ ] Chaque réaction est un bouton VoiceOver lu par son libellé, jamais par le nom de l'emoji, avec son état (« J'adore, sélectionné, 12 »).
+
+**Dépendances :** FR-027 ; FR-007 pour la synchronisation
+
+### FR-031 : Archives par rubrique
+
+**Priorité :** Must
+
+**Description :** au bout des articles du flux, la liste d'une rubrique continue avec les articles plus anciens du site.
+
+**Critères d'acceptation :**
+- [ ] « Charger plus » ou chargement en bas de liste, page par page.
+- [ ] Aucun doublon avec les articles du flux.
+
+**Dépendances :** FR-011, FR-032
+
+### FR-032 : Pages liste du site dans l'app
+
+**Priorité :** Must
+
+**Description :** les pages liste du site (festival, artiste, mot-clé, rubrique) s'affichent dans l'app comme listes d'articles. La fiche festival montre ses articles.
+
+**Critères d'acceptation :**
+- [ ] La fiche d'un festival montre ses derniers articles (critère de FR-004) et remplace « Lire sur Esprit Festivalier ».
+- [ ] Même lecteur de cartes que les pages auteurs.
+
+**Dépendances :** FR-027
+
+### FR-033 : À lire plus tard (plus tard)
+
+**Priorité :** Should
+
+**Description :** l'utilisateur garde un article pour plus tard ; il le relit hors ligne, images comprises.
+
+**Critères d'acceptation :**
+- [ ] Sans compte, sur l'appareil ; synchronisé une fois connecté.
+- [ ] En mode avion, un article gardé s'affiche en entier.
+
+**Dépendances :** FR-027
+
+### FR-034 : Liens universels du site (plus tard)
+
+**Priorité :** Should
+
+**Description :** un lien esprit-festivalier.fr (article, festival, auteur) ouvre l'app si elle est installée.
+
+**Critères d'acceptation :**
+- [ ] Le site publie `apple-app-site-association` (à demander plus tard, une fois le besoin précis).
+- [ ] Adresses prises en charge : `/<slug>-<numéro>/` (article), `/festival/<slug>/`, `/author/<slug>/`.
+- [ ] Les pages sans écran dans l'app restent sur le site.
+
+**Dépendances :** FR-028
+
+### FR-035 : À propos natif (plus tard)
+
+**Priorité :** Could
+
+**Description :** la page « À propos » est un écran de l'app, avec un texte relu par la rédaction.
+
+**Critères d'acceptation :**
+- [ ] Plus de feuille Safari pour « À propos ».
+
+### FR-036 : Lectures d'articles comptées
+
+**Priorité :** Must (file locale) ; envoi avec la mesure d'audience (FR-026)
+
+**Description :** l'app compte les lectures de chaque article, de façon anonyme et agrégée par article et par jour, pour la rédaction.
+
+**Critères d'acceptation :**
+- [ ] Un événement `article_view` (clé de l'article, jour) au premier affichage du texte complet ; au plus un par article et par jour sur l'appareil.
+- [ ] Aucun identifiant d'utilisateur ni d'appareil dans l'événement.
+- [ ] Respecte le choix de mesure d'audience de l'utilisateur (NFR-005).
+- [ ] Maintenant : file locale (mock) ; plus tard : envoi par lots vers Analytics Engine et export par article et par période.
+
+**Dépendances :** FR-027, FR-026
+
+---
+
 ## Exigences non fonctionnelles
 
 ### NFR-001 : Performance — démarrage et navigation
@@ -601,11 +742,11 @@ Priorités (MoSCoW) : **Must** = MVP (phase 1), **Should** = phase 2, **Could** 
 
 ### EPIC-004 : Contenus éditoriaux
 
-**Description :** articles par rubrique, notifications d'articles, encart recrutement.
+**Description :** articles par rubrique lus en entier dans l'app, liens internes, auteurs, réactions, notifications d'articles, encart recrutement ; propositions de la v1.1.
 
-**Exigences :** FR-011, FR-012, FR-013
+**Exigences :** FR-011, FR-012, FR-013, FR-027 à FR-032, FR-036 ; plus tard : FR-033 à FR-035
 
-**Estimation :** 3-4 stories
+**Estimation :** 18 stories (dont 3 plus tard)
 
 **Priorité :** Must
 
@@ -718,6 +859,7 @@ Les stories détaillées viendront au sprint planning. Exemples par epic :
 - Reconnaissance faciale.
 - Messagerie et fil social.
 - Spotify en phase 2.
+- Commentaires sous les articles (pas de modération possible ; décision du 2026-11-25).
 - Interface web pour que les festivals gèrent eux-mêmes leur fiche (plus tard).
 
 ---
@@ -757,6 +899,7 @@ Les stories détaillées viendront au sprint planning. Exemples par epic :
 | Version | Date | Auteur | Changements |
 |---|---|---|---|
 | 1.0 | 2026-11-25 | clement | Première version |
+| 1.1 | 2026-11-25 | clement | Application complète : FR-027 à FR-032 et FR-036 (MVP), FR-033 à FR-035 (plus tard), FR-011 modifiée |
 
 ---
 
@@ -779,12 +922,12 @@ Les stories détaillées viendront au sprint planning. Exemples par epic :
 | EPIC-001 | Socle et sources de données | (NFR-001 à NFR-011) | 6-8 |
 | EPIC-002 | Découverte des festivals | FR-001 à FR-006 | 7-9 |
 | EPIC-003 | Compte, favoris et jour J | FR-007 à FR-010 | 6-8 |
-| EPIC-004 | Contenus éditoriaux | FR-011 à FR-013 | 3-4 |
+| EPIC-004 | Contenus éditoriaux | FR-011 à FR-013, FR-027 à FR-036 | 18 |
 | EPIC-005 | Premium et artistes | FR-014 à FR-018 | 7-9 |
 | EPIC-006 | Offre festivals partenaires | FR-019 à FR-022, FR-026 | 7-9 |
 | EPIC-007 | Photos et passeport | FR-023 à FR-025 | 5-7 |
 
-**Total estimé :** 41 à 54 stories, dont 22 à 29 pour le MVP (epics 1 à 4).
+**Total estimé :** 55 à 68 stories, dont 32 à 39 pour le MVP (epics 1 à 4).
 
 ---
 
@@ -792,9 +935,9 @@ Les stories détaillées viendront au sprint planning. Exemples par epic :
 
 | | Must | Should | Could | Total |
 |---|---|---|---|---|
-| Exigences fonctionnelles | 12 | 9 | 5 | 26 |
+| Exigences fonctionnelles | 19 | 11 | 6 | 36 |
 | Exigences non fonctionnelles | 10 | 2 | 0 | 12 |
 
-- **Must (MVP) :** FR-001 à FR-012.
-- **Should (phase 2) :** FR-014 à FR-017, FR-019 à FR-022, FR-026.
-- **Could (phase 3) :** FR-013, FR-018, FR-023, FR-024, FR-025.
+- **Must (MVP) :** FR-001 à FR-012, FR-027 à FR-032, FR-036.
+- **Should :** FR-014 à FR-017, FR-019 à FR-022, FR-026 (phase 2) ; FR-033, FR-034 (plus tard).
+- **Could (phase 3) :** FR-013, FR-018, FR-023, FR-024, FR-025 ; FR-035 (plus tard).
