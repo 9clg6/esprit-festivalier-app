@@ -19,4 +19,5 @@ public protocol ArtistSource: Sendable {
 
 public enum SourceError: Error, Equatable {
     case festivalNotFound(Festival.ID)
+    case malformedFeed
 }

@@ -223,15 +223,20 @@ private struct FestivalDetailContent: View {
     }
 }
 
-private struct SafariItem: Identifiable {
+struct SafariItem: Identifiable {
     let url: URL
     var id: URL { url }
 }
 
-private struct SafariView: UIViewControllerRepresentable {
+struct SafariView: UIViewControllerRepresentable {
     let url: URL
+    var readerMode = false
 
-    func makeUIViewController(context: Context) -> SFSafariViewController { SFSafariViewController(url: url) }
+    func makeUIViewController(context: Context) -> SFSafariViewController {
+        let configuration = SFSafariViewController.Configuration()
+        configuration.entersReaderIfAvailable = readerMode
+        return SFSafariViewController(url: url, configuration: configuration)
+    }
     func updateUIViewController(_ controller: SFSafariViewController, context: Context) {}
 }
 

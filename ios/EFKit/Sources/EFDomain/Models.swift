@@ -194,6 +194,19 @@ public struct Article: Sendable, Codable, Hashable, Identifiable {
             var container = encoder.singleValueContainer()
             try container.encode(rawValue)
         }
+
+        public static let actu = Category(rawValue: "Actu")
+        public static let liveReport = Category(rawValue: "Live report")
+        public static let programmation = Category(rawValue: "Programmation")
+        public static let interview = Category(rawValue: "Interview")
+        public static let guide = Category(rawValue: "Guide")
+        public static let decryptage = Category(rawValue: "Décryptage")
+        public static let chronique = Category(rawValue: "Chronique")
+
+        /// The sections the app knows, in the order of the Articles screen.
+        public static let known: [Category] = [
+            .liveReport, .programmation, .interview, .actu, .guide, .decryptage, .chronique
+        ]
     }
 
     public let id: ID
@@ -202,10 +215,16 @@ public struct Article: Sendable, Codable, Hashable, Identifiable {
     public let category: Category
     public let author: String
     public let publishedAt: Date
-    public let imageURL: URL
+    public let imageURL: URL?
+    /// Plain text, at most 200 characters.
+    public let excerpt: String
+    /// Paragraphs of plain text.
+    public let body: [String]
+    public let isSponsored: Bool
 
     public init(
-        id: ID, title: String, link: URL, category: Category, author: String, publishedAt: Date, imageURL: URL
+        id: ID, title: String, link: URL, category: Category, author: String, publishedAt: Date, imageURL: URL?,
+        excerpt: String = "", body: [String] = [], isSponsored: Bool = false
     ) {
         self.id = id
         self.title = title
@@ -214,5 +233,24 @@ public struct Article: Sendable, Codable, Hashable, Identifiable {
         self.author = author
         self.publishedAt = publishedAt
         self.imageURL = imageURL
+        self.excerpt = excerpt
+        self.body = body
+        self.isSponsored = isSponsored
+    }
+
+    // The bundled demo JSON has no excerpt, body or sponsored flag.
+    public init(from decoder: any Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            id: try values.decode(ID.self, forKey: .id), title: try values.decode(String.self, forKey: .title),
+            link: try values.decode(URL.self, forKey: .link),
+            category: try values.decode(Category.self, forKey: .category),
+            author: try values.decode(String.self, forKey: .author),
+            publishedAt: try values.decode(Date.self, forKey: .publishedAt),
+            imageURL: try values.decodeIfPresent(URL.self, forKey: .imageURL),
+            excerpt: try values.decodeIfPresent(String.self, forKey: .excerpt) ?? "",
+            body: try values.decodeIfPresent([String].self, forKey: .body) ?? [],
+            isSponsored: try values.decodeIfPresent(Bool.self, forKey: .isSponsored) ?? false
+        )
     }
 }
